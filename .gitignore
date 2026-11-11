@@ -1,0 +1,21 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+__pycache__/
+.build/
+data/
+reports/
+
+# Separate Android coursework kept locally, outside the MagAir project.
+/mobile_programming_assignment/
+
+# Local credentials and signing assets.
+.env
+.env.*
+!.env.example
+*.p12
+*.p8
+*.mobileprovision
+*.py[cod]

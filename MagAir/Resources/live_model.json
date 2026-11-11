@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "sourceSession": "MagAir-2026-10-14T15-55-27Z-1FCF6B",
+  "aspect": 1.5,
+  "method": "inverse bilinear interpolation of four median magnetic-field anchors",
+  "baselineReferenceUT": [
+    2443.3889160155,
+    -1894.867614746,
+    -459.25440979
+  ],
+  "modes": [
+    {
+      "id": "surface",
+      "title": "책상 접촉",
+      "anchors": [
+        [
+          5.941384079154886,
+          13.048257895778306,
+          31.784397221649044
+        ],
+        [
+          -28.960377205836267,
+          -24.709504355850868,
+          -22.755336529243323
+        ],
+        [
+          -7.595273227840153,
+          -8.886238417635923,
+          -14.148278220520865
+        ],
+        [
+          -4.030220651533909,
+          -6.473866314813222,
+          14.880471349539278
+        ]
+      ],
+      "residualLimitUT": 11.564632311321482,
+      "minimumSignalUT": 3.3441414512342806,
+      "trainingTrialIDs": [
+        "b4-corners-1-top_left-a2",
+        "b4-corners-1-top_right-a3",
+        "b4-corners-1-bottom_right-a4",
+        "b4-corners-1-bottom_left-a5",
+        "b4-corners-2-top_left-a6",
+        "b4-corners-2-top_right-a7",
+        "b4-corners-2-bottom_right-a8",
+        "b4-corners-2-bottom_left-a9",
+        "b4-corners-3-top_left-a10",
+        "b4-corners-3-top_right-a11",
+        "b4-corners-3-bottom_right-a12",
+        "b4-corners-3-bottom_left-a13"
+      ]
+    },
+    {
+      "id": "air",
+      "title": "약 1cm 공중",
+      "anchors": [
+        [
+          4.178833008000311,
+          10.377441406000116,
+          25.62864685049999
+        ],
+        [
+          -11.363769531500111,
+          -15.506652831999872,
+          -4.199508666999975
+        ],
+        [
+          -5.996948241999689,
+          -5.377014159999817,
+          -2.5783233645000223
+        ],
+        [
+          -3.2457275384999775,
+          -2.703247070499856,
+          10.642044067500024
+        ]
+      ],
+      "residualLimitUT": 12.959817449900918,
+      "minimumSignalUT": 3.0,
+      "trainingTrialIDs": [
+        "b10-cornersHeight-1-top_left-a19",
+        "b10-cornersHeight-1-top_right-a20",
+        "b10-cornersHeight-1-bottom_right-a21",
+        "b10-cornersHeight-1-bottom_left-a22",
+        "b10-cornersHeight-2-top_left-a23",
+        "b10-cornersHeight-2-top_right-a24",
+        "b10-cornersHeight-2-bottom_right-a25",
+        "b10-cornersHeight-2-bottom_left-a26",
+        "b10-cornersHeight-3-top_left-a27",
+        "b10-cornersHeight-3-top_right-a28",
+        "b10-cornersHeight-3-bottom_right-a29",
+        "b10-cornersHeight-3-bottom_left-a30"
+      ]
+    }
+  ],
+  "limitation": "Four-corner pilot. Interior position, handwriting, and physical pen contact are unvalidated."
+}
