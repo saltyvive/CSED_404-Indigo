@@ -5,8 +5,6 @@ import argparse
 from pathlib import Path
 
 from reportlab.lib.units import mm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 
@@ -19,8 +17,7 @@ BORDER_WIDTH_MM = 0.20
 FILENAME = "sweet_spot_50x30mm_pitch2p5mm_a4_landscape.pdf"
 
 
-def generate(output: Path, font_path: Path) -> None:
-    pdfmetrics.registerFont(TTFont("TemplateKorean", str(font_path)))
+def generate(output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     pdf = canvas.Canvas(
         str(output),
@@ -34,16 +31,6 @@ def generate(output: Path, font_path: Path) -> None:
         "273 points; paper-bottom-left origin; x=115 mm, y=55 mm; print at 100%."
     )
     pdf.setViewerPreference("PrintScaling", "None")
-
-    def label(x_mm: float, y_mm: float, text: str, size: float = 8) -> None:
-        pdf.setFont("TemplateKorean", size)
-        pdf.drawString(x_mm * mm, y_mm * mm, text)
-
-    pdf.setFillColorRGB(0.30, 0.30, 0.30)
-    label(15, 193, "스윗 스팟 측정 도면", 12)
-    label(15, 185, "A4 가로 297 × 210 mm  |  실제 크기 100%로 인쇄")
-    label(15, 179, "영역 50 × 30 mm  |  점 간격 2.5 mm  |  21열 × 13행 = 273점 (경계 포함)")
-    label(15, 173, "영역 좌하단: 용지 왼쪽에서 115 mm, 아래에서 55 mm")
 
     # Rectangle coordinates describe the stroke centerline. Boundary dot centers
     # lie on that same line; four corners are included exactly once.
@@ -65,26 +52,6 @@ def generate(output: Path, font_path: Path) -> None:
                 fill=1,
             )
 
-    # Separate calibration rulers verify both print axes without adding marks
-    # to the measurement region. Their lengths match the sweet spot dimensions.
-    pdf.setStrokeColorRGB(0.35, 0.35, 0.35)
-    pdf.setFillColorRGB(0.35, 0.35, 0.35)
-    pdf.setLineWidth(0.15 * mm)
-    pdf.line(20 * mm, 20 * mm, 70 * mm, 20 * mm)
-    for x in (20, 45, 70):
-        pdf.line(x * mm, 19 * mm, x * mm, 21 * mm)
-    pdf.line(20 * mm, 20 * mm, 20 * mm, 50 * mm)
-    for y in (20, 35, 50):
-        pdf.line(19 * mm, y * mm, 21 * mm, y * mm)
-    label(40, 15, "50 mm", 7)
-    pdf.saveState()
-    pdf.translate(16 * mm, 30 * mm)
-    pdf.rotate(90)
-    label(0, 0, "30 mm", 7)
-    pdf.restoreState()
-    label(85, 24, "인쇄 설정: 실제 크기 100% · 페이지 맞춤 / 자동 축소 끄기", 7.5)
-    label(85, 18, "인쇄 후 기준선 길이와 용지 모서리 기준 오프셋을 확인하세요.", 7.5)
-
     pdf.showPage()
     pdf.save()
     print(f"Created {output}: {columns} x {rows} = {columns * rows} points")
@@ -93,15 +60,8 @@ def generate(output: Path, font_path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name(FILENAME))
-    parser.add_argument(
-        "--font", type=Path,
-        default=Path("/System/Library/Fonts/Supplemental/AppleGothic.ttf"),
-        help="Korean TrueType font; defaults to AppleGothic on macOS.",
-    )
     args = parser.parse_args()
-    if not args.font.is_file():
-        parser.error("Supply an installed Korean TrueType font with --font PATH.")
-    generate(args.output, args.font)
+    generate(args.output)
 
 
 if __name__ == "__main__":
