@@ -146,6 +146,9 @@ struct TrialSpec: Codable, Identifiable {
     var gridColumn: Int? = nil
     var guidePathID: String? = nil
     var gridSize: Int? = nil // Missing in historical 5x5 sessions; explicit for dense grids.
+    var gridColumns: Int? = nil // Rectangular printed grid; never infer this from gridSize.
+    var gridRows: Int? = nil
+    var nominalPointMM: Point2D? = nil // Printed target from top-left, NOT a measured tip position.
     var duration: Double { kind.duration }
     var dataset: String { purpose ?? kind.dataset }
     var isManual: Bool { kind == .edgeSweep || kind == .mapSweep }
@@ -282,6 +285,7 @@ struct SessionManifest: Codable {
     var coordinateDefinition = "User looking at desk rectangle: top-left=(0,0), right=+x, toward user/down=+y. Normalized coordinates, not screen pixels or mm."
     var pencilIMU = "Unavailable: no off-screen Apple Pencil raw IMU API. All IMU streams are from iPad."
     var motionReference = "xArbitraryZVertical (not magnetic north); raw magnetometer remains unmodified."
+    var printedGrid: PrintedGridMetadata? = nil
 }
 
 func number(_ value: Double) -> String {

@@ -3,6 +3,7 @@ import Foundation
 @main
 struct CoreTests {
     static func main() throws {
+        try PrintedGridProtocolTests.run()
         for scenario in EdgeScenario.allCases {
             let plan = scenario.make(block: 9)
             precondition(plan.first?.edgeAction == "before" && plan.last?.edgeAction == "after")
