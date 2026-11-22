@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct MagAirApp: App {
     @StateObject private var collector = Collector()
-    @State private var selectedTab = "edges"
+    @State private var selectedTab = "printed"
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
+                PrintedGridStudyView(collector: collector)
+                    .tabItem { Label("273점 수집", systemImage: "square.grid.3x3.fill") }.tag("printed")
                 GridLiveView(collector: collector, tester: collector.gridLiveTester) { scenario in
                     collector.selectEdge(scenario)
                     selectedTab = "edges"
@@ -19,9 +21,10 @@ struct MagAirApp: App {
                 }
                     .tabItem { Label("네 변 테스트", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }.tag("edgeLive")
                 EdgeStudyView(collector: collector)
-                    .tabItem { Label("데이터 수집", systemImage: "rectangle.and.pencil.and.ellipsis") }.tag("edges")
+                    .disabled(collector.sessionOpen && collector.printedBatch != nil)
+                    .tabItem { Label("이전 격자·변 수집", systemImage: "rectangle.and.pencil.and.ellipsis") }.tag("edges")
                 ContentView(collector: collector)
-                    .disabled(collector.sessionOpen && collector.edgeScenario != nil)
+                    .disabled(collector.sessionOpen && (collector.edgeScenario != nil || collector.printedBatch != nil))
                     .tabItem { Label("이전 수집", systemImage: "waveform.path") }.tag("collect")
                 LiveTestView(collector: collector, tester: collector.liveTester)
                     .tabItem { Label("이전 모델 테스트", systemImage: "pencil.and.outline") }.tag("live")

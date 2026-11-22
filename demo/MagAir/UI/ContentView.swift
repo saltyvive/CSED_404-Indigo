@@ -67,6 +67,11 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear {
+            if !collector.sessionOpen && (collector.printedBatch != nil || collector.edgeScenario != nil) {
+                collector.select(.baselineBefore)
+            }
+        }
         .sheet(isPresented: $showSetup) { SetupView(collector: collector) }
         .sheet(isPresented: $showLibrary) { LibraryView(collector: collector) }
         .sheet(isPresented: $showHelp) { HelpView() }
@@ -378,6 +383,9 @@ struct LibraryView: View {
                             Text(directory.lastPathComponent).font(.subheadline.monospaced()).textSelection(.enabled)
                             if let data = try? Data(contentsOf: directory.appendingPathComponent("manifest.json")),
                                let session = try? JSONDecoder().decode(SessionManifest.self, from: data) {
+                                if let meta = session.printedGrid {
+                                    Text("273점 도면 · \(meta.batch.pass)회차 \(meta.batch.row)행").font(.headline)
+                                }
                                 Text("완료 측정 \(session.trials.filter { $0.status == "completed" }.count)개 · 상태 \(session.status)")
                                     .font(.caption).foregroundStyle(.secondary)
                             }

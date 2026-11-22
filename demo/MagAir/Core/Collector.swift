@@ -20,6 +20,13 @@ final class Collector: ObservableObject {
     @Published var setup = Setup()
     @Published var selected: ProtocolKind = .baselineBefore
     @Published var edgeScenario: EdgeScenario?
+    @Published var printedBatch: PrintedGridBatch?
+    @Published var printedCampaign = PrintedGridCampaign()
+    @Published var printedCompleted: [String: String] = [:] // batch ID -> durable session ID
+    @Published var printedReady = false
+    var nextPrintedBatch: PrintedGridBatch {
+        PrintedGridBatch.all.first { printedCompleted[$0.id] == nil } ?? PrintedGridBatch.all[0]
+    }
     @Published var denseCompleted = Set(UserDefaults.standard.stringArray(forKey: "denseGrid.completed.v1") ?? [])
     var nextDenseCollection: EdgeScenario {
         EdgeScenario.denseTraining.first { !denseCompleted.contains($0.rawValue) } ?? .grid9Train1A
@@ -111,6 +118,10 @@ final class Collector: ObservableObject {
     }
 
     init() {
+        if let data = UserDefaults.standard.data(forKey: "printedGrid.campaign.v1"),
+           let campaign = try? JSONDecoder().decode(PrintedGridCampaign.self, from: data) {
+            printedCampaign = campaign
+        }
         if let data = UserDefaults.standard.data(forKey: "setup.v1"), let saved = try? JSONDecoder().decode(Setup.self, from: data) {
             setup = saved
             setup.confirmed = false
@@ -291,7 +302,8 @@ final class Collector: ObservableObject {
     }
 
     func beginSession() {
-        guard !sessionOpen, setup.confirmed, sensorFresh else { return }
+        guard !sessionOpen, !isClosing, setup.confirmed, sensorFresh else { return }
+        if printedBatch != nil && !printedReady { return }
         do {
             var sys = utsname(); uname(&sys)
             let model = withUnsafePointer(to: &sys.machine) { pointer in
@@ -300,8 +312,11 @@ final class Collector: ObservableObject {
             let date = Date(), uptime = now
             let stamp = ISO8601DateFormatter().string(from: date)
             let id = "MagAir-" + stamp.replacingOccurrences(of: ":", with: "-") + "-" + UUID().uuidString.prefix(6)
-            let session = SessionManifest(id: id, startedAt: stamp, anchorUptime: uptime, anchorUnix: date.timeIntervalSince1970,
+            var session = SessionManifest(id: id, startedAt: stamp, anchorUptime: uptime, anchorUnix: date.timeIntervalSince1970,
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
+            if let printedBatch {
+                session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch)
+            }
             let newStore = try SessionStore(manifest: session)
             newStore.onError = { [weak self] message in
                 guard let self else { return }
@@ -310,26 +325,66 @@ final class Collector: ObservableObject {
                 self.endSession(status: "write_error")
             }
             store = newStore; manifest = session; counts = [:]; blockNumber = 0
+            if printedBatch != nil { printedCampaign.hasStarted = true; persistPrintedCampaign() }
             UserDefaults.standard.set(try JSONEncoder().encode(setup), forKey: "setup.v1")
             UIApplication.shared.isIdleTimerDisabled = true
-            if let edgeScenario { selectEdge(edgeScenario) } else { select(selected) }
+            if let printedBatch {
+                blockNumber += 1; plan = printedBatch.make(block: blockNumber); planIndex = 0
+            } else if let edgeScenario {
+                blockNumber += 1; plan = edgeScenario.make(block: blockNumber); planIndex = 0
+            } else { select(selected) }
             notice = "세션 생성 완료 · 동작별 시작 버튼을 누르세요."
         } catch { errorMessage = error.localizedDescription }
     }
 
     func select(_ kind: ProtocolKind) {
         guard !recording, !isClosing else { return }
-        guard !sessionOpen || edgeScenario == nil else { return }
+        guard !sessionOpen || (edgeScenario == nil && printedBatch == nil) else { return }
         edgeScenario = nil
+        printedBatch = nil
         selected = kind; blockNumber += 1; plan = TrialSpec.make(kind, block: blockNumber); planIndex = 0
         elapsed = 0
     }
 
     func selectEdge(_ scenario: EdgeScenario) {
-        guard !recording, !isClosing else { return }
+        guard !recording, !isClosing, !sessionOpen else { return }
+        printedBatch = nil
         edgeScenario = scenario; blockNumber += 1
         plan = scenario.make(block: blockNumber); planIndex = 0; elapsed = 0
         selected = .edgeBaseline
+    }
+
+    func selectPrinted(_ batch: PrintedGridBatch) {
+        guard !recording, !isClosing, !sessionOpen, PrintedGridBatch.all.contains(batch) else { return }
+        printedBatch = batch; edgeScenario = nil; blockNumber += 1
+        setup = printedCampaign.setup; setup.confirmed = printedReady
+        plan = batch.make(block: blockNumber); planIndex = 0; elapsed = 0
+        selected = .mapBaseline
+    }
+
+    func confirmPrintedSetup(_ proposed: Setup) {
+        guard !sessionOpen, !isClosing else { return }
+        if !printedCampaign.hasStarted {
+            printedCampaign.setup = proposed
+            printedCampaign.setup.widthMM = "50"; printedCampaign.setup.heightMM = "30"
+            printedCampaign.setup.aspect = 5.0/3.0
+        }
+        printedReady = true
+        setup = printedCampaign.setup; setup.confirmed = true
+        persistPrintedCampaign()
+    }
+
+    func newPrintedCampaign() {
+        guard !sessionOpen, !isClosing else { return }
+        printedCampaign = PrintedGridCampaign(); printedReady = false
+        printedCompleted = [:]; persistPrintedCampaign()
+        selectPrinted(PrintedGridBatch.all[0])
+    }
+
+    private func persistPrintedCampaign() {
+        if let data = try? JSONEncoder().encode(printedCampaign) {
+            UserDefaults.standard.set(data, forKey: "printedGrid.campaign.v1")
+        }
     }
 
     func finishSweep() {
@@ -358,7 +413,7 @@ final class Collector: ObservableObject {
         activeTrial = nil; waitingForTail = false; planIndex += 1
         checkpoint()
         notice = currentSpec == nil ? "이 동작이 끝났습니다. 다음 동작을 선택하세요." : "지점 저장 완료 · 다음 위치로 옮긴 뒤 시작하세요."
-        if edgeScenario != nil && currentSpec == nil { endSession() }
+        if (edgeScenario != nil || printedBatch != nil) && currentSpec == nil { endSession() }
     }
 
     func abortTrial(reason: String = "user_cancelled") {
@@ -406,6 +461,9 @@ final class Collector: ObservableObject {
                 UserDefaults.standard.set(Array(self?.denseCompleted ?? []), forKey: "denseGrid.completed.v1")
             }
             self?.isClosing = false; self?.refreshLibrary()
+            if session.printedGrid != nil, session.status != "completed", let batch = self?.printedBatch {
+                self?.selectPrinted(batch) // Restart an interrupted row with a fresh background pair.
+            }
             self?.notice = success ? "세션을 저장했습니다. 맥북에 연결되어 있으면 직접 가져올 수 있습니다. ZIP 공유는 선택입니다." : "파일 저장 중 오류가 발생했습니다. 기록이 불완전할 수 있습니다."
         }
         UIApplication.shared.isIdleTimerDisabled = false
@@ -420,6 +478,16 @@ final class Collector: ObservableObject {
         library = ((try? FileManager.default.contentsOfDirectory(at: SessionStore.root, includingPropertiesForKeys: [.isDirectoryKey])) ?? [])
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
             .sorted { $0.lastPathComponent > $1.lastPathComponent }
+        var completed: [String: String] = [:]
+        for directory in library {
+            guard let data = try? Data(contentsOf: directory.appendingPathComponent("manifest.json")),
+                  let session = try? JSONDecoder().decode(SessionManifest.self, from: data),
+                  let meta = session.printedGrid, PrintedGridBatch.all.contains(meta.batch),
+                  meta.batch.accepts(session, campaignID: printedCampaign.id) else { continue }
+            // Preserve every raw session; prefer the newest complete remeasurement in the UI.
+            if completed[meta.batch.id] == nil { completed[meta.batch.id] = session.id }
+        }
+        printedCompleted = completed
     }
 
     func export(_ directory: URL) {

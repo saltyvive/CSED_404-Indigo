@@ -60,6 +60,17 @@ final class SessionStore {
         repetition identifies the pass (1...3), calibrationGroup pairs passN-rowR baselines.
         Do not pool historical 5x5 with dense data automatically; verify unchanged setup.
         Raw high-frequency samples are not independent repeated placements.
+        Printed grid: manifest.printedGrid identifies sweetspot_21x13_v1 and a unique campaignID.
+        All 39 batches (13 rows x 3 passes) are ONE training campaign: 273 targets x 3 independent placements.
+        Each batch has one row: before background + 21 holds + after background; all 23 must complete.
+        printed_grid_train and printed_grid_baseline never mix automatically with historical datasets.
+        gridColumns=21, gridRows=13; gridSize is absent. x=(column-1)/20, y=(row-1)/12.
+        nominalPointMM=(2.5*(column-1),2.5*(row-1)) from sweet spot TOP LEFT, not measured tip coordinates.
+        Printed geometry is 50x30 mm; A4 landscape lower-left offset is (115,55) mm.
+        Paper lower-left coordinates=(115+50*x,85-30*y). Pose and contact are operator instructions, not sensors.
+        campaignID changes when setup changes; do not pool campaigns just because dimensions match.
+        Interrupted rows restart from a fresh before baseline; incomplete row sessions are excluded.
+        A replacement row keeps its prior files. Select one complete session per batch explicitly for training.
         manifest trial.spec.calibrationGroup pairs each row's before/after mapBaseline; do not use one session-wide baseline.
         gridRow/gridColumn are 1-based; row 1 is iPad side, column 1 is user's left.
         Grid path scenarios 13/14/15: gridHorizontal/gridVertical/gridDiagonal. grid_path_test is not coordinate training.
@@ -68,7 +79,7 @@ final class SessionStore {
         Each path has its own before/after mapBaseline using the same calibrationGroup.
         Exclude trials whose status is not completed. Repeated attempts have unique trial IDs.
         Keep whole trials / repetitions together when splitting training and evaluation data.
-        Unknown lengths are not millimeters; aspect ratio is approximate, for display only.
+        Historical unknown lengths are not millimeters. Printed geometry is nominal; verify actual print scale.
         Active/aborted sessions can contain partial data; retain manifest with all CSV files.
         """
         try Data(readme.utf8).write(to: directory.appendingPathComponent("README.txt"))
