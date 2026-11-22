@@ -146,10 +146,6 @@ struct TrialSpec: Codable, Identifiable {
     var gridColumn: Int? = nil
     var guidePathID: String? = nil
     var gridSize: Int? = nil // Missing in historical 5x5 sessions; explicit for dense grids.
-    var gridColumns: Int? = nil // Rectangular printed grid; never infer this from gridSize.
-    var gridRows: Int? = nil
-    var nominalPointMM: Point2D? = nil // Printed target from top-left, NOT a measured tip position.
-    var fixturePose: PrintedGridPose? = nil
     var duration: Double { kind.duration }
     var dataset: String { purpose ?? kind.dataset }
     var isManual: Bool { kind == .edgeSweep || kind == .mapSweep }
@@ -256,7 +252,7 @@ struct TrialRecord: Codable {
 
     func instructedHeightMM(at timestamp: Double) -> Double? {
         let phase = annotation(at: timestamp).phase
-        if spec.kind == .mapHold && phase == "hold" { return spec.fixturePose?.tipHeightMM ?? 0 }
+        if spec.kind == .mapHold && phase == "hold" { return 0 }
         if spec.kind == .mapSweep && phase == "move" { return 0 }
         if spec.edge != nil && phase != "settle" && phase != "outside" { return 0 }
         if phase == "surface_hold" || phase == "surface_return" { return 0 }
@@ -269,7 +265,7 @@ struct TrialRecord: Codable {
 
 struct SessionManifest: Codable {
     var schemaVersion = 1
-    var appVersion = "1.14.0"
+    var appVersion = "1.12.0"
     var id: String
     var startedAt: String
     var anchorUptime: Double
@@ -286,8 +282,6 @@ struct SessionManifest: Codable {
     var coordinateDefinition = "User looking at desk rectangle: top-left=(0,0), right=+x, toward user/down=+y. Normalized coordinates, not screen pixels or mm."
     var pencilIMU = "Unavailable: no off-screen Apple Pencil raw IMU API. All IMU streams are from iPad."
     var motionReference = "xArbitraryZVertical (not magnetic north); raw magnetometer remains unmodified."
-    var printedGrid: PrintedGridMetadata? = nil
-    var ipadInclinationAtStart: IPadInclinationSnapshot? = nil
 }
 
 func number(_ value: Double) -> String {

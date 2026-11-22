@@ -1,15 +1,5 @@
 import Foundation
 
-struct PrintedGridModelContext: Codable {
-    var campaignID: String
-    var passes: [Int]
-    var widthMM: Double
-    var heightMM: Double
-    var pose: PrintedGridPose
-    var trainingPositions: Int
-    var ipadInclinationRange: [Double]
-}
-
 struct GridLiveModel: Codable {
     var version: Int
     var method: String
@@ -27,20 +17,11 @@ struct GridLiveModel: Codable {
     var movementIncludedRows: [Int]? = nil
     var inclusionNote: String? = nil
     var scope: String
-    var printedGridContext: PrintedGridModelContext? = nil
-    var sourceSessions: [String]? = nil
 
     var isValid: Bool {
         func validKnots(_ k: [Double]) -> Bool {
             k.count >= 3 && k.first == 0 && k.last == 1 && k.allSatisfy(\.isFinite) &&
             zip(k, k.dropFirst()).allSatisfy { $0 < $1 }
-        }
-        if let context = printedGridContext {
-            guard xKnots.count == 21, yKnots.count == 13, context.trainingPositions == 273,
-                  context.widthMM == 50, context.heightMM == 30, abs(aspect-5.0/3) < 1e-9,
-                  context.pose.isValid, !context.passes.isEmpty,
-                  Set(context.passes).count == context.passes.count, context.passes.allSatisfy({ (1...3).contains($0) }),
-                  context.ipadInclinationRange.count == 2, context.ipadInclinationRange.allSatisfy({ $0.isFinite && (0...90).contains($0) }) else { return false }
         }
         return version == 1 && method == "bilinear_forward_surface_grid_inverse" && aspect.isFinite && aspect > 0 &&
             validKnots(xKnots) && validKnots(yKnots) && fieldsUT.count == yKnots.count &&
@@ -129,29 +110,12 @@ enum GridGuide: String, CaseIterable, Identifiable, Codable {
     case free, row1, row2, row3, row4, row5, col1, col2, col3, col4, col5, diagonalDown, diagonalUp
     case denseRow1, denseRow2, denseRow3, denseRow4, denseRow5, denseRow6, denseRow7, denseRow8, denseRow9
     case denseCol1, denseCol2, denseCol3, denseCol4, denseCol5, denseCol6, denseCol7, denseCol8, denseCol9
-    case printedRow1, printedRow2, printedRow3, printedRow4, printedRow5, printedRow6, printedRow7
-    case printedRow8, printedRow9, printedRow10, printedRow11, printedRow12, printedRow13
-    case printedCol1, printedCol2, printedCol3, printedCol4, printedCol5, printedCol6, printedCol7
-    case printedCol8, printedCol9, printedCol10, printedCol11, printedCol12, printedCol13, printedCol14
-    case printedCol15, printedCol16, printedCol17, printedCol18, printedCol19, printedCol20, printedCol21
     var id: String { rawValue }
-    var row: Int? {
-        if rawValue.hasPrefix("printedRow") { return Int(rawValue.dropFirst(10)) }
-        return rawValue.hasPrefix("row") || rawValue.hasPrefix("denseRow") ? Int(rawValue.suffix(1)) : nil
-    }
-    var column: Int? {
-        if rawValue.hasPrefix("printedCol") { return Int(rawValue.dropFirst(10)) }
-        return rawValue.hasPrefix("col") || rawValue.hasPrefix("denseCol") ? Int(rawValue.suffix(1)) : nil
-    }
+    var row: Int? { rawValue.hasPrefix("row") || rawValue.hasPrefix("denseRow") ? Int(rawValue.suffix(1)) : nil }
+    var column: Int? { rawValue.hasPrefix("col") || rawValue.hasPrefix("denseCol") ? Int(rawValue.suffix(1)) : nil }
     static func options(gridSize: Int) -> [GridGuide] {
         allCases.filter { $0 == .free || $0 == .diagonalDown || $0 == .diagonalUp ||
-            (!$0.rawValue.hasPrefix("printed") && (gridSize == 9 ? $0.rawValue.hasPrefix("dense") : !$0.rawValue.hasPrefix("dense"))) }
-    }
-    static func options(columns: Int, rows: Int) -> [GridGuide] {
-        if columns == 21 && rows == 13 {
-            return allCases.filter { $0 == .free || $0 == .diagonalDown || $0 == .diagonalUp || $0.rawValue.hasPrefix("printed") }
-        }
-        return options(gridSize: columns)
+            (gridSize == 9 ? $0.rawValue.hasPrefix("dense") : !$0.rawValue.hasPrefix("dense")) }
     }
     var title: String {
         if let row { return "가로 \(row)행 · 좌우 왕복" }
@@ -163,7 +127,7 @@ enum GridGuide: String, CaseIterable, Identifiable, Codable {
         }
     }
     var endpoints: [Point2D] {
-        let divisor = rawValue.hasPrefix("printedRow") ? 12.0 : (rawValue.hasPrefix("printedCol") ? 20.0 : (rawValue.hasPrefix("dense") ? 8.0 : 4.0))
+        let divisor = rawValue.hasPrefix("dense") ? 8.0 : 4.0
         if let row { let y = Double(row-1)/divisor; return [.init(x: 0,y: y), .init(x: 1,y: y)] }
         if let column { let x = Double(column-1)/divisor; return [.init(x: x,y: 0), .init(x: x,y: 1)] }
         switch self {

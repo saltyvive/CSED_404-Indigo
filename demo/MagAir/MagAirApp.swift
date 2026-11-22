@@ -3,19 +3,14 @@ import SwiftUI
 @main
 struct MagAirApp: App {
     @StateObject private var collector = Collector()
-    @State private var selectedTab = "gridLive"
+    @State private var selectedTab = "edges"
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
-                PrintedGridStudyView(collector: collector)
-                    .tabItem { Label("273점 수집", systemImage: "square.grid.3x3.fill") }.tag("printed")
                 GridLiveView(collector: collector, tester: collector.gridLiveTester) { scenario in
                     collector.selectEdge(scenario)
                     selectedTab = "edges"
-                } collectPrinted: {
-                    collector.selectPrinted(collector.nextPrintedBatch)
-                    selectedTab = "printed"
                 }
                     .tabItem { Label("격자 내부 테스트", systemImage: "square.grid.3x3") }.tag("gridLive")
                 EdgeLiveView(collector: collector, tester: collector.edgeLiveTester) {
@@ -24,10 +19,9 @@ struct MagAirApp: App {
                 }
                     .tabItem { Label("네 변 테스트", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }.tag("edgeLive")
                 EdgeStudyView(collector: collector)
-                    .disabled(collector.sessionOpen && collector.printedBatch != nil)
-                    .tabItem { Label("이전 격자·변 수집", systemImage: "rectangle.and.pencil.and.ellipsis") }.tag("edges")
+                    .tabItem { Label("데이터 수집", systemImage: "rectangle.and.pencil.and.ellipsis") }.tag("edges")
                 ContentView(collector: collector)
-                    .disabled(collector.sessionOpen && (collector.edgeScenario != nil || collector.printedBatch != nil))
+                    .disabled(collector.sessionOpen && collector.edgeScenario != nil)
                     .tabItem { Label("이전 수집", systemImage: "waveform.path") }.tag("collect")
                 LiveTestView(collector: collector, tester: collector.liveTester)
                     .tabItem { Label("이전 모델 테스트", systemImage: "pencil.and.outline") }.tag("live")

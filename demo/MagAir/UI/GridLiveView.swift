@@ -14,9 +14,6 @@ final class GridLiveTester: ObservableObject {
     @Published var guide: GridGuide = .free
     @Published var trail: [GridTrailPoint] = []
     private var lastAcceptedTime: Double?
-    var calibrationSettle: Double { model?.printedGridContext == nil ? 2 : 3 }
-    var calibrationCapture: Double { model?.printedGridContext == nil ? 3 : 10 }
-    var calibrationTotal: Double { calibrationSettle + calibrationCapture }
 
     func clearTrail() { trail = []; lastAcceptedTime = nil }
 
@@ -50,8 +47,8 @@ final class GridLiveTester: ObservableObject {
         clearTrail()
         baseline = nil; estimate = nil; recent = []; calibrationSamples = []; exportURL = nil
         calibrationStart = ProcessInfo.processInfo.systemUptime
-        calibrating = true; remaining = calibrationTotal; baselineAge = 0
-        status = "준비 \(Int(calibrationSettle))초 · 펜슬과 이동 홀더를 충분히 멀리 치우세요"
+        calibrating = true; remaining = 5; baselineAge = 0
+        status = "준비 2초 · 펜슬을 충분히 멀리 치우세요"
     }
 
     func invalidate(_ message: String) {
@@ -62,7 +59,7 @@ final class GridLiveTester: ObservableObject {
 
     func deviceMoved() {
         guard active, baseline != nil || calibrating else { return }
-        if calibrating && ProcessInfo.processInfo.systemUptime - calibrationStart < calibrationSettle { return }
+        if calibrating && ProcessInfo.processInfo.systemUptime - calibrationStart < 2 { return }
         invalidate("iPad 움직임 감지 · 고정한 뒤 배경을 다시 맞추세요")
     }
 
@@ -76,14 +73,14 @@ final class GridLiveTester: ObservableObject {
         lastSensorTime = timestamp
         if calibrating {
             let elapsed = timestamp - calibrationStart
-            remaining = max(0, calibrationTotal - elapsed)
-            status = elapsed < calibrationSettle ? "준비 중 · 펜슬과 홀더를 충분히 멀리" : "배경 측정 중 · 배치를 유지하세요"
-            if elapsed >= calibrationSettle && elapsed < calibrationTotal { calibrationSamples.append((timestamp, field)) }
-            if elapsed >= calibrationTotal {
+            remaining = max(0, 5 - elapsed)
+            status = elapsed < 2 ? "준비 중 · 펜슬을 충분히 멀리" : "배경 측정 중 · 배치를 유지하세요"
+            if elapsed >= 2 && elapsed < 5 { calibrationSamples.append((timestamp, field)) }
+            if elapsed >= 5 {
                 calibrating = false
-                guard calibrationSamples.count >= Int(calibrationCapture*30),
+                guard calibrationSamples.count >= 100,
                       let first = calibrationSamples.first, let last = calibrationSamples.last,
-                      last.0 - first.0 >= calibrationCapture-0.5,
+                      last.0 - first.0 >= 2.5,
                       zip(calibrationSamples, calibrationSamples.dropFirst()).allSatisfy({ $1.0 - $0.0 <= 0.15 }) else {
                     status = "배경 샘플 부족 또는 수신 공백 · 다시 시도하세요"; return
                 }
@@ -200,26 +197,17 @@ struct GridLiveView: View {
     @ObservedObject var collector: Collector
     @ObservedObject var tester: GridLiveTester
     var collect: (EdgeScenario) -> Void
-    var collectPrinted: () -> Void
-    var gridColumns: Int { tester.model?.xKnots.count ?? 5 }
-    var gridRows: Int { tester.model?.yKnots.count ?? 5 }
-    var printed: PrintedGridModelContext? { tester.model?.printedGridContext }
+    var gridSize: Int { tester.model?.xKnots.count == 9 ? 9 : 5 }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text(printed == nil ? "격자 내부 실시간 테스트" : "스윗 스팟 · 273점 실시간 테스트").font(.largeTitle.bold())
-                    if let printed {
-                        Text("21열 × 13행 · 50 × 30 mm · 사용 회차 \(printed.passes.map(String.init).joined(separator: ", "))")
-                            .font(.headline).foregroundStyle(.teal)
-                        Text(printed.passes.count == 1 ? "첫 회차의 273점을 모두 사용한 임시 지도입니다. 점 사이는 보간으로 추정합니다. 반복 측정과 별도 정확도 검증은 아직 하지 않았습니다." : "273개 위치의 반복 측정을 모은 지도입니다. 점 사이 위치는 보간으로 추정하며, 별도 자료로 정확도를 검증해야 합니다.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("\(gridColumns)×\(gridRows) 정지점 지도입니다. 점 사이 위치는 보간으로 추정합니다.").foregroundStyle(.secondary)
-                    }
-                    if printed == nil, let model = tester.model, let included = model.movementIncludedRows, !included.isEmpty {
-                        Text("학습점 \(model.trainingTrialIDs.count)개 · \(included.map(String.init).joined(separator: ", "))행의 움직임 경고를 보존한 시험 모델입니다.")
+                    Text("격자 내부 실시간 테스트").font(.largeTitle.bold())
+                    Text(gridSize == 9 ? "9×9 반복 정지점으로 만든 지도입니다. 점 사이 위치는 보간으로 추정합니다. 먼저 자유 테스트하고, 이후 새 자료로 검증합니다." : "현재는 11번의 기존 5×5 지도입니다. 9×9 자료 수집만으로 자동 갱신되지는 않습니다. 16A–18C 완료 후 새 지도를 제작·반영합니다.")
+                        .foregroundStyle(.secondary)
+                    if let model = tester.model, let included = model.movementIncludedRows, !included.isEmpty {
+                        Text("학습점 \(model.trainingTrialIDs.count)개 · \(included.map(String.init).joined(separator: ", "))행도 포함했습니다. 사용자 요청으로 움직임 경고가 있는 행을 포함한 시험 모델이며, 경고 기록은 보존합니다.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     if let model = tester.model, !model.excludedRows.isEmpty {
@@ -228,18 +216,12 @@ struct GridLiveView: View {
                     }
                     VStack(alignment: .leading, spacing: 10) {
                         Text("① 펜을 멀리  ② 배경 맞추기  ③ 책상에 대고 이동").font(.headline)
-                        Text("iPad·종이·스탠드·케이블을 수집 때와 같은 배치로 유지하세요.")
-                        Text(printed?.pose.summary ?? "펜은 책상에 수직, 로고는 왼쪽입니다.").font(.headline)
-                        if let printed, let min = printed.ipadInclinationRange.first, let max = printed.ipadInclinationRange.last {
-                            Text("수집 때 iPad 경사 \(min, specifier: "%.1f")–\(max, specifier: "%.1f")° · 현재 \(collector.ipadInclinationDegrees.map { String(format: "%.1f°", $0) } ?? "수신 대기")")
-                                .font(.footnote.monospacedDigit())
-                        }
-                        Button(tester.calibrating ? "배경 측정 중… \(Int(ceil(tester.remaining)))초" : "펜·홀더를 멀리 두었음 · 배경 맞추기") { tester.calibrate() }
+                        Text("iPad·스탠드·케이블을 같은 배치로 유지하세요. 펜은 책상에 수직, 로고는 왼쪽입니다.")
+                        Button(tester.calibrating ? "배경 측정 중… \(Int(ceil(tester.remaining)))초" : "펜을 멀리 두었음 · 배경 맞추기 5초") { tester.calibrate() }
                             .buttonStyle(.borderedProminent).controlSize(.large)
                             .disabled(!collector.sensorFresh || collector.sessionOpen || collector.isClosing || tester.calibrating || tester.model == nil)
                         if collector.sessionOpen { Text("수집을 저장·종료한 뒤 테스트하세요.").foregroundStyle(.orange) }
                         if !collector.sensorFresh { Text("자력계 수신 대기 중입니다.").foregroundStyle(.orange) }
-                        Text("준비 \(Int(tester.calibrationSettle))초 + 배경 \(Int(tester.calibrationCapture))초").font(.footnote)
                         if tester.baseline != nil {
                             Text("배경 측정 후 \(tester.baselineAge, specifier: "%.0f")초 · 약 1분마다 다시 맞춰 주세요. 1분이 지나도 중단되지 않습니다.")
                                 .font(.footnote).foregroundStyle(tester.baselineAge > 60 ? .orange : .secondary)
@@ -247,43 +229,31 @@ struct GridLiveView: View {
                     }.padding(18).background(.background, in: RoundedRectangle(cornerRadius: 18))
                     HStack {
                         Picker("따라 그릴 안내선", selection: $tester.guide) {
-                            ForEach(GridGuide.options(columns: gridColumns, rows: gridRows)) { Text($0.title).tag($0) }
+                            ForEach(GridGuide.options(gridSize: gridSize)) { Text($0.title).tag($0) }
                         }.pickerStyle(.menu)
                         Spacer()
                         Button("궤적 지우기") { tester.clearTrail() }.buttonStyle(.bordered)
                     }
-                    Text(tester.guide == .free ? "가운데에 놓고 자유롭게 움직여 보세요. 안내선은 현재 \(gridColumns)열 × \(gridRows)행 도면 기준입니다." : "회색 굵은 선을 편한 속도로 한 번 왕복하세요. 끝점에서 잠깐 멈춰도 됩니다.")
+                    Text(tester.guide == .free ? "가운데에 놓고 자유롭게 움직여 보세요. 안내선은 현재 \(gridSize)×\(gridSize) 모델 기준입니다." : "회색 굵은 선을 편한 속도로 한 번 왕복하세요. 끝점에서 잠깐 멈춰도 됩니다.")
                         .font(.subheadline)
                     GridLiveCanvas(estimate: tester.estimate, trail: tester.trail, guide: tester.guide,
-                                   aspect: tester.model?.aspect ?? 1.5, gridColumns: gridColumns, gridRows: gridRows).frame(height: 380)
+                                   aspect: tester.model?.aspect ?? 1.5, gridSize: gridSize).frame(height: 380)
                     Text(tester.status).font(.headline)
                     if let e = tester.estimate, e.showCandidate {
                         Text("왼쪽에서 \(e.point.x*100, specifier: "%.0f")% · 위에서 \(e.point.y*100, specifier: "%.0f")%")
                             .font(.title2.monospacedDigit()).foregroundStyle(e.accepted ? .teal : .orange)
-                        if let printed {
-                            Text("도면 기준 추정 x \(e.point.x*printed.widthMM, specifier: "%.1f") mm · y \(e.point.y*printed.heightMM, specifier: "%.1f") mm")
-                                .font(.subheadline.monospacedDigit())
-                        }
                         Text("자기장 차이 \(e.residual, specifier: "%.1f") / 기준 \(e.limit, specifier: "%.1f") µT · 떨어진 다른 후보의 차이 \(e.otherLocationResidual, specifier: "%.1f") µT")
                             .font(.footnote.monospacedDigit())
                     }
                     Text("● 청록색: 표시 기준을 통과한 추정점 · ◯ 주황색: 불확실한 후보\n궤적은 최근 8초의 청록색 점만 연결합니다. 회색 안내선은 추정에 사용하지 않습니다. 선 위에 붙어 보이는지 직접 확인해 주세요.")
                         .font(.footnote).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 10) {
-                        if printed != nil {
-                            Text("우선 자유 테스트 · 다음 수집은 그대로 유지").font(.headline)
-                            Text("중앙·테두리·가로선·세로선·대각선을 천천히 움직여 보세요. 안내선은 추정을 제한하지 않습니다. 2·3회차는 수집 탭에서 계속할 수 있고, 이번 업데이트로 완료한 13묶음은 지워지지 않습니다.")
-                            Button("273점 수집으로 이동") { collectPrinted() }
-                                .buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
-                            if let included = tester.model?.movementIncludedRows, !included.isEmpty {
-                                Text("수집 중 이동·준비 구간의 기기 움직임이 기록된 \(included.map(String.init).joined(separator: ", "))행을 검토 후 시험에 포함했습니다. 정지 측정 중 움직임은 없었지만 실제 배치 변화가 없었다고 보장할 수는 없습니다.")
-                                    .font(.footnote).foregroundStyle(.secondary)
-                            }
-                        } else {
-                            Text("이전 격자 수집").font(.headline)
-                            Button("이전 9×9 수집으로 이동") { collect(collector.nextDenseCollection) }
-                                .buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
-                        }
+                        Text("9×9 반복 학습 → 자유 테스트 → 별도 검증").font(.headline)
+                        Text("81개 위치를 3회씩 모두 학습용으로 수집합니다. 16A부터 18C까지 9묶음을 마친 뒤 알려주세요. 14·15 이동 검증은 지금 진행하지 않아도 됩니다.")
+                            .font(.subheadline)
+                        HStack {
+                            Button("9×9 학습 수집으로 이동") { collect(collector.nextDenseCollection) }
+                        }.buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
                     }.padding(18).background(.teal.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
                     Text(tester.logStatus).font(.footnote)
                     HStack {
@@ -293,8 +263,7 @@ struct GridLiveView: View {
                     Text("같은 자세·책상 접촉 조건의 초기 모델입니다. 펜의 기울기·축 회전·접촉 여부는 측정하지 않습니다. 펜을 들어 옮길 때 궤적이 생길 수 있으니 내려놓고 궤적을 지우세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir · 2차원 지도 1.14")
-                .navigationBarTitleDisplayMode(.inline)
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir · 2차원 지도 1.12")
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }
         .onDisappear {
@@ -315,10 +284,6 @@ struct GridLiveCanvas: View {
     var guide: GridGuide
     var aspect: Double
     var gridSize: Int = 5
-    var gridColumns: Int? = nil
-    var gridRows: Int? = nil
-    var columns: Int { gridColumns ?? gridSize }
-    var rows: Int { gridRows ?? gridSize }
     var body: some View {
         GeometryReader { geo in
             Canvas { context, _ in
@@ -327,23 +292,19 @@ struct GridLiveCanvas: View {
                 func p(_ point: Point2D) -> CGPoint { .init(x: r.minX+point.x*r.width, y: r.minY+point.y*r.height) }
                 context.draw(Text("위 · iPad 쪽").font(.headline), at: .init(x: r.midX,y: 14))
                 context.draw(Text("아래 · 사용자 쪽").font(.headline), at: .init(x: r.midX,y: r.maxY+25))
-                for i in 0..<rows {
-                    let s = Double(i)/Double(rows-1)
+                for i in 0..<gridSize {
+                    let s = Double(i)/Double(gridSize-1)
                     var h = Path(); h.move(to: p(.init(x: 0,y: s))); h.addLine(to: p(.init(x: 1,y: s)))
+                    var v = Path(); v.move(to: p(.init(x: s,y: 0))); v.addLine(to: p(.init(x: s,y: 1)))
                     context.stroke(h, with: .color(.gray.opacity(0.25)), lineWidth: 1)
-                    context.draw(Text("\(i+1)행").font(.caption2), at: .init(x: r.minX-27,y: r.minY+s*r.height))
-                    for j in 0..<columns {
-                        let q = p(.init(x: Double(j)/Double(columns-1),y: s))
+                    context.stroke(v, with: .color(.gray.opacity(0.25)), lineWidth: 1)
+                    context.draw(Text("\(i+1)행").font(.caption), at: .init(x: r.minX-27,y: r.minY+s*r.height))
+                    context.draw(Text("\(i+1)열").font(.caption), at: .init(x: r.minX+s*r.width,y: r.minY-14))
+                    for j in 0..<gridSize {
+                        let q = p(.init(x: Double(j)/Double(gridSize-1),y: s))
                         context.fill(Path(ellipseIn: CGRect(x: q.x-3,y: q.y-3,width: 6,height: 6)), with: .color(.gray.opacity(0.6)))
                     }
                 }
-                for i in 0..<columns {
-                    let s = Double(i)/Double(columns-1)
-                    var v = Path(); v.move(to: p(.init(x: s,y: 0))); v.addLine(to: p(.init(x: s,y: 1)))
-                    context.stroke(v, with: .color(.gray.opacity(0.25)), lineWidth: 1)
-                    context.draw(Text(columns > 9 ? "\(i+1)" : "\(i+1)열").font(.caption2), at: .init(x: r.minX+s*r.width,y: r.minY-14))
-                }
-                if columns == 21 { context.stroke(Path(r), with: .color(.red), lineWidth: 1.5) }
                 if let first = guide.endpoints.first, let last = guide.endpoints.last {
                     var line = Path(); line.move(to: p(first)); line.addLine(to: p(last))
                     context.stroke(line, with: .color(.gray.opacity(0.55)), style: StrokeStyle(lineWidth: 5,dash: [8,5]))

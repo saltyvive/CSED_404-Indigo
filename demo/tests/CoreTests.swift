@@ -3,7 +3,6 @@ import Foundation
 @main
 struct CoreTests {
     static func main() throws {
-        try PrintedGridProtocolTests.run()
         for scenario in EdgeScenario.allCases {
             let plan = scenario.make(block: 9)
             precondition(plan.first?.edgeAction == "before" && plan.last?.edgeAction == "after")
@@ -182,7 +181,7 @@ struct CoreTests {
         var manifest = SessionManifest(id: "SYNTHETIC-STORE-TEST", startedAt: "test", anchorUptime: 100, anchorUnix: 1000,
                                        device: "test", osVersion: "test", setup: Setup(), availableSensors: [:])
         let storage = try SessionStore(manifest: manifest, root: directory)
-        let prefix = ["100", "1000", "100", "trial", "gridTrain", "train", "1", "r1c1", "hold", "0", "0", "manual_static_target", "", "none", "", "", "", ""]
+        let prefix = ["100", "1000", "100", "trial", "gridTrain", "train", "1", "r1c1", "hold", "0", "0", "manual_static_target", "", "none"]
         storage.append(stream: "magnetometer", fields: prefix + ["1", "2", "3"])
         var saved = false
         storage.checkpoint(manifest) { success in precondition(success); saved = true }
@@ -191,12 +190,8 @@ struct CoreTests {
         precondition(saved)
         let rows = try String(contentsOf: storage.directory.appendingPathComponent("magnetometer.csv"), encoding: .utf8)
         precondition(rows.split(separator: "\n").count == 2)
-        precondition(rows.contains("manual_static_target,,none,,,,,1,2,3"))
-        precondition(rows.split(separator: "\n").allSatisfy { $0.split(separator: ",", omittingEmptySubsequences: false).count == 21 })
-        let cells = rows.split(separator: "\n")[1].split(separator: ",", omittingEmptySubsequences: false)
-        let header = rows.split(separator: "\n")[0].split(separator: ",")
-        precondition(cells[header.firstIndex(of: "bx_uT")!] == "1")
-        precondition(cells[header.firstIndex(of: "fixture_phi_deg")!].isEmpty)
+        precondition(rows.contains("manual_static_target,,none,1,2,3"))
+        precondition(rows.split(separator: "\n").allSatisfy { $0.split(separator: ",", omittingEmptySubsequences: false).count == 17 })
         for stream in SessionStore.columns.keys {
             precondition(FileManager.default.fileExists(atPath: storage.directory.appendingPathComponent(stream + ".csv").path))
         }

@@ -14,7 +14,7 @@ struct EdgeStudyView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text(scenario.isGridMap ? "\(scenario.gridSize)×\(scenario.gridSize) 격자 좌표 수집" : (scenario.isGridPath ? "그려둔 선을 내 속도로" : "한 변씩, 내 속도로")).font(.largeTitle.bold())
-                    Text("이전 5×5·9×9·변 수집 절차입니다. 새 인쇄 도면은 ‘273점 수집’ 탭을 사용하세요.")
+                    Text("지금은 9×9 학습입니다. 16A부터 18C까지 9묶음 → 새 지도 제작 → 자유 실시간 테스트 → 별도 검증 순서입니다. 14·15는 지금 하지 않아도 됩니다.")
                         .font(.headline).foregroundStyle(.teal)
                     Picker("측정 묶음", selection: Binding(get: { scenario }, set: { collector.selectEdge($0) })) {
                         ForEach(EdgeScenario.denseTraining + EdgeScenario.allCases.filter { $0.denseRound == nil }) {
@@ -46,7 +46,7 @@ struct EdgeStudyView: View {
                     }.font(.footnote).padding(18).background(.teal.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
             }.background(Color(uiColor: .systemGroupedBackground))
-                .navigationTitle("MagAir · 이전 좌표 수집")
+                .navigationTitle("MagAir · 좌표 수집 1.12")
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Button("저장 기록") { collector.refreshLibrary(); showLibrary = true }.disabled(collector.recording)
