@@ -268,8 +268,8 @@ struct TrialRecord: Codable {
 }
 
 struct SessionManifest: Codable {
-    var schemaVersion = 1
-    var appVersion = "1.14.0"
+    var schemaVersion = 2
+    var appVersion = "1.15.0"
     var id: String
     var startedAt: String
     var anchorUptime: Double

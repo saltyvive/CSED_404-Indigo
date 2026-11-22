@@ -12,14 +12,40 @@ enum PrintedGridProtocolTests {
         let airTrial = TrialRecord(spec: airPlan[1], startUptime: 100)
         precondition(airTrial.instructedHeightMM(at: 102) == nil)
         precondition(airTrial.instructedHeightMM(at: 104) == 5)
-        precondition(airPlan[1].fixturePose?.csvLabels(phase: "hold")[2] == "air")
+        precondition(airPlan[1].fixturePose?.csvLabels(phase: "hold")[3] == "air")
         for phase in ["settle", "idle", "outside", "baseline", "move"] {
-            precondition(air.csvLabels(phase: phase) == ["", "", "", ""])
+            precondition(air.csvLabels(phase: phase) == Array(repeating: "", count: 6))
         }
         var invalid = air; invalid.tipContact = true; precondition(!invalid.isValid)
         invalid = air; invalid.tipHeightMM = 0; precondition(!invalid.isValid)
         invalid = air; invalid.phiDegrees = -1; precondition(!invalid.isValid)
         invalid = air; invalid.thetaDegrees = 91; precondition(!invalid.isValid)
+        for alpha in [-90.0, -15, 0, 35, 90] {
+            var tilted = air; tilted.alphaDegrees = alpha
+            precondition(tilted.readyForCollection)
+            let decoded = try JSONDecoder().decode(PrintedGridPose.self, from: JSONEncoder().encode(tilted))
+            precondition(decoded == tilted && decoded.thetaDegrees == 60)
+            precondition(Double(decoded.csvLabels(phase: "hold")[2]) == alpha)
+        }
+        for alpha in [-91.0, 91, Double.nan] {
+            invalid = air; invalid.alphaDegrees = alpha; precondition(!invalid.isValid)
+        }
+        var vertical = PrintedGridPose(); vertical.alphaDegrees = 10
+        precondition(!vertical.readyForCollection) // Vertical needs a fixture hinge reference for nonzero alpha.
+        vertical.tiltDirectionAtPhiZero = "toward iPad"; precondition(vertical.readyForCollection)
+        var legacyObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(PrintedGridPose())) as! [String: Any]
+        for key in ["alphaDegrees", "alphaLabelSource", "alphaDefinition"] { legacyObject.removeValue(forKey: key) }
+        let legacyPose = try JSONDecoder().decode(PrintedGridPose.self, from: JSONSerialization.data(withJSONObject: legacyObject))
+        precondition(legacyPose.alphaDegrees == nil && legacyPose.isValid && !legacyPose.readyForCollection)
+        let annotations = try JSONDecoder().decode(FixturePoseAnnotations.self,
+            from: Data(contentsOf: URL(fileURLWithPath: "MagAir/Resources/fixture_pose_annotations.json")))
+        let annotation = annotations.annotations[0]
+        let known = annotations.resolve(legacyPose, campaignID: annotation.campaignID, sessionID: annotation.sessionManifestSHA256.keys.first!)
+        precondition(known.alphaDegrees == 0 && known.readyForCollection)
+        precondition(known.alphaLabelSource == "user_confirmed_retrospective_2026-11-23")
+        precondition(annotations.resolve(legacyPose, campaignID: "unrelated").alphaDegrees == nil)
+        precondition(annotations.resolve(legacyPose, campaignID: annotation.campaignID, sessionID: "unlisted").alphaDegrees == nil)
+        precondition(annotations.resolve(vertical, campaignID: annotation.campaignID).alphaDegrees == 10)
         invalid = air; invalid.tipHeightMM = .nan; precondition(!invalid.isValid)
         precondition(ipadScreenInclination(gravity: [0,0,-1]) == 0)
         precondition(ipadScreenInclination(gravity: [0,0,1]) == 0)
@@ -91,6 +117,24 @@ enum PrintedGridProtocolTests {
         }
         precondition(PrintedGridBatch.all.last?.next == nil)
         try JSONEncoder().encode(plans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-plans.json"))
+        // Optional real-source migration audit; no file is written or re-encoded.
+        if CommandLine.arguments.count > 2 {
+            let root = URL(fileURLWithPath: CommandLine.arguments[2])
+            var completed = Set<String>()
+            for sessionID in annotation.sessionManifestSHA256.keys {
+                let url = root.appendingPathComponent(sessionID).appendingPathComponent("manifest.json")
+                let original = try Data(contentsOf: url)
+                let session = try JSONDecoder().decode(SessionManifest.self, from: original)
+                let meta = session.printedGrid!
+                precondition(meta.pose.alphaDegrees == nil && meta.batch.accepts(session, campaignID: annotation.campaignID))
+                precondition(annotations.resolve(meta.pose, campaignID: meta.campaignID, sessionID: session.id) == known)
+                let after = try Data(contentsOf: url)
+                precondition(after == original)
+                completed.insert(meta.batch.id)
+            }
+            precondition(completed.count == 13)
+            print("Legacy migration: 13 completed rows retained; raw manifests unchanged; alpha zero explicitly annotated")
+        }
         print("Printed grid: 273 positions x 3 passes, physical coordinates and completion checks passed")
     }
 }

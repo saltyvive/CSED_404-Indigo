@@ -121,7 +121,8 @@ final class Collector: ObservableObject {
 
     init() {
         if let data = UserDefaults.standard.data(forKey: "printedGrid.campaign.v1"),
-           let campaign = try? JSONDecoder().decode(PrintedGridCampaign.self, from: data) {
+           var campaign = try? JSONDecoder().decode(PrintedGridCampaign.self, from: data) {
+            campaign.pose = FixturePoseAnnotations.bundled.resolve(campaign.pose, campaignID: campaign.id)
             printedCampaign = campaign
         }
         if let data = UserDefaults.standard.data(forKey: "setup.v1"), let saved = try? JSONDecoder().decode(Setup.self, from: data) {
@@ -265,7 +266,7 @@ final class Collector: ObservableObject {
                                repetition, trial?.spec.pointID ?? "", annotation?.phase ?? "idle",
                                targetX, targetY, annotation?.source ?? "none",
                                height.map(number) ?? "", height == nil ? "none" : "operator_instruction_unmeasured"]
-        let poseLabels = trial?.spec.fixturePose?.csvLabels(phase: annotation?.phase ?? "idle") ?? ["", "", "", ""]
+        let poseLabels = trial?.spec.fixturePose?.csvLabels(phase: annotation?.phase ?? "idle") ?? Array(repeating: "", count: 6)
         store.append(stream: channel, fields: prefix + poseLabels + columns)
     }
 
@@ -315,7 +316,7 @@ final class Collector: ObservableObject {
 
     func beginSession() {
         guard !sessionOpen, !isClosing, setup.confirmed, sensorFresh else { return }
-        if printedBatch != nil && (!printedReady || !printedCampaign.pose.isValid) { return }
+        if printedBatch != nil && (!printedReady || !printedCampaign.pose.readyForCollection) { return }
         do {
             var sys = utsname(); uname(&sys)
             let model = withUnsafePointer(to: &sys.machine) { pointer in
@@ -376,7 +377,7 @@ final class Collector: ObservableObject {
     }
 
     func confirmPrintedSetup(_ proposed: Setup, pose: PrintedGridPose) {
-        guard !sessionOpen, !isClosing, pose.isValid else { return }
+        guard !sessionOpen, !isClosing, pose.readyForCollection else { return }
         if !printedCampaign.hasStarted {
             printedCampaign.setup = proposed
             printedCampaign.pose = pose.canonical
@@ -499,7 +500,9 @@ final class Collector: ObservableObject {
         for directory in library {
             guard let data = try? Data(contentsOf: directory.appendingPathComponent("manifest.json")),
                   let session = try? JSONDecoder().decode(SessionManifest.self, from: data),
-                  let meta = session.printedGrid, meta.pose == printedCampaign.pose, PrintedGridBatch.all.contains(meta.batch),
+                  let meta = session.printedGrid,
+                  FixturePoseAnnotations.bundled.resolve(meta.pose, campaignID: meta.campaignID, sessionID: session.id) == printedCampaign.pose,
+                  PrintedGridBatch.all.contains(meta.batch),
                   meta.batch.accepts(session, campaignID: printedCampaign.id) else { continue }
             // Preserve every raw session; prefer the newest complete remeasurement in the UI.
             if completed[meta.batch.id] == nil { completed[meta.batch.id] = session.id }

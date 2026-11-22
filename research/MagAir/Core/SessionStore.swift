@@ -8,7 +8,7 @@ final class SessionStore {
     private var pending: [String: String] = [:]
     private var firstError: Error?
     var onError: ((String) -> Void)?
-    static let baseColumns = ["timestamp_s", "unix_s", "received_uptime_s", "trial_id", "protocol", "dataset", "repetition", "point_id", "phase", "target_x", "target_y", "label_source", "instructed_tip_height_mm", "height_label_source", "fixture_phi_deg", "fixture_theta_deg", "fixture_tip_state", "fixture_pose_source"]
+    static let baseColumns = ["timestamp_s", "unix_s", "received_uptime_s", "trial_id", "protocol", "dataset", "repetition", "point_id", "phase", "target_x", "target_y", "label_source", "instructed_tip_height_mm", "height_label_source", "fixture_phi_deg", "fixture_theta_deg", "fixture_alpha_deg", "fixture_tip_state", "fixture_pose_source", "fixture_alpha_source"]
     static let columns = [
         "magnetometer": ["bx_uT", "by_uT", "bz_uT"],
         "accelerometer": ["ax_g", "ay_g", "az_g"],
@@ -30,7 +30,7 @@ final class SessionStore {
         }
         try Self.encode(manifest).write(to: directory.appendingPathComponent("manifest.json"), options: .atomic)
         let readme = """
-        MagAir schema 1. See manifest.json for setup, trial status, and coordinate conventions.
+        MagAir schema 2. See manifest.json for setup, trial status, and coordinate conventions.
         CSV streams are independent events; timestamp_s is Core Motion uptime, NOT a shared row index.
         unix_s = anchorUnix + timestamp_s - anchorUptime. received_uptime_s measures callback delivery time.
         Magnetometer: raw 3-axis microtesla. Accelerometer: g. Gyroscope: rad/s.
@@ -71,11 +71,15 @@ final class SessionStore {
         nominalPointMM=(2.5*(column-1),2.5*(row-1)) from sweet spot TOP LEFT, not measured tip coordinates.
         Printed geometry is 50x30 mm; A4 landscape lower-left offset is (115,55) mm.
         Paper lower-left coordinates=(115+50*x,85-30*y). Pose and contact are operator instructions, not sensors.
-        printedGrid.pose and trial.spec.fixturePose record operator-set phi/theta/height/contact and their reference.
+        printedGrid.pose and trial.spec.fixturePose record operator-set phi/theta/alpha/height/contact and their reference.
         phi: whole-holder yaw about desk vertical, clockwise from above; demo fixture orientation=0 (360=0).
         phi is NOT Pencil axial roll. At theta=90, phi still identifies the fixture's material orientation.
-        theta: Pencil elevation above desk, horizontal=0, vertical=90. Record tiltDirectionAtPhiZero when tilted.
-        fixture_phi_deg / fixture_theta_deg / fixture_tip_state / fixture_pose_source are filled only during steady holds.
+        theta: Pencil elevation above desk at alpha=0; horizontal=0, vertical=90.
+        alpha: [-90,90] about the initial desk-projection hinge; positive toward fixture-local right (rotates with phi).
+        At theta=90 the projection vanishes: record the fixture hinge reference in tiltDirectionAtPhiZero.
+        Theta is not recomputed as the final elevation after alpha. Missing legacy alpha is unknown, not zero.
+        fixture_alpha_source distinguishes newly entered values from explicit retrospective user confirmation.
+        fixture_phi_deg / fixture_theta_deg / fixture_alpha_deg / fixture_tip_state / fixture_pose_source / fixture_alpha_source are filled only during steady holds.
         Heights in instructed_tip_height_mm use the fixture target during holds; air targets are vertical projections onto paper.
         Do not attach pose/height/contact labels to backgrounds, movement, settling or idle samples.
         campaignID changes when setup changes; do not pool campaigns just because dimensions match.

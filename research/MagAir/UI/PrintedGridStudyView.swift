@@ -51,12 +51,12 @@ struct PrintedGridStudyView: View {
                     }
                     DisclosureGroup("전체 측정 순서 · 쉬는 방법") {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("273개 점을 서로 다른 세 회차에 한 번씩 다시 놓아 총 819번 측정합니다. 39행을 모두 모아 하나의 모델에 사용하며, 세 회차 모두 학습용입니다.")
+                            Text("한 회차는 273점입니다. 기존 3회차 슬롯(총 39행)은 보존하지만 다음 자세와 반복 횟수는 아직 미정입니다. 다른 자세의 자료는 새 배치로 구분하며 자동으로 한 모델에 섞지 않습니다.")
                             Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 7, 1, 13, 4, 10, 2, 12, 5, 9, 3, 11, 6, 8행")
                             Text("한 행: 시작 배경 10초 → 21점 각각 준비 3초 + 정지 3초 → 종료 배경 10초 → 자동 저장. 배경도 준비 3초 후 측정합니다. 항목마다 위치를 확인하고 직접 시작하세요.")
-                            Text("행당 약 3–5분, 전체 약 2–3시간입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
+                            Text("행당 약 3–5분입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
-                            Text("실시간 테스트에는 첫 회차 273점으로 만든 임시 모델이 적용됐습니다. 2·3회차 수집을 계속할 수 있으며, 새 자료를 모은 뒤 모델을 다시 만들고 별도 검증합니다.")
+                            Text("실시간 테스트에는 첫 회차 273점으로 만든 임시 모델이 적용됐습니다. 같은 자세의 2·3회차를 지금 반드시 할 필요는 없습니다. 다음 수집 조건은 논의 후 정합니다.")
                         }.font(.subheadline).padding(.vertical, 8)
                     }
                     HStack {
@@ -81,7 +81,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir · 도면 수집 1.14")
+                .navigationTitle("MagAir Research · 도면 수집 1.15")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
@@ -213,7 +213,7 @@ struct PrintedGridSetupView: View {
                 Section("이번 도면") {
                     Text("A4 가로 · 실제 크기 100% · 스윗 스팟 50 × 30 mm")
                     Text("왼쪽 아래 오프셋: 용지 왼쪽에서 115 mm, 아래에서 55 mm. 앱의 1행은 사각형의 위쪽(iPad 쪽), 1열은 왼쪽입니다.")
-                    Text("273점 × 3회는 같은 φ·θ·높이 조건으로 측정합니다. 이번 기본값은 φ=0°, θ=90°, 높이=0 mm·접촉입니다.")
+                    Text("한 배치에서는 φ·θ·α·높이를 고정합니다. 기본값은 φ=0°, θ=90°, α=0°, 높이=0 mm·접촉입니다. 다음 실험 조건은 아직 정하지 않았습니다.")
                 }
                 Section("펜 장치 설정 · 수집 라벨") {
                     HStack {
@@ -225,7 +225,16 @@ struct PrintedGridSetupView: View {
                         Text("θ · 지면과의 각도 (°)"); Spacer()
                         TextField("0–90", value: $pose.thetaDegrees, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
                     }
-                    Text("수평 0° · 수직 90°").font(.footnote)
+                    Text("α=0일 때 수평 0° · 수직 90°. α를 바꿔도 이 θ 라벨을 최종 지면 각도로 다시 계산하지 않습니다.").font(.footnote)
+                    HStack {
+                        Text("α · 옆 기울임 (°)"); Spacer()
+                        TextField("−90~+90", value: $pose.alphaDegrees, format: .number)
+                            .keyboardType(.numbersAndPunctuation).multilineTextAlignment(.trailing)
+                    }
+                    Text("초기 펜의 책상 투영선을 경첩 축으로 옆으로 기울입니다. 장치 기준 오른쪽이 +이며 이 기준은 φ와 함께 돌아갑니다. θ=90°에서는 투영선 대신 장치 기준선을 사용합니다.").font(.footnote)
+                    if pose.alphaLabelSource?.hasPrefix("user_confirmed_retrospective") == true {
+                        Text("기존 첫 회차 α=0°는 사용자 확인으로 보완한 라벨입니다. 원본 측정 파일은 변경하지 않았습니다.").font(.footnote).foregroundStyle(.secondary)
+                    }
                     Picker("펜촉 상태", selection: Binding(get: { pose.tipContact }, set: { pose.tipContact = $0; if $0 { pose.tipHeightMM = 0 } })) {
                         Text("표면 접촉").tag(true)
                         Text("공중").tag(false)
@@ -236,8 +245,8 @@ struct PrintedGridSetupView: View {
                             .disabled(pose.tipContact)
                     }
                     TextField("φ=0 기준 방향 / 펜 고정 설명", text: $pose.referenceNote, axis: .vertical).lineLimit(2...5)
-                    if pose.thetaDegrees < 90 {
-                        TextField("φ=0에서 θ를 낮출 때 기울어지는 쪽 (필수)", text: $pose.tiltDirectionAtPhiZero, axis: .vertical)
+                    if pose.needsHingeReference {
+                        TextField("φ=0의 경첩 기준선 / θ를 낮출 때 기울어지는 쪽 (필수)", text: $pose.tiltDirectionAtPhiZero, axis: .vertical)
                     }
                     Text("장치에서 맞춘 값을 사람이 입력합니다. 실제 펜의 각도·높이·접촉을 센서로 읽은 값은 아닙니다. 공중에서는 펜촉의 수직 아래에 해당하는 표식을 맞춥니다.").font(.footnote)
                 }.disabled(collector.printedCampaign.hasStarted)
@@ -256,11 +265,11 @@ struct PrintedGridSetupView: View {
                 Section {
                     Toggle("인쇄 크기·방향과 고정 상태를 확인했음", isOn: $checked)
                     Text("완료된 행 이후 쉬었다 이어갈 때에도 종이·iPad·스탠드·케이블·펜 자세가 같아야 합니다. 이동하는 홀더는 배경 측정 때 펜슬과 함께 같은 먼 위치에 두세요.")
-                    if !pose.isValid {
-                        Text("φ 0–360°, θ 0–90°를 입력하세요. 접촉 높이는 0 mm, 공중 높이는 0보다 커야 합니다. 기울인 경우 φ=0에서의 기울임 방향도 적으세요.").foregroundStyle(.orange)
+                    if !pose.readyForCollection {
+                        Text("φ 0–360°, θ 0–90°, α −90~+90°를 입력하세요. 접촉 높이는 0 mm, 공중 높이는 0보다 커야 합니다. θ<90° 또는 α≠0°이면 φ=0에서의 경첩 기준선도 적으세요.").foregroundStyle(.orange)
                     }
                     Button("이 조건으로 준비 완료") { collector.confirmPrintedSetup(setup, pose: pose); dismiss() }
-                        .buttonStyle(.borderedProminent).disabled(!checked || !pose.isValid)
+                        .buttonStyle(.borderedProminent).disabled(!checked || !pose.readyForCollection)
                 }
             }.navigationTitle("스윗 스팟 배치 확인")
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } } }

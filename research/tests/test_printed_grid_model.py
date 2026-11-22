@@ -46,6 +46,7 @@ class PrintedModelTests(unittest.TestCase):
                               dataset='printed_grid_train' if hold else 'printed_grid_baseline',
                               target_x=x if hold else '', target_y=y if hold else '',
                               fixture_phi_deg=0 if hold else '', fixture_theta_deg=90 if hold else '',
+                              fixture_alpha_deg=0 if hold else '', fixture_alpha_source='operator_set_fixture_unmeasured' if hold else '',
                               fixture_tip_state='contact' if hold else '', instructed_tip_height_mm=0 if hold else '',
                               fixture_pose_source='operator_set_fixture_unmeasured' if hold else '')
                 sample.update(zip(('bx_uT', 'by_uT', 'bz_uT'), [v+row*10+.001*t for v in b]))
@@ -54,7 +55,7 @@ class PrintedModelTests(unittest.TestCase):
                                     gravity_x_g=0, gravity_y_g=0, gravity_z_g=-1,
                                     user_ax_g=0, user_ay_g=0, user_az_g=0, rx_rad_s=0, ry_rad_s=0, rz_rad_s=0))
             time += duration+4
-        manifest = dict(schemaVersion=1, id=f'row{row}', status='completed', device='synthetic', warnings=[], trials=trials,
+        manifest = dict(schemaVersion=2, id=f'row{row}', status='completed', device='synthetic', warnings=[], trials=trials,
                         setup=dict(widthMM='50', heightMM='30', aspect=5/3),
                         sensorCounts=dict(magnetometer=len(samples), device_motion=len(motions)),
                         printedGrid=dict(protocolID=printed.PROTOCOL, campaignID='SYNTHETIC', batch=dict(row=row, **{'pass': 1}),
@@ -70,6 +71,7 @@ class PrintedModelTests(unittest.TestCase):
         self.assertEqual((len(model['xKnots']), len(model['yKnots'])), (21, 13))
         self.assertEqual(len(model['trainingTrialIDs']), 273)
         self.assertEqual(model['printedGridContext']['passes'], [1])
+        self.assertEqual(model['printedGridContext']['pose']['alphaDegrees'], 0)
         self.assertIn('Only one placement', model['scope'])
         for x, y in [(0, 0), (1, 1), (.15, 2/12), (.325, .375)]:
             self.assertLess(math.dist(field(model, x, y), [30*x, 40*y, 12+8*x*y]), 1e-9)
@@ -83,6 +85,18 @@ class PrintedModelTests(unittest.TestCase):
         for key, value in [('campaignID', 'DIFFERENT'), ('pose', {'phiDegrees': 15})]:
             batches = copy.deepcopy(self.batches); batches[0][key] = value
             with self.assertRaises(ValueError): printed.build(batches, [1])
+        batches = copy.deepcopy(self.batches); batches[0]['pose']['alphaDegrees'] = 15
+        with self.assertRaisesRegex(ValueError, 'fixture pose mismatch'): printed.build(batches, [1])
+
+    def test_reject_wrong_csv_alpha(self):
+        path = self.paths[0]/'magnetometer.csv'; original = path.read_bytes()
+        try:
+            with path.open() as f: rows = list(csv.DictReader(f))
+            next(r for r in rows if r['phase'] == 'hold')['fixture_alpha_deg'] = '-15'
+            with path.open('w') as f:
+                writer = csv.DictWriter(f, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
+            with self.assertRaisesRegex(ValueError, 'CSV alpha'): printed.extract(self.paths[0])
+        finally: path.write_bytes(original)
 
     def test_reject_wrong_csv_pose_and_incomplete_background(self):
         folder = self.paths[0]; path = folder/'magnetometer.csv'; original = path.read_bytes()

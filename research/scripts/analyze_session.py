@@ -29,7 +29,7 @@ def read_session(path):
             manifest = json.loads(z.read(names[0]))
             prefix = names[0][:-len('manifest.json')]
             rows = list(csv.DictReader(io.StringIO(z.read(prefix + 'magnetometer.csv').decode('utf-8'))))
-    if manifest.get('schemaVersion') != 1:
+    if manifest.get('schemaVersion') not in (1, 2):
         raise ValueError('지원하지 않는 schemaVersion입니다.')
     required = {'timestamp_s', 'trial_id', 'phase', 'bx_uT', 'by_uT', 'bz_uT', 'label_source'}
     if rows and not required.issubset(rows[0]):

@@ -15,6 +15,7 @@ import statistics as st
 import analyze_session as a
 from build_edge_model import summarize_trial
 from build_grid_model import Projector
+from fixture_pose import resolve_pose
 
 PROTOCOL = 'sweetspot_21x13_v1'
 GEOMETRY = dict(columns=21, rows=13, widthMM=50, heightMM=30, pitchMM=2.5,
@@ -41,7 +42,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
             abs(m['setup']['aspect']-5/3) < 1e-9, 'Setup geometry mismatch')
     row, repetition = meta['batch']['row'], meta['batch']['pass']
     require(row in range(1, 14) and repetition in (1, 2, 3) and meta.get('campaignID'), 'Invalid batch/campaign')
-    pose = meta['pose']
+    raw_pose = meta['pose']
+    pose, pose_annotation = resolve_pose(m, (path/'manifest.json').read_bytes())
     require(0 <= pose['phiDegrees'] < 360 and 0 <= pose['thetaDegrees'] <= 90 and
             math.isfinite(pose['tipHeightMM']) and (pose['tipHeightMM'] == 0 if pose['tipContact'] else pose['tipHeightMM'] > 0)
             and pose['source'] == 'operator_set_fixture_unmeasured', 'Invalid fixture labels')
@@ -61,7 +63,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                 spec.get('purpose') == ('printed_grid_train' if is_hold else 'printed_grid_baseline') and
                 spec.get('pointID') == (f'r{row}c{col}' if is_hold else f'pass{repetition}-row{row}-{action}') and
                 spec.get('point') == xy and spec.get('nominalPointMM') == (dict(x=(col-1)*2.5, y=(row-1)*2.5) if is_hold else None) and
-                spec.get('fixturePose') == (pose if is_hold else None), 'Trial target/pose/order mismatch')
+                spec.get('fixturePose') == (raw_pose if is_hold else None), 'Trial target/pose/order mismatch')
         expected_end = trial['startUptime']+3+(3 if is_hold else 10)
         require(trial.get('settleSeconds') == 3 and math.isfinite(expected_end) and
                 abs(trial.get('endUptime', 0)-expected_end) < 1e-3, 'Incomplete timing')
@@ -79,6 +81,13 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                 float(sample['instructed_tip_height_mm']) == pose['tipHeightMM'] and
                 sample['fixture_tip_state'] == ('contact' if pose['tipContact'] else 'air') and
                 sample['fixture_pose_source'] == pose['source'], 'CSV target/pose labels mismatch')
+        if pose_annotation:
+            require(sample.get('fixture_alpha_deg', '') == '' and sample.get('fixture_alpha_source', '') == '',
+                    'Legacy alpha annotation conflicts with CSV labels')
+        else:
+            require(sample.get('fixture_alpha_deg', '') != '' and
+                    float(sample['fixture_alpha_deg']) == pose['alphaDegrees'] and
+                    sample.get('fixture_alpha_source') == pose['alphaLabelSource'], 'CSV alpha labels mismatch')
     before = summarize_trial(trials[0], samples, 'baseline')
     after = summarize_trial(trials[-1], samples, 'baseline')
     require(max(before['noiseUT'], after['noiseUT']) < 3, 'Unstable background; recollect row')
@@ -122,7 +131,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                            xy=[spec['point']['x'], spec['point']['y']], **obs,
                            deltaUT=[v-b for v, b in zip(obs['raw'], background)], causalFrames=frames))
     return dict(session=m['id'], campaignID=meta['campaignID'], row=row, repetition=repetition, device=m['device'],
-                setup=m['setup'], pose=pose, points=points, before=before, after=after,
+                setup=m['setup'], pose=pose, poseAnnotation=pose_annotation, points=points, before=before, after=after,
                 driftUT=math.dist(before['raw'], after['raw']), motionEvents=events,
                 motionReviewNote=review_note if events else None, sourceWarnings=m.get('warnings', []),
                 inclinationRange=[min(inclinations), max(inclinations)],
@@ -156,7 +165,7 @@ def build(batches, passes):
                 movementIncludedRows=sorted({b['row'] for b in batches if b['motionEvents']}),
                 inclusionNote='Reviewed transient motion outside completed steady measurements; physical translation/yaw cannot be ruled out. Provisional test only.' if any(b['motionEvents'] for b in batches) else None,
                 printedGridContext=dict(campaignID=reference['campaignID'], passes=sorted(passes), widthMM=50, heightMM=30,
-                                        pose=reference['pose'], trainingPositions=273,
+                                        pose=reference['pose'], poseAnnotationIDs=sorted({b['poseAnnotation'] for b in batches if b['poseAnnotation']}), trainingPositions=273,
                                         ipadInclinationRange=[min(b['inclinationRange'][0] for b in batches), max(b['inclinationRange'][1] for b in batches)]),
                 aggregation='Equal weight per placement; componentwise median after per-row linear background correction',
                 scope='Provisional fixed-condition personal test, no independent validation. ' +

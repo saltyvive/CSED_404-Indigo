@@ -17,6 +17,7 @@
 
 연구 앱은 기존 `com.chohyeonjun.magair.collector` 식별자를 유지해 설치된 앱의 데이터와 완료 이력을 이어받습니다. 표시 이름은 **MagAir Research**입니다. 데모 프로젝트는 별도의 식별자를 사용합니다.
 
+- [φ·θ·α 정의와 사후 확인 라벨](docs/FIXTURE_POSE_LABELS.md)
 - [273점 수집 절차](docs/PRINTED_GRID_PROTOCOL.md)
 - [첫 회차 실시간 모델과 제한](docs/PRINTED_GRID_PASS1_LIVE.md)
 - [인쇄 도면](../output/pdf/sweet_spot_50x30mm_pitch2p5mm_a4_landscape.pdf)
@@ -28,7 +29,8 @@ open MagAir.xcodeproj
 mkdir -p build/tests
 swiftc -module-cache-path build/SwiftModuleCache \
   MagAir/Core/Experiment.swift MagAir/Core/EdgeExperiment.swift MagAir/Core/DenseGridProtocol.swift \
-  MagAir/Core/PrintedGridProtocol.swift MagAir/Core/GridLiveModel.swift MagAir/Core/SessionStore.swift \
+  MagAir/Core/PrintedGridProtocol.swift MagAir/Core/FixturePoseAnnotation.swift \
+  MagAir/Core/GridLiveModel.swift MagAir/Core/SessionStore.swift \
   tests/CoreTests.swift tests/PrintedGridProtocolTests.swift -o build/tests/CoreTests
 build/tests/CoreTests "$PWD/build/tests"
 python3 -m unittest discover -s tests -p 'test_*.py'

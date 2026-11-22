@@ -4,6 +4,10 @@ import Foundation
 struct PrintedGridPose: Codable, Equatable {
     var phiDegrees = 0.0
     var thetaDegrees = 90.0
+    // Missing legacy alpha stays unknown; only a scoped annotation may fill it.
+    var alphaDegrees: Double? = 0
+    var alphaLabelSource: String? = "operator_set_fixture_unmeasured"
+    var alphaDefinition: String? = Self.alphaConvention
     var tipHeightMM = 0.0
     var tipContact = true
     var referenceNote = "φ=0: 기존 데모의 홀더 방향. θ=90°에서 로고 왼쪽. 펜의 독립적인 축 회전은 고정."
@@ -11,22 +15,31 @@ struct PrintedGridPose: Codable, Equatable {
     var source = "operator_set_fixture_unmeasured"
     var phiDefinition = "Whole holder yaw about desk vertical; positive clockwise viewed from above; demo fixture orientation=0; 360 equivalent to 0. Not Pencil axial roll."
     var thetaDefinition = "Pencil axis elevation above desk plane: horizontal=0, vertical=90."
+    static let alphaConvention = "fixture_phi_theta_alpha_v1: theta is elevation at alpha=0; alpha rotates the initial vertical pencil plane about its desk-projection hinge. Positive tips toward fixture-local right, which rotates with phi. Range [-90,90]. At theta=90 use the fixture reference line, never derive it from the zero-length projection. Phi remains whole-holder desk-vertical yaw, not Pencil axial roll."
+    var needsHingeReference: Bool { thetaDegrees < 90 || (alphaDegrees ?? 0) != 0 }
+    var readyForCollection: Bool {
+        isValid && alphaDegrees != nil && alphaDefinition == Self.alphaConvention &&
+        !(alphaLabelSource ?? "").isEmpty
+    }
     var isValid: Bool {
         phiDegrees.isFinite && (0...360).contains(phiDegrees) &&
         thetaDegrees.isFinite && (0...90).contains(thetaDegrees) &&
+        (alphaDegrees.map { $0.isFinite && (-90...90).contains($0) } ?? true) &&
         tipHeightMM.isFinite && tipHeightMM >= 0 &&
         (tipContact ? tipHeightMM == 0 : tipHeightMM > 0) &&
         !referenceNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        (thetaDegrees == 90 || !tiltDirectionAtPhiZero.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        (!needsHingeReference || !tiltDirectionAtPhiZero.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
     var canonical: Self {
         var result = self; if result.phiDegrees == 360 { result.phiDegrees = 0 }; return result
     }
     var summary: String {
-        String(format: "φ %.1f° · θ %.1f° · 높이 %.1f mm · %@", phiDegrees, thetaDegrees, tipHeightMM, tipContact ? "접촉" : "공중")
+        String(format: "φ %.1f° · θ %.1f° · α %@ · 높이 %.1f mm · %@", phiDegrees, thetaDegrees,
+               alphaDegrees.map { String(format: "%.1f°", $0) } ?? "미기록", tipHeightMM, tipContact ? "접촉" : "공중")
     }
     func csvLabels(phase: String) -> [String] {
-        phase == "hold" ? [number(phiDegrees), number(thetaDegrees), tipContact ? "contact" : "air", source] : ["", "", "", ""]
+        phase == "hold" ? [number(phiDegrees), number(thetaDegrees), alphaDegrees.map(number) ?? "",
+                           tipContact ? "contact" : "air", source, alphaLabelSource ?? ""] : Array(repeating: "", count: 6)
     }
 }
 

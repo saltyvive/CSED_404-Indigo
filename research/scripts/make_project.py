@@ -57,5 +57,8 @@ scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
 </Scheme>'''
 scheme_dir = project / 'xcshareddata/xcschemes'
 scheme_dir.mkdir(parents=True, exist_ok=True)
-(scheme_dir / 'MagAir.xcscheme').write_text(scheme)
+# Keep Xcode's existing launch/test settings when refreshing file references.
+scheme_path = scheme_dir / 'MagAir.xcscheme'
+if not scheme_path.exists():
+    scheme_path.write_text(scheme)
 print(f'Generated MagAir.xcodeproj with {len(sources)} Swift files')

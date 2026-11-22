@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "annotations": [
+    {
+      "id": "first-pass-alpha-zero-20261123",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "sessionManifestSHA256": {
+        "MagAir-2026-11-22T19-40-44Z-EF73B8": "71ee9e3f238ebb4475fcff6cbbc88bc8f14a8698b073204ea3dc75d2891d5e95",
+        "MagAir-2026-11-22T20-04-37Z-28BE88": "4880d6b892273f42d3df37b78bdceb31e09dd8c78f1895abe120d4bd1275b5fc",
+        "MagAir-2026-11-22T20-10-36Z-2EDAFF": "ba1109b7cd8e909d1c0bee2154d95541f6ee9328a0ca4f9aae152bacbba303c1",
+        "MagAir-2026-11-22T20-16-18Z-55F62B": "bee96fae60c18108d66019ceb023b2e165f5a7eaf4b877539d604028bef99568",
+        "MagAir-2026-11-22T20-21-36Z-DE4A90": "5987289ac2ab7310e9029040b60d432e77614d510d989e4ae8b2baf92f1a2ca2",
+        "MagAir-2026-11-22T20-26-56Z-3BBF34": "da37bed57f9d9910c12005164e9fbff8ad73851183084adf36e7097eff9f3cc4",
+        "MagAir-2026-11-22T20-31-55Z-6DADF9": "2e15c921cf6e20d3cf251f294b39d600782c823a7f5492d2b2077cd8822f199f",
+        "MagAir-2026-11-22T20-36-52Z-2ADB59": "3800b52351214351fa2cce934617623653fd6071323ca35996c0289322369cd9",
+        "MagAir-2026-11-22T20-51-27Z-543987": "ed905a40cb7b32698efd90d2ea22d552f827266c7f07e11d236521d2aebb7a40",
+        "MagAir-2026-11-22T20-56-46Z-0A3875": "149a48e78aba81192c09b1516540bec293f2a713e51a122ba25648514264b935",
+        "MagAir-2026-11-22T21-02-22Z-D7B016": "b62fa70727ba6275c0dcee1a55ef99f514646bac1440a6d98dcd307076b4471f",
+        "MagAir-2026-11-22T21-07-51Z-A3405A": "3590579860a6b3299bab52fd53bedfa7bcf2d94b5c9f75a82bc9e5a5cb87e56f",
+        "MagAir-2026-11-22T21-14-06Z-65D27E": "c1d846c6b5d53baf33b8487e90acd21368dfc508539a1daed53fa3aedc03e2ac"
+      },
+      "expectedPhiDegrees": 0,
+      "expectedThetaDegrees": 90,
+      "expectedTipHeightMM": 0,
+      "expectedTipContact": true,
+      "alphaDegrees": 0,
+      "alphaLabelSource": "user_confirmed_retrospective_2026-11-23",
+      "confirmedOn": "2026-11-23",
+      "note": "User confirmed alpha=0 for the completed first 273-point pass. Applies only to the listed original sessions. Raw files remain unchanged; this is a manual fixture label, not a measured Pencil angle."
+    }
+  ]
+}

@@ -3,7 +3,13 @@ import SwiftUI
 @main
 struct MagAirApp: App {
     @StateObject private var collector = Collector()
-    @State private var selectedTab = "gridLive"
+    @State private var selectedTab: String = {
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--preview-printed-setup") ||
+            ProcessInfo.processInfo.arguments.contains("--preview-printed-target") { return "printed" }
+        #endif
+        return "gridLive"
+    }()
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {

@@ -1753,8 +1753,14 @@
       "thetaDegrees": 90,
       "tiltDirectionAtPhiZero": "",
       "tipContact": true,
-      "tipHeightMM": 0
+      "tipHeightMM": 0,
+      "alphaDegrees": 0,
+      "alphaLabelSource": "user_confirmed_retrospective_2026-11-23",
+      "alphaDefinition": "fixture_phi_theta_alpha_v1: theta is elevation at alpha=0; alpha rotates the initial vertical pencil plane about its desk-projection hinge. Positive tips toward fixture-local right, which rotates with phi. Range [-90,90]. At theta=90 use the fixture reference line, never derive it from the zero-length projection. Phi remains whole-holder desk-vertical yaw, not Pencil axial roll."
     },
+    "poseAnnotationIDs": [
+      "first-pass-alpha-zero-20261123"
+    ],
     "trainingPositions": 273,
     "ipadInclinationRange": [
       52.213329117439365,
