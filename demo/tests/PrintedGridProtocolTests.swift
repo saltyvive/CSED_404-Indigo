@@ -2,6 +2,32 @@ import Foundation
 
 enum PrintedGridProtocolTests {
     static func run() throws {
+        precondition(PrintedGridPose().isValid)
+        var air = PrintedGridPose(phiDegrees: 360, thetaDegrees: 60, tipHeightMM: 5, tipContact: false)
+        precondition(!air.isValid) // A tilted run needs its zero-yaw tilt direction.
+        air.tiltDirectionAtPhiZero = "toward iPad"
+        precondition(air.isValid && air.canonical.phiDegrees == 0)
+        let airPlan = PrintedGridBatch.all[0].make(block: 1, pose: air)
+        precondition(airPlan.first?.fixturePose == nil && airPlan.last?.fixturePose == nil)
+        let airTrial = TrialRecord(spec: airPlan[1], startUptime: 100)
+        precondition(airTrial.instructedHeightMM(at: 102) == nil)
+        precondition(airTrial.instructedHeightMM(at: 104) == 5)
+        precondition(airPlan[1].fixturePose?.csvLabels(phase: "hold")[2] == "air")
+        for phase in ["settle", "idle", "outside", "baseline", "move"] {
+            precondition(air.csvLabels(phase: phase) == ["", "", "", ""])
+        }
+        var invalid = air; invalid.tipContact = true; precondition(!invalid.isValid)
+        invalid = air; invalid.tipHeightMM = 0; precondition(!invalid.isValid)
+        invalid = air; invalid.phiDegrees = -1; precondition(!invalid.isValid)
+        invalid = air; invalid.thetaDegrees = 91; precondition(!invalid.isValid)
+        invalid = air; invalid.tipHeightMM = .nan; precondition(!invalid.isValid)
+        precondition(ipadScreenInclination(gravity: [0,0,-1]) == 0)
+        precondition(ipadScreenInclination(gravity: [0,0,1]) == 0)
+        precondition(ipadScreenInclination(gravity: [1,0,0]) == 90)
+        precondition(ipadScreenInclination(gravity: [0,-1,0]) == 90)
+        precondition(abs(ipadScreenInclination(gravity: [0,sqrt(3)/2,-0.5])! - 60) < 1e-9)
+        precondition(ipadScreenInclination(gravity: [0,0,0]) == nil)
+        precondition(ipadScreenInclination(gravity: [.nan,0,1]) == nil)
         precondition(PrintedGridBatch.all.count == 39)
         precondition(Set(PrintedGridBatch.all.map(\.id)).count == 39)
         var plans: [String: [TrialSpec]] = [:]
@@ -50,6 +76,8 @@ enum PrintedGridProtocolTests {
             bad = session; bad.trials[1].spec.nominalPointMM?.x += 2.5
             precondition(!batch.accepts(bad, campaignID: "campaign"))
             bad = session; bad.trials[1].endUptime! -= 1
+            precondition(!batch.accepts(bad, campaignID: "campaign"))
+            bad = session; bad.trials[1].spec.fixturePose?.phiDegrees = 45
             precondition(!batch.accepts(bad, campaignID: "campaign"))
             bad = session; bad.status = "interrupted_background"
             precondition(!batch.accepts(bad, campaignID: "campaign"))

@@ -18,6 +18,7 @@ struct PrintedGridStudyView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text("스윗 스팟 · 273점 수집").font(.largeTitle.bold())
                             Text("50 × 30 mm · 간격 2.5 mm · 21열 × 13행").foregroundStyle(.secondary)
+                            Text(collector.printedCampaign.pose.summary).font(.subheadline.bold()).foregroundStyle(.teal)
                         }
                         Spacer()
                         Text("\(collector.printedCompleted.count) / 39행 저장")
@@ -41,7 +42,7 @@ struct PrintedGridStudyView: View {
                     } else {
                         if !collector.printedReady {
                             VStack(alignment: .leading, spacing: 9) {
-                                Text("종이와 iPad 고정 · 펜 끝 접촉 · 수직 90° · 로고 왼쪽").font(.headline)
+                                Text("종이와 iPad 고정 · 장치의 각도와 펜촉 높이 확인").font(.headline)
                                 Text("위쪽(iPad 쪽)이 1행, 아래쪽이 13행입니다. 왼쪽부터 1–21열이며 중앙은 7행 11열입니다.")
                                 Button("배치 확인하고 준비 완료") { showSetup = true }.buttonStyle(.borderedProminent)
                             }.padding(18).background(.teal.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
@@ -64,6 +65,8 @@ struct PrintedGridStudyView: View {
                             Text(String(format: "Bx %.1f · By %.1f · Bz %.1f µT", field.x, field.y, field.z)).monospacedDigit()
                         }
                     }.font(.footnote)
+                    Text(collector.ipadInclinationDegrees.map { String(format: "iPad 화면 경사 %.1f° · 수평 0° / 직립 90° · 중력 센서", $0) } ?? "iPad 경사각 · 동작 센서 수신 대기")
+                        .font(.footnote.monospacedDigit())
                     if collector.deviceMoving {
                         Text("iPad 움직임이 감지됐습니다. 배치가 바뀌었다면 이 행을 중단하고 새 배치로 시작하세요.").foregroundStyle(.orange)
                     }
@@ -101,6 +104,7 @@ struct PrintedGridStudyView: View {
             if ProcessInfo.processInfo.arguments.contains("--preview-printed-target") {
                 collector.selectPrinted(.init(pass: 1, row: 7)); collector.planIndex = 11
             }
+            if ProcessInfo.processInfo.arguments.contains("--preview-printed-setup") { showSetup = true }
             #endif
         }
         .sheet(isPresented: $showSetup) { PrintedGridSetupView(collector: collector) }
@@ -202,13 +206,45 @@ struct PrintedGridSetupView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var setup = PrintedGridCampaign().setup
     @State private var checked = false
+    @State private var pose = PrintedGridPose()
     var body: some View {
         NavigationStack {
             Form {
                 Section("이번 도면") {
                     Text("A4 가로 · 실제 크기 100% · 스윗 스팟 50 × 30 mm")
                     Text("왼쪽 아래 오프셋: 용지 왼쪽에서 115 mm, 아래에서 55 mm. 앱의 1행은 사각형의 위쪽(iPad 쪽), 1열은 왼쪽입니다.")
-                    Text("273점 × 3회 · 접촉 높이 0 mm · 펜 90° · 로고 왼쪽. 모두 목표 조건이며 실제 펜 자세를 센서로 확인한 값은 아닙니다.")
+                    Text("273점 × 3회는 같은 φ·θ·높이 조건으로 측정합니다. 이번 기본값은 φ=0°, θ=90°, 높이=0 mm·접촉입니다.")
+                }
+                Section("펜 장치 설정 · 수집 라벨") {
+                    HStack {
+                        Text("φ · 홀더 회전각 (°)"); Spacer()
+                        TextField("0–360", value: $pose.phiDegrees, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    }
+                    Text("위에서 볼 때 시계방향 +, 기존 데모의 홀더 방향이 0°. 책상 수직축을 중심으로 홀더 전체를 회전합니다. 펜 자체의 축 회전과 다릅니다. 360°는 0°로 저장합니다.").font(.footnote)
+                    HStack {
+                        Text("θ · 지면과의 각도 (°)"); Spacer()
+                        TextField("0–90", value: $pose.thetaDegrees, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    }
+                    Text("수평 0° · 수직 90°").font(.footnote)
+                    Picker("펜촉 상태", selection: Binding(get: { pose.tipContact }, set: { pose.tipContact = $0; if $0 { pose.tipHeightMM = 0 } })) {
+                        Text("표면 접촉").tag(true)
+                        Text("공중").tag(false)
+                    }.pickerStyle(.segmented)
+                    HStack {
+                        Text("펜촉의 지면 높이 (mm)"); Spacer()
+                        TextField("0 이상", value: $pose.tipHeightMM, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .disabled(pose.tipContact)
+                    }
+                    TextField("φ=0 기준 방향 / 펜 고정 설명", text: $pose.referenceNote, axis: .vertical).lineLimit(2...5)
+                    if pose.thetaDegrees < 90 {
+                        TextField("φ=0에서 θ를 낮출 때 기울어지는 쪽 (필수)", text: $pose.tiltDirectionAtPhiZero, axis: .vertical)
+                    }
+                    Text("장치에서 맞춘 값을 사람이 입력합니다. 실제 펜의 각도·높이·접촉을 센서로 읽은 값은 아닙니다. 공중에서는 펜촉의 수직 아래에 해당하는 표식을 맞춥니다.").font(.footnote)
+                }.disabled(collector.printedCampaign.hasStarted)
+                Section("iPad 경사각 · 센서 자동 기록") {
+                    Text(collector.ipadInclinationDegrees.map { String(format: "현재 화면 경사 %.1f°", $0) } ?? "동작 센서 수신 대기")
+                        .font(.title3.monospacedDigit())
+                    Text("화면 평면과 중력 기준 수평면 사이의 각도입니다. 눕히면 0°, 세우면 90°입니다. 행 시작 값과 측정 중 연속 값을 기록합니다. iPad 높이는 센서로 측정하지 않으므로 아래 메모에 적으세요.").font(.footnote)
                 }
                 Section("배치 기록") {
                     TextField("iPad 각도 / 높이 설명", text: $setup.standAngle)
@@ -220,12 +256,15 @@ struct PrintedGridSetupView: View {
                 Section {
                     Toggle("인쇄 크기·방향과 고정 상태를 확인했음", isOn: $checked)
                     Text("완료된 행 이후 쉬었다 이어갈 때에도 종이·iPad·스탠드·케이블·펜 자세가 같아야 합니다. 이동하는 홀더는 배경 측정 때 펜슬과 함께 같은 먼 위치에 두세요.")
-                    Button("이 조건으로 준비 완료") { collector.confirmPrintedSetup(setup); dismiss() }
-                        .buttonStyle(.borderedProminent).disabled(!checked)
+                    if !pose.isValid {
+                        Text("φ 0–360°, θ 0–90°를 입력하세요. 접촉 높이는 0 mm, 공중 높이는 0보다 커야 합니다. 기울인 경우 φ=0에서의 기울임 방향도 적으세요.").foregroundStyle(.orange)
+                    }
+                    Button("이 조건으로 준비 완료") { collector.confirmPrintedSetup(setup, pose: pose); dismiss() }
+                        .buttonStyle(.borderedProminent).disabled(!checked || !pose.isValid)
                 }
             }.navigationTitle("스윗 스팟 배치 확인")
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } } }
-        }.onAppear { setup = collector.printedCampaign.setup }
+        }.onAppear { setup = collector.printedCampaign.setup; pose = collector.printedCampaign.pose }
     }
 }
 

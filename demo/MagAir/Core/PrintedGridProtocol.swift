@@ -1,5 +1,50 @@
 import Foundation
 
+/// Operator-set fixture labels, never Pencil IMU or measured contact/height.
+struct PrintedGridPose: Codable, Equatable {
+    var phiDegrees = 0.0
+    var thetaDegrees = 90.0
+    var tipHeightMM = 0.0
+    var tipContact = true
+    var referenceNote = "φ=0: 기존 데모의 홀더 방향. θ=90°에서 로고 왼쪽. 펜의 독립적인 축 회전은 고정."
+    var tiltDirectionAtPhiZero = "" // Required for tilted runs; vertical has no projected axis direction.
+    var source = "operator_set_fixture_unmeasured"
+    var phiDefinition = "Whole holder yaw about desk vertical; positive clockwise viewed from above; demo fixture orientation=0; 360 equivalent to 0. Not Pencil axial roll."
+    var thetaDefinition = "Pencil axis elevation above desk plane: horizontal=0, vertical=90."
+    var isValid: Bool {
+        phiDegrees.isFinite && (0...360).contains(phiDegrees) &&
+        thetaDegrees.isFinite && (0...90).contains(thetaDegrees) &&
+        tipHeightMM.isFinite && tipHeightMM >= 0 &&
+        (tipContact ? tipHeightMM == 0 : tipHeightMM > 0) &&
+        !referenceNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        (thetaDegrees == 90 || !tiltDirectionAtPhiZero.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
+    var canonical: Self {
+        var result = self; if result.phiDegrees == 360 { result.phiDegrees = 0 }; return result
+    }
+    var summary: String {
+        String(format: "φ %.1f° · θ %.1f° · 높이 %.1f mm · %@", phiDegrees, thetaDegrees, tipHeightMM, tipContact ? "접촉" : "공중")
+    }
+    func csvLabels(phase: String) -> [String] {
+        phase == "hold" ? [number(phiDegrees), number(thetaDegrees), tipContact ? "contact" : "air", source] : ["", "", "", ""]
+    }
+}
+
+/// Unsigned screen-plane inclination to gravity-defined horizontal, independent of UI orientation.
+func ipadScreenInclination(gravity: [Double]) -> Double? {
+    guard gravity.count == 3, gravity.allSatisfy(\.isFinite) else { return nil }
+    let norm = sqrt(gravity.reduce(0) { $0 + $1*$1 })
+    guard norm > 0.1 else { return nil }
+    return acos(min(1, abs(gravity[2])/norm)) * 180 / .pi
+}
+
+struct IPadInclinationSnapshot: Codable {
+    var degrees: Double
+    var gravity: [Double]
+    var sensorUptime: Double
+    var source = "CoreMotion.gravity; acos(abs(gz)/norm(g)); screen plane vs gravity horizontal, 0=flat,90=upright"
+}
+
 /// One row per file/checkpoint. All 39 batches belong to one training campaign.
 struct PrintedGridBatch: Codable, Hashable, Identifiable {
     let pass: Int
@@ -21,7 +66,7 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     var direction: String { columns.first == 1 ? "왼쪽 → 오른쪽" : "오른쪽 → 왼쪽" }
     var next: Self? { index + 1 < Self.all.count ? Self.all[index + 1] : nil }
 
-    func make(block: Int) -> [TrialSpec] {
+    func make(block: Int, pose: PrintedGridPose = .init()) -> [TrialSpec] {
         var specs: [TrialSpec] = []
         let group = "pass\(pass)-row\(row)"
         func append(column: Int?, action: String, instruction: String) {
@@ -33,11 +78,13 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
                                    instruction: instruction, scenarioID: id, edgeAction: action,
                                    calibrationGroup: group, gridRow: row, gridColumn: column,
                                    gridColumns: 21, gridRows: 13,
-                                   nominalPointMM: column.map { Point2D(x: Double($0-1)*2.5, y: Double(row-1)*2.5) }))
+                                   nominalPointMM: column.map { Point2D(x: Double($0-1)*2.5, y: Double(row-1)*2.5) },
+                                   fixturePose: column == nil ? nil : pose.canonical))
         }
         append(column: nil, action: "before", instruction: "\(row)행 시작 배경입니다. 펜슬과 이동하는 홀더를 항상 같은 먼 위치에 두세요. iPad·종이·스탠드·케이블은 그대로 두고 준비 3초 후 10초간 측정합니다.")
         for column in columns {
-            append(column: column, action: "hold", instruction: "위에서 \(row)행, 왼쪽에서 \(column)열의 검은 점에 펜 끝을 가볍게 대세요. 종이와 수직 90°·로고 왼쪽을 유지합니다. 위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요.")
+            let position = pose.tipContact ? "검은 점에 펜 끝을 가볍게 대세요." : "검은 점의 수직 위에 펜촉을 맞추세요."
+            append(column: column, action: "hold", instruction: "위에서 \(row)행, 왼쪽에서 \(column)열. \(position) \(pose.canonical.summary)를 유지합니다. 위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요.")
         }
         append(column: nil, action: "after", instruction: "\(row)행 종료 배경입니다. 펜슬과 이동하는 홀더를 시작 배경 때와 같은 먼 위치에 두세요. 10초 배경까지 끝나야 이 행이 완료됩니다. 자동 저장 후 쉬어도 됩니다.")
         return specs
@@ -46,11 +93,11 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     /// Completion is reconstructed from files, not a count of button presses.
     func accepts(_ session: SessionManifest, campaignID: String) -> Bool {
         guard session.status == "completed", let meta = session.printedGrid,
-              meta.campaignID == campaignID, meta.batch == self, meta.hasExpectedGeometry,
+              meta.campaignID == campaignID, meta.batch == self, meta.hasExpectedGeometry, meta.pose.isValid,
               session.setup.widthMM == "50", session.setup.heightMM == "30",
               abs(session.setup.aspect - 5.0/3.0) < 1e-9 else { return false }
         let completed = session.trials.filter { $0.status == "completed" }
-        let expected = make(block: 0)
+        let expected = make(block: 0, pose: meta.pose)
         guard completed.count == expected.count, Set(completed.map { $0.spec.id }).count == expected.count else { return false }
         for (actual, target) in zip(completed, expected) {
             let s = actual.spec
@@ -59,7 +106,7 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
                   s.edgeAction == target.edgeAction, s.purpose == target.purpose,
                   s.gridRows == 13, s.gridColumns == 21, s.gridSize == nil,
                   s.gridRow == row, s.gridColumn == target.gridColumn,
-                  s.point == target.point, s.nominalPointMM == target.nominalPointMM,
+                  s.point == target.point, s.nominalPointMM == target.nominalPointMM, s.fixturePose == target.fixturePose,
                   actual.startUptime.isFinite, actual.settleSeconds == 3,
                   let end = actual.endUptime, end.isFinite,
                   abs(end - actual.plannedEnd) < 0.001 else { return false }
@@ -80,9 +127,7 @@ struct PrintedGridMetadata: Codable {
     var paperWidthMM = 297.0
     var paperHeightMM = 210.0
     var paperLowerLeftOffsetMM = Point2D(x: 115, y: 55)
-    var nominalTiltDegrees = 90.0
-    var nominalTipHeightMM = 0.0
-    var nominalRoll = "Apple logo faces operator's left"
+    var pose = PrintedGridPose()
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
     var hasExpectedGeometry: Bool {
@@ -96,6 +141,7 @@ struct PrintedGridCampaign: Codable {
     var id = "SweetSpot-" + UUID().uuidString
     var createdAt = ISO8601DateFormatter().string(from: Date())
     var hasStarted = false
+    var pose = PrintedGridPose()
     var setup: Setup = {
         var setup = Setup()
         setup.aspect = 5.0/3.0

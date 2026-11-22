@@ -40,6 +40,8 @@ final class Collector: ObservableObject {
     @Published var history: [FieldSample] = []
     @Published var actualHz = 0.0
     @Published var gravity: [Double] = []
+    @Published var ipadInclinationDegrees: Double?
+    private var latestInclination: IPadInclinationSnapshot?
     @Published var deviceMoving = false
     @Published var notice = "센서를 확인하고 있습니다."
     @Published var errorMessage: String?
@@ -193,11 +195,18 @@ final class Collector: ObservableObject {
                 if let error { self.sensorError(error, channel: "device_motion"); return }
                 guard let d = data else { return }
                 let g = d.gravity, a = d.userAcceleration, r = d.rotationRate, q = d.attitude.quaternion
-                self.receive("device_motion", timestamp: d.timestamp, values: [g.x, g.y, g.z, a.x, a.y, a.z, r.x, r.y, r.z, q.x, q.y, q.z, q.w])
+                let values = [g.x, g.y, g.z, a.x, a.y, a.z, r.x, r.y, r.z, q.x, q.y, q.z, q.w]
+                let inclination = ipadScreenInclination(gravity: [g.x, g.y, g.z])
+                if values.allSatisfy(\.isFinite) {
+                    self.appendEvent("device_motion", timestamp: d.timestamp, columns: values.map(number) + [inclination.map(number) ?? ""])
+                }
+                self.latestInclination = inclination.map { .init(degrees: $0, gravity: [g.x,g.y,g.z], sensorUptime: d.timestamp) }
                 let moving = sqrt(a.x*a.x + a.y*a.y + a.z*a.z) > 0.03 || sqrt(r.x*r.x + r.y*r.y + r.z*r.z) > 0.05
                 if moving { self.liveTester.deviceMoved(); self.edgeLiveTester.deviceMoved(); self.gridLiveTester.deviceMoved() }
                 if self.deviceMoving != moving { self.deviceMoving = moving }
-                if self.gravity.isEmpty || self.now - self.lastDisplay < 0.03 { self.gravity = [g.x, g.y, g.z] }
+                if self.gravity.isEmpty || self.now - self.lastDisplay < 0.03 {
+                    self.gravity = [g.x, g.y, g.z]; self.ipadInclinationDegrees = inclination
+                }
                 if moving && self.recording && self.now - self.lastWarning > 3 {
                     self.lastWarning = self.now
                     self.manifest?.warnings.append("iPad movement at uptime \(number(d.timestamp)); inspect device_motion.csv")
@@ -214,6 +223,7 @@ final class Collector: ObservableObject {
         motion.stopGyroUpdates(); motion.stopDeviceMotionUpdates()
         sensorFresh = false
         sensorTimes = []
+        ipadInclinationDegrees = nil; latestInclination = nil
     }
 
     private func sensorError(_ error: Error, channel: String) {
@@ -255,10 +265,12 @@ final class Collector: ObservableObject {
                                repetition, trial?.spec.pointID ?? "", annotation?.phase ?? "idle",
                                targetX, targetY, annotation?.source ?? "none",
                                height.map(number) ?? "", height == nil ? "none" : "operator_instruction_unmeasured"]
-        store.append(stream: channel, fields: prefix + columns)
+        let poseLabels = trial?.spec.fixturePose?.csvLabels(phase: annotation?.phase ?? "idle") ?? ["", "", "", ""]
+        store.append(stream: channel, fields: prefix + poseLabels + columns)
     }
 
     private func tick() {
+        if latestInclination.map({ now - $0.sensorUptime > 1.5 }) ?? false { ipadInclinationDegrees = nil }
         liveTester.checkStale(now: now)
         edgeLiveTester.checkStale(now: now)
         gridLiveTester.checkStale(now: now)
@@ -303,7 +315,7 @@ final class Collector: ObservableObject {
 
     func beginSession() {
         guard !sessionOpen, !isClosing, setup.confirmed, sensorFresh else { return }
-        if printedBatch != nil && !printedReady { return }
+        if printedBatch != nil && (!printedReady || !printedCampaign.pose.isValid) { return }
         do {
             var sys = utsname(); uname(&sys)
             let model = withUnsafePointer(to: &sys.machine) { pointer in
@@ -315,8 +327,9 @@ final class Collector: ObservableObject {
             var session = SessionManifest(id: id, startedAt: stamp, anchorUptime: uptime, anchorUnix: date.timeIntervalSince1970,
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
             if let printedBatch {
-                session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch)
+                session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
             }
+            if let latestInclination, now - latestInclination.sensorUptime < 1.5 { session.ipadInclinationAtStart = latestInclination }
             let newStore = try SessionStore(manifest: session)
             newStore.onError = { [weak self] message in
                 guard let self else { return }
@@ -329,7 +342,7 @@ final class Collector: ObservableObject {
             UserDefaults.standard.set(try JSONEncoder().encode(setup), forKey: "setup.v1")
             UIApplication.shared.isIdleTimerDisabled = true
             if let printedBatch {
-                blockNumber += 1; plan = printedBatch.make(block: blockNumber); planIndex = 0
+                blockNumber += 1; plan = printedBatch.make(block: blockNumber, pose: printedCampaign.pose); planIndex = 0
             } else if let edgeScenario {
                 blockNumber += 1; plan = edgeScenario.make(block: blockNumber); planIndex = 0
             } else { select(selected) }
@@ -358,20 +371,24 @@ final class Collector: ObservableObject {
         guard !recording, !isClosing, !sessionOpen, PrintedGridBatch.all.contains(batch) else { return }
         printedBatch = batch; edgeScenario = nil; blockNumber += 1
         setup = printedCampaign.setup; setup.confirmed = printedReady
-        plan = batch.make(block: blockNumber); planIndex = 0; elapsed = 0
+        plan = batch.make(block: blockNumber, pose: printedCampaign.pose); planIndex = 0; elapsed = 0
         selected = .mapBaseline
     }
 
-    func confirmPrintedSetup(_ proposed: Setup) {
-        guard !sessionOpen, !isClosing else { return }
+    func confirmPrintedSetup(_ proposed: Setup, pose: PrintedGridPose) {
+        guard !sessionOpen, !isClosing, pose.isValid else { return }
         if !printedCampaign.hasStarted {
             printedCampaign.setup = proposed
+            printedCampaign.pose = pose.canonical
             printedCampaign.setup.widthMM = "50"; printedCampaign.setup.heightMM = "30"
             printedCampaign.setup.aspect = 5.0/3.0
+            printedCampaign.setup.plane = pose.tipContact ? "책상/종이 표면 · 펜촉 접촉" : "책상 위 공중 · 펜촉의 수직 투영 위치"
+            printedCampaign.setup.heightNote = pose.canonical.summary + " · 장치 설정값, 센서 실측 아님"
         }
         printedReady = true
         setup = printedCampaign.setup; setup.confirmed = true
         persistPrintedCampaign()
+        if let printedBatch { selectPrinted(printedBatch) }
     }
 
     func newPrintedCampaign() {
@@ -482,7 +499,7 @@ final class Collector: ObservableObject {
         for directory in library {
             guard let data = try? Data(contentsOf: directory.appendingPathComponent("manifest.json")),
                   let session = try? JSONDecoder().decode(SessionManifest.self, from: data),
-                  let meta = session.printedGrid, PrintedGridBatch.all.contains(meta.batch),
+                  let meta = session.printedGrid, meta.pose == printedCampaign.pose, PrintedGridBatch.all.contains(meta.batch),
                   meta.batch.accepts(session, campaignID: printedCampaign.id) else { continue }
             // Preserve every raw session; prefer the newest complete remeasurement in the UI.
             if completed[meta.batch.id] == nil { completed[meta.batch.id] = session.id }

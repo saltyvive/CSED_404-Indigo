@@ -8,12 +8,12 @@ final class SessionStore {
     private var pending: [String: String] = [:]
     private var firstError: Error?
     var onError: ((String) -> Void)?
-    static let baseColumns = ["timestamp_s", "unix_s", "received_uptime_s", "trial_id", "protocol", "dataset", "repetition", "point_id", "phase", "target_x", "target_y", "label_source", "instructed_tip_height_mm", "height_label_source"]
+    static let baseColumns = ["timestamp_s", "unix_s", "received_uptime_s", "trial_id", "protocol", "dataset", "repetition", "point_id", "phase", "target_x", "target_y", "label_source", "instructed_tip_height_mm", "height_label_source", "fixture_phi_deg", "fixture_theta_deg", "fixture_tip_state", "fixture_pose_source"]
     static let columns = [
         "magnetometer": ["bx_uT", "by_uT", "bz_uT"],
         "accelerometer": ["ax_g", "ay_g", "az_g"],
         "gyroscope": ["rx_rad_s", "ry_rad_s", "rz_rad_s"],
-        "device_motion": ["gravity_x_g", "gravity_y_g", "gravity_z_g", "user_ax_g", "user_ay_g", "user_az_g", "rx_rad_s", "ry_rad_s", "rz_rad_s", "quaternion_x", "quaternion_y", "quaternion_z", "quaternion_w"],
+        "device_motion": ["gravity_x_g", "gravity_y_g", "gravity_z_g", "user_ax_g", "user_ay_g", "user_az_g", "rx_rad_s", "ry_rad_s", "rz_rad_s", "quaternion_x", "quaternion_y", "quaternion_z", "quaternion_w", "ipad_screen_inclination_deg"],
         "pencil_events": ["event_type", "event_phase", "timestamp_basis", "pose_valid", "window_x_pt", "window_y_pt", "altitude_rad", "azimuth_rad", "roll_rad", "hover_z_normalized", "force", "estimated_properties", "expecting_updates", "estimation_update_index", "interface_orientation"]
     ]
     static var root: URL {
@@ -35,6 +35,9 @@ final class SessionStore {
         unix_s = anchorUnix + timestamp_s - anchorUptime. received_uptime_s measures callback delivery time.
         Magnetometer: raw 3-axis microtesla. Accelerometer: g. Gyroscope: rad/s.
         Device motion: iPad gravity, user acceleration, rotation, quaternion; xArbitraryZVertical reference.
+        ipad_screen_inclination_deg = acos(abs(gravity_z)/norm(gravity))*180/pi, 0=flat,90=upright.
+        This is screen plane vs gravity-defined horizontal, not desk-relative if the desk is tilted.
+        manifest.ipadInclinationAtStart is a fresh row/session-start snapshot; per-sample values are in device_motion.csv.
         This is iPad IMU, NOT Apple Pencil IMU. No physical pencil coordinates are directly sensed.
         pencil_events.csv contains opportunistic screen touch/hover only, NOT raw Pencil IMU.
         Pencil altitude is relative to the screen, azimuth to window coordinates, NOT the desk plane.
@@ -68,6 +71,13 @@ final class SessionStore {
         nominalPointMM=(2.5*(column-1),2.5*(row-1)) from sweet spot TOP LEFT, not measured tip coordinates.
         Printed geometry is 50x30 mm; A4 landscape lower-left offset is (115,55) mm.
         Paper lower-left coordinates=(115+50*x,85-30*y). Pose and contact are operator instructions, not sensors.
+        printedGrid.pose and trial.spec.fixturePose record operator-set phi/theta/height/contact and their reference.
+        phi: whole-holder yaw about desk vertical, clockwise from above; demo fixture orientation=0 (360=0).
+        phi is NOT Pencil axial roll. At theta=90, phi still identifies the fixture's material orientation.
+        theta: Pencil elevation above desk, horizontal=0, vertical=90. Record tiltDirectionAtPhiZero when tilted.
+        fixture_phi_deg / fixture_theta_deg / fixture_tip_state / fixture_pose_source are filled only during steady holds.
+        Heights in instructed_tip_height_mm use the fixture target during holds; air targets are vertical projections onto paper.
+        Do not attach pose/height/contact labels to backgrounds, movement, settling or idle samples.
         campaignID changes when setup changes; do not pool campaigns just because dimensions match.
         Interrupted rows restart from a fresh before baseline; incomplete row sessions are excluded.
         A replacement row keeps its prior files. Select one complete session per batch explicitly for training.

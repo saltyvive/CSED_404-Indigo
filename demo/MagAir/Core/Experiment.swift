@@ -149,6 +149,7 @@ struct TrialSpec: Codable, Identifiable {
     var gridColumns: Int? = nil // Rectangular printed grid; never infer this from gridSize.
     var gridRows: Int? = nil
     var nominalPointMM: Point2D? = nil // Printed target from top-left, NOT a measured tip position.
+    var fixturePose: PrintedGridPose? = nil
     var duration: Double { kind.duration }
     var dataset: String { purpose ?? kind.dataset }
     var isManual: Bool { kind == .edgeSweep || kind == .mapSweep }
@@ -255,7 +256,7 @@ struct TrialRecord: Codable {
 
     func instructedHeightMM(at timestamp: Double) -> Double? {
         let phase = annotation(at: timestamp).phase
-        if spec.kind == .mapHold && phase == "hold" { return 0 }
+        if spec.kind == .mapHold && phase == "hold" { return spec.fixturePose?.tipHeightMM ?? 0 }
         if spec.kind == .mapSweep && phase == "move" { return 0 }
         if spec.edge != nil && phase != "settle" && phase != "outside" { return 0 }
         if phase == "surface_hold" || phase == "surface_return" { return 0 }
@@ -286,6 +287,7 @@ struct SessionManifest: Codable {
     var pencilIMU = "Unavailable: no off-screen Apple Pencil raw IMU API. All IMU streams are from iPad."
     var motionReference = "xArbitraryZVertical (not magnetic north); raw magnetometer remains unmodified."
     var printedGrid: PrintedGridMetadata? = nil
+    var ipadInclinationAtStart: IPadInclinationSnapshot? = nil
 }
 
 func number(_ value: Double) -> String {
