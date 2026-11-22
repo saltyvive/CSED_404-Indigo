@@ -16,6 +16,18 @@ struct GridLiveModelTests {
         let data = try Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1]))
         var model = try JSONDecoder().decode(GridLiveModel.self, from: data)
         let projector = GridProjector(model: model)!
+        if let context = model.printedGridContext {
+            precondition(context.trainingPositions == 273 && context.widthMM == 50 && context.heightMM == 30)
+            precondition(model.xKnots.count == 21 && model.yKnots.count == 13)
+            let guides = GridGuide.options(columns: 21, rows: 13)
+            precondition(guides.count == 37)
+            precondition(GridGuide.printedRow11.endpoints == [.init(x: 0, y: 10.0/12), .init(x: 1, y: 10.0/12)])
+            precondition(GridGuide.printedRow13.endpoints == [.init(x: 0, y: 1), .init(x: 1, y: 1)])
+            precondition(GridGuide.printedCol21.endpoints == [.init(x: 1, y: 0), .init(x: 1, y: 1)])
+            precondition(GridGuide.printedCol11.endpoints == [.init(x: 0.5, y: 0), .init(x: 0.5, y: 1)])
+            precondition(!GridGuide.options(gridSize: 5).contains(.printedRow1))
+            precondition(!GridGuide.options(gridSize: 9).contains(.printedCol21))
+        }
         precondition(projector.project([Double.nan,0,0]) == nil)
         precondition(projector.project([1,2]) == nil)
         precondition(!projector.project([0,0,0])!.showCandidate)

@@ -56,7 +56,7 @@ struct PrintedGridStudyView: View {
                             Text("한 행: 시작 배경 10초 → 21점 각각 준비 3초 + 정지 3초 → 종료 배경 10초 → 자동 저장. 배경도 준비 3초 후 측정합니다. 항목마다 위치를 확인하고 직접 시작하세요.")
                             Text("행당 약 3–5분, 전체 약 2–3시간입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
-                            Text("현재 실시간 테스트는 이전 모델입니다. 이 자료를 모두 분석한 뒤 새 모델을 적용하고, 자유 테스트 → 별도 검증을 진행합니다.")
+                            Text("실시간 테스트에는 첫 회차 273점으로 만든 임시 모델이 적용됐습니다. 2·3회차 수집을 계속할 수 있으며, 새 자료를 모은 뒤 모델을 다시 만들고 별도 검증합니다.")
                         }.font(.subheadline).padding(.vertical, 8)
                     }
                     HStack {
@@ -81,7 +81,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir · 도면 수집 1.13")
+                .navigationTitle("MagAir · 도면 수집 1.14")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {

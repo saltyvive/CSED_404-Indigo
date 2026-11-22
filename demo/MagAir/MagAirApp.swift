@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct MagAirApp: App {
     @StateObject private var collector = Collector()
-    @State private var selectedTab = "printed"
+    @State private var selectedTab = "gridLive"
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
@@ -13,6 +13,9 @@ struct MagAirApp: App {
                 GridLiveView(collector: collector, tester: collector.gridLiveTester) { scenario in
                     collector.selectEdge(scenario)
                     selectedTab = "edges"
+                } collectPrinted: {
+                    collector.selectPrinted(collector.nextPrintedBatch)
+                    selectedTab = "printed"
                 }
                     .tabItem { Label("격자 내부 테스트", systemImage: "square.grid.3x3") }.tag("gridLive")
                 EdgeLiveView(collector: collector, tester: collector.edgeLiveTester) {
