@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
 import build_printed_grid_model as printed
 from build_grid_model import field, Projector
 from evaluate_printed_pass import score, metrics
+import build_knn_model as knn
 
 
 class PrintedModelTests(unittest.TestCase):
@@ -80,6 +81,34 @@ class PrintedModelTests(unittest.TestCase):
         path.write_text(json.dumps(m))
         with self.assertRaisesRegex(ValueError, 'Acquisition timing metadata mismatch'):
             printed.extract(folder)
+
+    def test_knn_retains_placements_and_handles_ambiguity(self):
+        model = knn.build(self.batches, [1])
+        self.assertEqual(len(model['locations']), 273)
+        self.assertTrue(all(len(p['fieldsUT']) == 4 for p in model['locations']))
+        anchor = model['locations'][6*21+10]
+        result = knn.Projector(model).project(anchor['fieldsUT'][0])
+        self.assertLess(math.dist(result['xy'], anchor['xy']), 1e-9)
+        self.assertTrue(result['accepted'])
+        copies = copy.deepcopy(model)
+        copies['locations'][6*21+10]['fieldsUT'] *= 5
+        self.assertEqual(knn.Projector(copies).project(anchor['fieldsUT'][0]), result)
+        conflict = copy.deepcopy(model)
+        conflict['locations'][0]['fieldsUT'] = copy.deepcopy(anchor['fieldsUT'])
+        ambiguous = knn.Projector(conflict).project(anchor['fieldsUT'][0])
+        self.assertTrue(ambiguous['ambiguous']); self.assertFalse(ambiguous['accepted'])
+        self.assertFalse(knn.Projector(model).project([0,0,0])['shown'])
+        self.assertFalse(knn.Projector(model).project([1000,1000,1000])['accepted'])
+        with self.assertRaises(ValueError): knn.Projector(model).project([math.nan,0,0])
+        repeated = copy.deepcopy(self.batches)
+        for batch in repeated:
+            batch.update(repetition=2, session='repeat-'+batch['session'])
+            for point in batch['points']:
+                point.update(repetition=2, session=batch['session'])
+                point['deltaUT'][2] += 2
+        combined = knn.build(self.batches+repeated, [1,2])
+        self.assertTrue(all(len(p['fieldsUT']) == 8 for p in combined['locations']))
+        self.assertEqual(combined['locations'][0]['fieldsUT'][4][2]-combined['locations'][0]['fieldsUT'][0][2], 2)
 
     def test_rectangular_single_pass_and_background_drift(self):
         model = printed.build(self.batches, [1])
