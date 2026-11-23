@@ -4,6 +4,56 @@
   "note": "Raw bytes unchanged. Status and snapshots retained; not all sessions are eligible training data.",
   "sessions": [
     {
+      "sessionID": "MagAir-2026-10-14T15-40-22Z-1BB856",
+      "snapshotSHA256": "e68f933a03188646ff5fcbf45b217c8df7cb0f4b89f982b4b3f57066f58033df",
+      "status": "recording",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 1614,
+          "sha256": "bc76fa16f6f473ba094263936d6071cf06faf3e472a6ed767a1b1144a0c648fc"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2473852,
+          "sha256": "00808e01d45e03f888fdab5bd2ea91f766332230dbe3588bfbe3afa2a964c4a2"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5264606,
+          "sha256": "df514c1300b67ba426142c4a17b4b0d47b5ecf0bf3e1a5cf9d3adbed30025c17"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2470374,
+          "sha256": "d3973ca414ae09dfe56049a035294b2ea1fe5eeb8cc383af6cf7888b6e194967"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2626600,
+          "sha256": "2ce77d7f5509eb8536e7bcb07ac71fb56f85c5c84f4ba6522ab66fe7bea54a47"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 1730,
+          "sha256": "a5a600484782d164907da854f6299491bdf267f2aab9f81e378728b5cbd727b0"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 338,
+          "sha256": "3dd57e1fa3f9e3b2a152be7b42e097cb547f0541750992566838e9ada5a044fe"
+        }
+      ],
+      "sources": [
+        "research/data/device-archive-20261124/MagAir-2026-10-14T15-40-22Z-1BB856"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-14T15-40-22Z-1BB856/e68f933a03188646.zip",
+      "archiveSHA256": "495aa29114944b1e3c0449badc9a5fa971a87a6ac68ff921b4b85055d8109941",
+      "archiveBytes": 3625877
+    },
+    {
       "sessionID": "MagAir-2026-10-14T15-55-27Z-1FCF6B",
       "snapshotSHA256": "38519e5947ab9649d44fa6ed03586efb11de001e7286e7a7a62f8465c92d3da5",
       "status": "recording",
@@ -95,7 +145,8 @@
         }
       ],
       "sources": [
-        "demo/data/completed-20261015"
+        "demo/data/completed-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-14T15-55-27Z-1FCF6B"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -145,7 +196,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-top-20261015"
+        "demo/data/edge-top-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T11-46-47Z-B5A018"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -195,7 +247,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-top-test-20261015"
+        "demo/data/edge-top-test-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T12-09-41Z-8FBCDB"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -245,7 +298,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-bottom-20261015"
+        "demo/data/edge-bottom-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T13-08-44Z-848BD7"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -295,7 +349,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-bottom-test-20261015"
+        "demo/data/edge-bottom-test-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T13-25-54Z-904755"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -345,7 +400,8 @@
         }
       ],
       "sources": [
-        "demo/data/edges-horizontal-compare-20261015"
+        "demo/data/edges-horizontal-compare-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T13-32-20Z-D2EFDC"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -395,7 +451,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-left-20261015"
+        "demo/data/edge-left-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T13-43-58Z-3B1C2A"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -445,7 +502,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-left-test-20261015"
+        "demo/data/edge-left-test-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T13-59-38Z-D85628"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -495,7 +553,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-right-20261015"
+        "demo/data/edge-right-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T14-07-24Z-796E5A"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -545,7 +604,8 @@
         }
       ],
       "sources": [
-        "demo/data/edge-right-test-20261015"
+        "demo/data/edge-right-test-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T14-19-19Z-350EEC"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -595,7 +655,8 @@
         }
       ],
       "sources": [
-        "demo/data/edges-all-compare-20261015"
+        "demo/data/edges-all-compare-20261015",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T14-26-00Z-C536C2"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -645,7 +706,8 @@
         }
       ],
       "sources": [
-        "demo/data/grid-map-train-20261016/MagAir-2026-10-15T15-22-22Z-4D0DB7"
+        "demo/data/grid-map-train-20261016/MagAir-2026-10-15T15-22-22Z-4D0DB7",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T15-22-22Z-4D0DB7"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -695,7 +757,8 @@
         }
       ],
       "sources": [
-        "demo/data/grid-map-test-20261016/MagAir-2026-10-15T16-28-30Z-C9EC2B"
+        "demo/data/grid-map-test-20261016/MagAir-2026-10-15T16-28-30Z-C9EC2B",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T16-28-30Z-C9EC2B"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -745,7 +808,8 @@
         }
       ],
       "sources": [
-        "demo/data/grid-horizontal-20261016/MagAir-2026-10-15T16-44-07Z-D6D4DC"
+        "demo/data/grid-horizontal-20261016/MagAir-2026-10-15T16-44-07Z-D6D4DC",
+        "research/data/device-archive-20261124/MagAir-2026-10-15T16-44-07Z-D6D4DC"
       ],
       "protocol": "historical_demo",
       "campaignID": null,
@@ -796,6 +860,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T19-40-44Z-EF73B8",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T19-40-44Z-EF73B8",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T19-40-44Z-EF73B8"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -847,6 +912,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-04-37Z-28BE88",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-04-37Z-28BE88",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-04-37Z-28BE88"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -898,6 +964,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-10-36Z-2EDAFF",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-10-36Z-2EDAFF",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-10-36Z-2EDAFF"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -949,6 +1016,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-16-18Z-55F62B",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-16-18Z-55F62B",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-16-18Z-55F62B"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1000,6 +1068,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-21-36Z-DE4A90",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-21-36Z-DE4A90",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-21-36Z-DE4A90"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1051,6 +1120,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-26-56Z-3BBF34",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-26-56Z-3BBF34",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-26-56Z-3BBF34"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1102,6 +1172,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-31-55Z-6DADF9",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-31-55Z-6DADF9",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-31-55Z-6DADF9"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1153,6 +1224,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-36-52Z-2ADB59",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-36-52Z-2ADB59",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-36-52Z-2ADB59"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1204,6 +1276,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-51-27Z-543987",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-51-27Z-543987",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-51-27Z-543987"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1255,6 +1328,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-56-46Z-0A3875",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T20-56-46Z-0A3875",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-56-46Z-0A3875"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1306,6 +1380,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-02-22Z-D7B016",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T21-02-22Z-D7B016",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-02-22Z-D7B016"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1357,6 +1432,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-07-51Z-A3405A",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T21-07-51Z-A3405A",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-07-51Z-A3405A"
       ],
       "protocol": "sweetspot_21x13_v1",
@@ -1408,6 +1484,7 @@
       ],
       "sources": [
         "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-14-06Z-65D27E",
+        "research/data/device-archive-20261124/MagAir-2026-11-22T21-14-06Z-65D27E",
         "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-14-06Z-65D27E"
       ],
       "protocol": "sweetspot_21x13_v1",

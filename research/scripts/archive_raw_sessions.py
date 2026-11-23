@@ -32,6 +32,9 @@ def archive(roots, output):
                 campaignID=m.get('printedGrid', {}).get('campaignID')))
             entry['sources'].append(manifest.parent.relative_to(ROOT).as_posix())
     output.mkdir(parents=True, exist_ok=True)
+    previous = {}
+    if (output/'index.json').exists():
+        previous = {(e['sessionID'],e['snapshotSHA256']):e for e in json.loads((output/'index.json').read_text())['sessions']}
     entries = []
     for (sid, digest), entry in sorted(groups.items()):
         target = output/'raw'/sid/(digest[:16]+'.zip')
@@ -51,7 +54,15 @@ def archive(roots, output):
             raise ValueError('Archive exceeds regular GitHub file limit; use a separately approved storage strategy')
         entry.update(archive=target.relative_to(output).as_posix(), archiveSHA256=sha(target.read_bytes()),
                      archiveBytes=target.stat().st_size)
+        old = previous.pop((sid,digest), None)
+        if old: entry['sources'] = sorted(set(entry['sources']+old['sources']))
         entries.append(entry)
+    # Moving/removing a working copy must never erase an archived snapshot from the index.
+    for entry in previous.values():
+        target = output/entry['archive']
+        assert sha(target.read_bytes()) == entry['archiveSHA256'], 'Existing archive checksum mismatch'
+        entries.append(entry)
+    entries.sort(key=lambda e:(e['sessionID'],e['snapshotSHA256']))
     index = dict(version=1, rawPublicationAuthorizedOn='2026-11-24',
                  note='Raw bytes unchanged. Status and snapshots retained; not all sessions are eligible training data.', sessions=entries)
     (output/'index.json').write_text(json.dumps(index, ensure_ascii=False, indent=2)+'\n')
