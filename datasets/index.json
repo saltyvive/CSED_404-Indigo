@@ -1,0 +1,1420 @@
+{
+  "version": 1,
+  "rawPublicationAuthorizedOn": "2026-11-24",
+  "note": "Raw bytes unchanged. Status and snapshots retained; not all sessions are eligible training data.",
+  "sessions": [
+    {
+      "sessionID": "MagAir-2026-10-14T15-55-27Z-1FCF6B",
+      "snapshotSHA256": "38519e5947ab9649d44fa6ed03586efb11de001e7286e7a7a62f8465c92d3da5",
+      "status": "recording",
+      "files": [
+        {
+          "file": "magnetometer.csv",
+          "bytes": 9999886,
+          "sha256": "b49cbfeb32a4333f2a4f9f6a70be963fb9f070d0e2bce950971aad3daac78d2a"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 14066,
+          "sha256": "b56cb47a3a7076bb05d4ed44c83d941245aece3683016301932617aa6b8d813e"
+        }
+      ],
+      "sources": [
+        "demo/data/analysis-snapshot"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-14T15-55-27Z-1FCF6B/38519e5947ab9649.zip",
+      "archiveSHA256": "3c7b633f36d05d297fa15c696aa99174202c1b0ecedf35496141cbcff6c60a3c",
+      "archiveBytes": 1969772
+    },
+    {
+      "sessionID": "MagAir-2026-10-14T15-55-27Z-1FCF6B",
+      "snapshotSHA256": "7cfbefbdc8577bd327c4489d676516d7ae68cf76f057655cf6b2463aec593942",
+      "status": "completed",
+      "files": [
+        {
+          "file": "magnetometer.csv",
+          "bytes": 10000000,
+          "sha256": "98303fe44c4c32c56dd01ca3dd74da8a5ab73254eb87b14b008c0d07a39413b9"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 14389,
+          "sha256": "28490e01ffda4444dc0a33c8783f68d2884ea6aae887fa6909beb17e585e61ea"
+        }
+      ],
+      "sources": [
+        "demo/data/collection-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-14T15-55-27Z-1FCF6B/7cfbefbdc8577bd3.zip",
+      "archiveSHA256": "5f991a6e9b8d70f87f6e4cdf619a3ce4985b01e87bd837f913b16be15487cb7e",
+      "archiveBytes": 1969721
+    },
+    {
+      "sessionID": "MagAir-2026-10-14T15-55-27Z-1FCF6B",
+      "snapshotSHA256": "ae22254694e9ec442a69c23f32b7258d413be9c383d31a8f085c8c843b77ee3d",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 1956,
+          "sha256": "7a70f3797020e3b13a4a0514cb3e6a631348f9289e4723306805c03e9e9877e7"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 11005500,
+          "sha256": "aa93b5eccd762da71f6701682328b0ccfc8bece881886ce2dd1f447d7872f240"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 19024552,
+          "sha256": "ebe634339c47f10cc5c5b991f602ad5cf5b9262d78857d84e9d2af1b153b573c"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 10999309,
+          "sha256": "6c4cab863d66f97ac8fba452f4543688a7516db53317033cafcb8049c51930c6"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 11409022,
+          "sha256": "cf5daada67e3d58507b89b1d4a483648bc4a632f14e7a4402518e4c07c409c63"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 14389,
+          "sha256": "28490e01ffda4444dc0a33c8783f68d2884ea6aae887fa6909beb17e585e61ea"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 5698,
+          "sha256": "b331792e114166820f4452469b7cf4f1cffac95702068576c34e5e283fde9f32"
+        }
+      ],
+      "sources": [
+        "demo/data/completed-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-14T15-55-27Z-1FCF6B/ae22254694e9ec44.zip",
+      "archiveSHA256": "3838ee18fdc2af453917da2df8521775cbe9ff21f51de27e1b142a09ee846ae7",
+      "archiveBytes": 11342683
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T11-46-47Z-B5A018",
+      "snapshotSHA256": "2074e01bf07b7b618d02c5eae896d6c47c22104a7011f0cbb66e85811d2b92ee",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2488961,
+          "sha256": "f73dd5244158c3f632c221d4900507c4ab76dfa4925dd6edd8b538ba11791ec1"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4256696,
+          "sha256": "e1336da796deaca4d5e7c0b97410fc7cb61067a12970bfe592091ce55b544b18"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2486301,
+          "sha256": "cc998214bc3ebec7eca420fe331dfa0604d688cc68f3a128fdb9047956dafaea"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2578926,
+          "sha256": "c96d8f231e16fdf912195163ede241301b547c89dd18d6988ccf0049afe5aeb6"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 11502,
+          "sha256": "b34b0271aa2e66dc20e5840f6a12d419054b7694727a4902af6a93ddc75e185a"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-top-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T11-46-47Z-B5A018/2074e01bf07b7b61.zip",
+      "archiveSHA256": "dabdee9bc90ff8e1bb881bc3971228642269a1ac78422b3b08c344da52d0d0d0",
+      "archiveBytes": 2389874
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T12-09-41Z-8FBCDB",
+      "snapshotSHA256": "4ce31aac50434d0d1c0f904809fde86ddff2377d74cc6e78cc60fe6515975f23",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 1897732,
+          "sha256": "01a47b90f7eba84f38f68142feed201ff64265fdee245314751f983b596b8974"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 3267291,
+          "sha256": "7ee42d3fb93734259cb2e35b37e0ad3afade142ea4fa6fcd89bc0b32739fcc83"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 1895964,
+          "sha256": "d603d57526ce56016b337c1cf954fc7972d6f45c9cad0f1bd31847d420fafeac"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 1966275,
+          "sha256": "4332a0b7459f17ad3a67f094110946873027c6d344060c32760c1eabd4ab25fe"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 8136,
+          "sha256": "5a50d90ba292f19942392983880842cc9b77d64e5ccb839372f6db994f8a6fc7"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-top-test-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T12-09-41Z-8FBCDB/4ce31aac50434d0d.zip",
+      "archiveSHA256": "1f415ff3d5d2a2d13379f47690625b0f901db674c850800521c115b7fe1ea452",
+      "archiveBytes": 1848349
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T13-08-44Z-848BD7",
+      "snapshotSHA256": "06b108f4f6a18d0c4f104c564ae0cffad5779b0e307e3d7ae562aaba711779ed",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2460302,
+          "sha256": "bd72635ed55dc8946b9d4425e1ea518ad5007b6676833720121a8ce3ce632734"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4139384,
+          "sha256": "9687d8c9c5f80e4ee4b3c69acd055a571b8c50671c82b80d57730186f513ef3c"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2458561,
+          "sha256": "b0c35d51c36bf936f04f037a9724a9875bec7f551e795c1ab04abe85b2c58a32"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2542759,
+          "sha256": "cf11818f7459cc3c5b8a626a9be68750d4b894333f1826f887be63e4dddfde1d"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 11635,
+          "sha256": "a57a86c1cf4b566690836d74f22d2f821d8aa4c5940c1b2f0641fc45b3367b05"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-bottom-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T13-08-44Z-848BD7/06b108f4f6a18d0c.zip",
+      "archiveSHA256": "9296591f3de2ed823b2f9f57a70c2f7343d20b54e4e9440b0ccbf9ef324fc911",
+      "archiveBytes": 2268677
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T13-25-54Z-904755",
+      "snapshotSHA256": "57aeea0db49b3d1f7eebbb682a99d629d83f263bc7b3459eb74c11803c55adc7",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 1704150,
+          "sha256": "9002bb98c0109532482b3b8da313ffdfe57c54373cbcd0acf7dab955d309aef0"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 2880586,
+          "sha256": "4e74288ea0ebe63f162ac6b095c640e34e2de137cea6711f3276a04ef610d572"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 1702932,
+          "sha256": "7ea0c5e9a3c4b28ca9c1133d773b090730dbe55fcc40f44d449d0019d4cf8404"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 1762090,
+          "sha256": "82011faa6998cc6d3b538aa4189a392921a67c0c310ba44cb7d770eb10622cfd"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 8212,
+          "sha256": "b5b32c999d8d3cbf632bb0c623d8c466cd6607883fdbc5e4b3d89c705709ae7e"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-bottom-test-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T13-25-54Z-904755/57aeea0db49b3d1f.zip",
+      "archiveSHA256": "9c956729353cfd2cbc0d1b2d7fa333be9fb3fa48fad1e3f634faa578514e1912",
+      "archiveBytes": 1588951
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T13-32-20Z-D2EFDC",
+      "snapshotSHA256": "89ffa4bfc416b369319e8939d4438d561e09520fc8782e05afbf5cdc07d9c130",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3526894,
+          "sha256": "e3a7c6f34ac8788db9b1626152cf56b73a95b1577d2944ad9ffc6d35791933e1"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5898539,
+          "sha256": "83ace751ed93712f750cfed1ecf89dad505b19db1bae48759425128a3dce7570"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3524588,
+          "sha256": "b17cca9e6310c3a01d2a0d5a143c6d168680c9aa06172184add43154d7262f17"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3642618,
+          "sha256": "40ac04b6bb9df62fc713221eca077bf5aff3494da8e4ffb8dedd41c18c78e543"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 14076,
+          "sha256": "2cf6f2b23e41f5a8d4a91338903e694cf16ca4b85c7e6c2601444b01ae13cc41"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edges-horizontal-compare-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T13-32-20Z-D2EFDC/89ffa4bfc416b369.zip",
+      "archiveSHA256": "f965a6c6b7e6f87f4690bdbdc31116114e586b26b84fac84198de1f834c6fd55",
+      "archiveBytes": 3206646
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T13-43-58Z-3B1C2A",
+      "snapshotSHA256": "1a01c43a402a483544f27bb4b53dfdb4228a98f7949786bad7cf2b6d8269dc6f",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2390015,
+          "sha256": "48c433ff6d02f9af85bd64a6fd74d1231a962cd113f092b6bba06c8623a5919b"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4064840,
+          "sha256": "f12e1a9ad27cac155e27655fe326589edb4a7ba7b01303af72ee6897bb3e1319"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2388407,
+          "sha256": "cec1df08b9c3c7c3c2a132a1ae2fda9beb9b62ca7a8a767ab99b193f52fd7caf"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2472521,
+          "sha256": "69a5c992b4929bb74407fc0540eb1b10aa9a92f2eb735f0e2aa190720f59a7e7"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 11548,
+          "sha256": "141391fda6b875aa7711bb34abadaade255762f98ff837844e86d3779d1e367f"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-left-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T13-43-58Z-3B1C2A/1a01c43a402a4835.zip",
+      "archiveSHA256": "b99577741bbb4e81ee44b51c2589acba6600332b8f3c2f43a2d706825693664c",
+      "archiveBytes": 2248016
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T13-59-38Z-D85628",
+      "snapshotSHA256": "9041a0407fc5717b60b804ec703418717f5d0bb1dca35ae83c1d828ee71fe7fc",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 1787644,
+          "sha256": "489b293a12a0ca103503bd865fb545bc5fcc4aedf070d27160016f3d464cacf4"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 3045509,
+          "sha256": "0664f3f0ea1c1a959f7f18c75b804648e0de667ada95038171a8fa05aeca2ce5"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 1786472,
+          "sha256": "623265631fd70e3c40898edd2297e081fdc818ef21517f3eb56f264f44dfe76d"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 1849715,
+          "sha256": "20d83eb704402fa7f466c9a488b98932f42a859090aa4e310702827bc8b1ec45"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 8151,
+          "sha256": "c6aeaab469064ac69f6cdaff6faf0930399e51c2603c1f4786b1f0d9446f96eb"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-left-test-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T13-59-38Z-D85628/9041a0407fc5717b.zip",
+      "archiveSHA256": "3945dbf47e47f4686ebbb7e35dbfebab77c1caa844cc2dcc9f55b67f0c99ff38",
+      "archiveBytes": 1690607
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T14-07-24Z-796E5A",
+      "snapshotSHA256": "4ea5676119c1ab7b6e8157c51d33efbf50d3b15d7e35a3d9a39ca5578f029a75",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2627438,
+          "sha256": "7517218f3a21023308dc4a263d4955fde83d7c2abaac5ec0821d5f2a60940ce0"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4476611,
+          "sha256": "607df8cca20e745c40ffb16c74d869e1be65e5411128c059e3ed4bc6c92386d2"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2625601,
+          "sha256": "f5dd486919e5c23fbb30785ea346a054e464b50145dcf1d410b69b516a5556cb"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2718747,
+          "sha256": "17d9a2932bc09fdddfc463c8f3453866d41aef52a1154836f90c1e92f4d759ec"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 12358,
+          "sha256": "5ad11f10422b1655aeeb674ee4df9ef3b46c10106bd188bc9821488d8279d22c"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-right-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T14-07-24Z-796E5A/4ea5676119c1ab7b.zip",
+      "archiveSHA256": "bfbfd98791a82d41742003d6a5703735397349b7e7fdb6d5c51ebb5dd0493a10",
+      "archiveBytes": 2494132
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T14-19-19Z-350EEC",
+      "snapshotSHA256": "dfd1f031dcf0c3e0e7ab82638e085375b21bb91c1578098436a04b3ff3750d0d",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 1747546,
+          "sha256": "6c4bb1f15dd984c2ec4f94e4be7d4402ff0792336d241ae353a2978f810b45b9"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 3021748,
+          "sha256": "fe1a3f39e1776ea337fb65bbd9574606bebad56c277f4533853e19dc41a478e7"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 1746367,
+          "sha256": "f37bd756472c42fe5d19d58f3bc0857ffc02063c7f6b7b3a050063105ecf4c28"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 1812190,
+          "sha256": "89d7f2fb96edd2ee0443357151444c99ded3845c842d8ff0c97bf7c87882ed48"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 8269,
+          "sha256": "14e4886f5eeb4476a75ede94b95292afde72c7ea59e9b9bdca1d4e3560cd8a58"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edge-right-test-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T14-19-19Z-350EEC/dfd1f031dcf0c3e0.zip",
+      "archiveSHA256": "1298524b30024d3a188b7e542afbc5d26f5a70e33accad3061764bfd5390b374",
+      "archiveBytes": 1726809
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T14-26-00Z-C536C2",
+      "snapshotSHA256": "1aee45afe316624f37ae123e73054e45a5b7048359b1f612b0a3037d79578a8b",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2436,
+          "sha256": "aa836ad76a723e86371254447a662c7e089e48227e55b31d118487ef273d987e"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 5363338,
+          "sha256": "baf4c9fd189e8d162bd76d68bf96bff2cdfe4048c80f738a9dd1eba3178bf255"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 9038588,
+          "sha256": "ba1f49755278a7f9d06a122b8c103ff02da6f6371d8024d5c0f6cf50782b98b6"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 5360962,
+          "sha256": "ac13bcfae327d8f4389db0a58671913b04c0e0509144c0a6a54ff9a2b9f717c8"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 5547795,
+          "sha256": "8fa257e8b7786f4bc84b9dea11b25c521deea2a1a78ee02b137e75bd6e988a67"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 25123,
+          "sha256": "da2f2c6d4e51e9d456ffc622dd92b73acc34d55aeabb61ba132798ed97551ab2"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/edges-all-compare-20261015"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T14-26-00Z-C536C2/1aee45afe316624f.zip",
+      "archiveSHA256": "4fdb6f254405a02d05ee2381549a1f0ca2b5d9eec255a29ebedfb5a7fca4192b",
+      "archiveBytes": 5015795
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T15-22-22Z-4D0DB7",
+      "snapshotSHA256": "5d4d8c7e770533332a7aedf4697376ccce5897743d9902026bf8620d5b8ba9e8",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 2806,
+          "sha256": "5b46c43e48892524a385b6d61ed6314e94d4fb201958c8d3a2792a65651debe5"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 6025641,
+          "sha256": "d55c103104b03a5434f209419a0220c095b46dae20b0f3515195f523bb80d584"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 11269419,
+          "sha256": "dd1dfbac76f84e37ef6c09674dcfa29b4aba7b12681b9e53d65c3b0ae96b105f"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 6019935,
+          "sha256": "18d28664344dfe92726b144bec30f1ac34996be9de0ed032ac5d747e382d9b08"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 6300407,
+          "sha256": "9b9d633d0f267220227ef7c4e34e7ac16fc4a0c45fcd99b592353ab645855091"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 29288,
+          "sha256": "feba82df290fede432eb00c41c1d9bea5a0245370861a2ff301532f24fea64e3"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/grid-map-train-20261016/MagAir-2026-10-15T15-22-22Z-4D0DB7"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T15-22-22Z-4D0DB7/5d4d8c7e77053333.zip",
+      "archiveSHA256": "4eed007978883f05276d6ba777fe4452564c79c95acc2090488d1fe72c2861fa",
+      "archiveBytes": 6959181
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T16-28-30Z-C9EC2B",
+      "snapshotSHA256": "b08ba04e14a70aa40836c366f9116a4b09211ddea9d80e8f3ad2f84dd2d8c89c",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 3204,
+          "sha256": "3f984f1c13e1d1738f530d37158ea501fcfc19c46b26bf0d617a34ff3b687631"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3644181,
+          "sha256": "81b193cfc3108de95c4e8a93a01d702355fa57a8ac0a2de8b1097b5996a3b17b"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 6365876,
+          "sha256": "15c9a838487c017c6ec1478d563d77032b5bb012276cee65210efe3a24924d9e"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3641385,
+          "sha256": "27e5fc98a71a97c0a8a5bc7d0dd9099bb701e1182266ec1d27772711ae1244cb"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3781872,
+          "sha256": "c101ba615724d6baaeac1a41d0b876f62c94c8c5a8bc0d7c9fc0399f77c4bc56"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 28509,
+          "sha256": "bc05d513826e76592cb33645383489e364bb6b679bc6d4baaea9603cf78c0727"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/grid-map-test-20261016/MagAir-2026-10-15T16-28-30Z-C9EC2B"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T16-28-30Z-C9EC2B/b08ba04e14a70aa4.zip",
+      "archiveSHA256": "cbd6c0d7e03fdc1f6cf5c2e16f33adde5d7cb292049b85ae2e2266470b33c541",
+      "archiveBytes": 3638110
+    },
+    {
+      "sessionID": "MagAir-2026-10-15T16-44-07Z-D6D4DC",
+      "snapshotSHA256": "9a3c3d54cc125e48f357c972f55b4862395f2e3e06b8c74b3f1a6c3c436d352d",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 3204,
+          "sha256": "3f984f1c13e1d1738f530d37158ea501fcfc19c46b26bf0d617a34ff3b687631"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3730905,
+          "sha256": "65bf67272dc42fb37fd3ab26bedb24541340714ea5c174bbbec6e38cc54ef130"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 6335480,
+          "sha256": "e0d1954d0ed61be501d3a67cd0d8f8532dfb7afdc750b063982eba090dddd110"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3728278,
+          "sha256": "c19b48b753250f71323b10ee1ec721bc939c2c5c30b336fbc58f557401e023db"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3859662,
+          "sha256": "e31dbe12c69fffd43a1f321e5fabc35d6f79e5eb51059000ad1f4f8f241f23bb"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 12755,
+          "sha256": "267f4f478a3ac8cec617660182bdbda0a07f0a27437428f40d7864804f1ba52c"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 383,
+          "sha256": "680743026a86a160908243f3757a4233b543dd17ec54ae78bbbfa901215c1909"
+        }
+      ],
+      "sources": [
+        "demo/data/grid-horizontal-20261016/MagAir-2026-10-15T16-44-07Z-D6D4DC"
+      ],
+      "protocol": "historical_demo",
+      "campaignID": null,
+      "archive": "raw/MagAir-2026-10-15T16-44-07Z-D6D4DC/9a3c3d54cc125e48.zip",
+      "archiveSHA256": "805a9e88a47df55afc515bea4bf92a988635e8b3e5eea348c1256b744f85c1f8",
+      "archiveBytes": 3469160
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "snapshotSHA256": "d90e3bad121676f085c0656c52df3b97b269e4159c1f6b5a94f98a885259d13c",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3803645,
+          "sha256": "f31c528da6ffffcb3e2f21bc5f30bfdf9e66da052d93d7d7c301e8f354b2d7e0"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 6958520,
+          "sha256": "0c245f611d0461be1859bf5e962eae0f3324ae3858b4877217d2099a8c6d99e3"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3782506,
+          "sha256": "1a360eea24dd73b11ae50bd2ec95065d57bee0fc971243701e5e54521dcf5552"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3938160,
+          "sha256": "934128aca4504e43006a38e39d607adbcbb5f2bc7da8ecbc14c9aa070c990c9a"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40535,
+          "sha256": "71ee9e3f238ebb4475fcff6cbbc88bc8f14a8698b073204ea3dc75d2891d5e95"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T19-40-44Z-EF73B8",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T19-40-44Z-EF73B8"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T19-40-44Z-EF73B8/d90e3bad121676f0.zip",
+      "archiveSHA256": "72bba7f81d2ebad18d43715c20b5f83ab9d6df83655d1237ecce8bdec4638e6e",
+      "archiveBytes": 3987086
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "snapshotSHA256": "e5a004234162ac1c25bd84e2eaff4918eb2ee8f42bc71fd3c95b8b47cb541790",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3205224,
+          "sha256": "e3c262c905924e6c329791e946f41083e0aac1839bdf40f423f4e82aba93304c"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5674421,
+          "sha256": "f625f0ffe1c47117b7baef7656c2ae884ef22214300f9698298e743f215b22b1"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3190899,
+          "sha256": "59650422c92534a1283ac410059c6b1fe13836e21e5af6e0364bd37f71e02bb0"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3309310,
+          "sha256": "74d6462b3042f728c15007a3c964e3a2e4900c941d1bc77023419c844e32edf4"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40960,
+          "sha256": "4880d6b892273f42d3df37b78bdceb31e09dd8c78f1895abe120d4bd1275b5fc"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-04-37Z-28BE88",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-04-37Z-28BE88"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-04-37Z-28BE88/e5a004234162ac1c.zip",
+      "archiveSHA256": "9c3fb316e5cb5e15177ad66c98559ca8e9b8a1e6562d8762b09a0616a7527a08",
+      "archiveBytes": 3156448
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "snapshotSHA256": "6a41faf1d0918abdf09d785ced91f5f1ac52e4502b0d7b4a1897c4ae7235f8e0",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3192472,
+          "sha256": "f6e55eab6108334950d45f3104fa5bf66cad8440cbf6e81a8e2814016ce9619e"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5543682,
+          "sha256": "194a5489c6b11feef8ce78d8dbe7eb81bc56155991ee0378672e7b8b733b2a4b"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3178334,
+          "sha256": "cf456f58a6a38b495dc17bf4fa50f9c64756663b591e1f572a9688276b03b5b5"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3289710,
+          "sha256": "03bdf2d030144de6a172460884a8bf91ab067258898b3eea74ad9272b80f2976"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 44393,
+          "sha256": "ba1109b7cd8e909d1c0bee2154d95541f6ee9328a0ca4f9aae152bacbba303c1"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-10-36Z-2EDAFF",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-10-36Z-2EDAFF"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-10-36Z-2EDAFF/6a41faf1d0918abd.zip",
+      "archiveSHA256": "3d8efa33a188d1006663e30c77fbb8219a79007dfb2a5ef70934909051ad2cb9",
+      "archiveBytes": 3019953
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "snapshotSHA256": "3913d44fa905cde69d1b86ab15de3af35686ba352e36f3ed6c01191eea281310",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2955927,
+          "sha256": "35a7e657b3a73c80ed5cd9fdde88a1bf36c3e9df94f9279a0c5185b46a24fcc0"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5139944,
+          "sha256": "34fe97ba37b492a770d193a7ce81a8cc0d7426122191b1300d7dba14144c1456"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2943911,
+          "sha256": "fe65119a4e6a252632cc6bbfc01148eea708464b29f8e5cca8c838216a0cf112"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3047054,
+          "sha256": "7b6ab6cf9c1e786c9db017b0f3a6683eda001be5b50b38ffafc70d9b2c60c45f"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40653,
+          "sha256": "bee96fae60c18108d66019ceb023b2e165f5a7eaf4b877539d604028bef99568"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-16-18Z-55F62B",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-16-18Z-55F62B"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-16-18Z-55F62B/3913d44fa905cde6.zip",
+      "archiveSHA256": "b7b0a0744a9a525425fbb3de769e88e779a0b1b727804226fca74736d065373c",
+      "archiveBytes": 2805619
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "snapshotSHA256": "7bb8f0afc7c3d1673879a703d67823e21d1d4112535d288b4fdbc17ab3e7bc1d",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2768341,
+          "sha256": "49676f654fa9e33537933f54c07ec14cb8c482581cdb3d385f18a5920455a46f"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4729422,
+          "sha256": "4b9a60d03c10c341a6d1245c91af16fbb22dae30291f0abd2062ce5c7a013147"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2757797,
+          "sha256": "2d2f031019535ad0095b2205d152581a1619fffab28688b29cee197fbfb0c744"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2847607,
+          "sha256": "81004b00f339a903a546748273966b3dab5b0e9f0898128a2d1082e3e1fd801c"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40940,
+          "sha256": "5987289ac2ab7310e9029040b60d432e77614d510d989e4ae8b2baf92f1a2ca2"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-21-36Z-DE4A90",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-21-36Z-DE4A90"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-21-36Z-DE4A90/7bb8f0afc7c3d167.zip",
+      "archiveSHA256": "e406f77552a4b9aab14e8b8a82d6eba7eaebd29d0efea2eeaef082928b8ef11c",
+      "archiveBytes": 2528019
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "snapshotSHA256": "67b22900ad2622fad88b9de83cbf4266f6aaea9dec1fb100d50ab721c7dcc3e2",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2852600,
+          "sha256": "bbfe3130f121231e13464dba54bb951e7100b382d5079105942151393b0c3cb2"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4909335,
+          "sha256": "3310eec592662d917563789480c212a8e35d64e5c04d0a8624438835384e5aad"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2840338,
+          "sha256": "4fd19d59877f06d1ef99599cb93fe36a06026a9e58ef07d1f55a0d30aa3b3152"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2937360,
+          "sha256": "e3ad2d6fd4a2f39650546a6f2a1f6261ac99cb6551248e6c3c6f11418c11a039"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40991,
+          "sha256": "da37bed57f9d9910c12005164e9fbff8ad73851183084adf36e7097eff9f3cc4"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-26-56Z-3BBF34",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-26-56Z-3BBF34"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-26-56Z-3BBF34/67b22900ad2622fa.zip",
+      "archiveSHA256": "cc833f2df4df0e6300ff4fbd9d5c94999e25bec6b47c60dd7e286192f37ce82e",
+      "archiveBytes": 2649847
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "snapshotSHA256": "fca23b9f4653e1d6e8a7a22c30c7c2e9d7ae5946686e703bc492ffbfb058916d",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2762222,
+          "sha256": "06d86d40ff04e84c9ec462bb91cce93bc834cb7851555e5e5f1a94ef3047bdda"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4715662,
+          "sha256": "035aecf3d5cdfe255896fd270f07d84a19d45a31e396c288a3bc397a0f899302"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2750947,
+          "sha256": "8c7ae2688a93b21ef1bb4d7c586dbb1057d07902783044e8fcd157a9eb9e000a"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2842199,
+          "sha256": "f39d2bee5068df45de52faa77d145051a5044621998089ede54c10c4ae787bb5"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40615,
+          "sha256": "2e15c921cf6e20d3cf251f294b39d600782c823a7f5492d2b2077cd8822f199f"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-31-55Z-6DADF9",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-31-55Z-6DADF9"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-31-55Z-6DADF9/fca23b9f4653e1d6.zip",
+      "archiveSHA256": "d829e700a8ea1e67704ef09dd149697db37c6f383c8f1098312bedb1c1c88386",
+      "archiveBytes": 2523117
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "snapshotSHA256": "f19977ada7905b7df3e8522cca3041d1418cdd59538292472e1fb234131bce65",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2849157,
+          "sha256": "c13ccf90f73c61a35708502cad37a37e0b66e09c14c181ba3f91ea4c370a7667"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4902397,
+          "sha256": "37dd4388bc97d68e77fef8704561a1fff84ff744f32b37c23a5d93ee3d465acf"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2837723,
+          "sha256": "20b7be82fb99cd3063729e615c24a159619086b45b347a9965e3728b95af3573"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2934164,
+          "sha256": "746e5eb103b53bc32e8da735706339d77376b23341df67b7761e93e7f0aff060"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 41000,
+          "sha256": "3800b52351214351fa2cce934617623653fd6071323ca35996c0289322369cd9"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-36-52Z-2ADB59",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-36-52Z-2ADB59"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-36-52Z-2ADB59/f19977ada7905b7d.zip",
+      "archiveSHA256": "0e53748ad05b8719c3361673ca7a7baf01ba685f0dadfb5163c6a9d879e9b084",
+      "archiveBytes": 2641874
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-51-27Z-543987",
+      "snapshotSHA256": "ec35fa79175e2b40d9cdc7c75e949b8d408b0b19daa915ba06be069e6dafe3e1",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3016968,
+          "sha256": "9bbf92681391013dc9a4f3d1effaf6c2f0381e2db3370105948e95c9c11a7c59"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5210260,
+          "sha256": "d39efe1cd4e82329d92d830722f3bdde619d8ffb642a7dd4c962acbd4f84dd3d"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3004624,
+          "sha256": "d666d306442a33f5c6ec8e591b280a696d6554f4d3869e00372d8c969a404fa8"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3107759,
+          "sha256": "494353947728a9432188f56f618bcb5622763f663dc4c8e8d3fb1df68fed44de"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 42679,
+          "sha256": "ed905a40cb7b32698efd90d2ea22d552f827266c7f07e11d236521d2aebb7a40"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-51-27Z-543987",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-51-27Z-543987"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-51-27Z-543987/ec35fa79175e2b40.zip",
+      "archiveSHA256": "dd0011edbabb3f0f4d4ea5a6e0473109b50eae9006eb3f5a31b0857eed172479",
+      "archiveBytes": 2816533
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "snapshotSHA256": "7b4c72bee131d4af16c401601146c93313ce736e3e126fb4da9ec9a3b5f97d92",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3167182,
+          "sha256": "fbcb033e82da02ac0367c266cd54dbc792f9fd688c339943b5f57b67ee3b8d3d"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5486052,
+          "sha256": "e2ef1b3293a1461eab74d32dd4093e4abc453395581ed8bbf960278e1fb694df"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3154344,
+          "sha256": "d6e36d73b1c35c41645219d94586e0e8c7bca2f91dfa9de8f24fe949a1efdcca"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3263616,
+          "sha256": "a6cfd9b327fd923b7d9a2e7f115a9d554788541d0de194693d387c85664b4ca9"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 44281,
+          "sha256": "149a48e78aba81192c09b1516540bec293f2a713e51a122ba25648514264b935"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-56-46Z-0A3875",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T20-56-46Z-0A3875"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T20-56-46Z-0A3875/7b4c72bee131d4af.zip",
+      "archiveSHA256": "89210080af3784ea0407ffb308f05b026558df02ddaf5b8755ca605f3d1ae515",
+      "archiveBytes": 2976370
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "snapshotSHA256": "d3175f4efa25d8d663314d7d2a9ee833c3ca6d8ef9ab4840862c10d7e00edba7",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3098133,
+          "sha256": "71b6571d1ca4680f1bc41efd58c55a72df029a013fc6bbcd2437154b0d88526c"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5366017,
+          "sha256": "c32c999b18da27040784a12ea5ba251b4d9d011d2c1ff2d21b1172992d7803ee"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3084712,
+          "sha256": "80b84a153f10e6cdb9a45fbdb03347c4bc50812ec09ef36701035ddb3c7c63dc"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3191911,
+          "sha256": "3424d5379c8692f9dea71ddcc829ff467e93c12f47c108adacfe959e92614937"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 42898,
+          "sha256": "b62fa70727ba6275c0dcee1a55ef99f514646bac1440a6d98dcd307076b4471f"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-02-22Z-D7B016",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-02-22Z-D7B016"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T21-02-22Z-D7B016/d3175f4efa25d8d6.zip",
+      "archiveSHA256": "ed49850801292001ed1430398160059fe6f450d0a4a4aabb69e6d1eeb9226f0b",
+      "archiveBytes": 2912314
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "snapshotSHA256": "1f04defc7df9c6969ee65d541c4b36227eff23af5a853e389bc9acc564c396cb",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 3309758,
+          "sha256": "28fb7320c460fbc36f822f669760a3a1087fa1621796755323067488a216fac6"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5830353,
+          "sha256": "ff70bf1e007567ad35a0ce73e0e21701f948abedb3a8810232d695d56245e139"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 3296125,
+          "sha256": "772fb33b4dbedbead5dc6c2a1c6d8af3b23221dbe074331e7254781e30852140"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3416173,
+          "sha256": "15bb18194aec39fd5102b5ad33bd5271ef9bd31f16694476234bf9123f103bde"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 42868,
+          "sha256": "3590579860a6b3299bab52fd53bedfa7bcf2d94b5c9f75a82bc9e5a5cb87e56f"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-07-51Z-A3405A",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-07-51Z-A3405A"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T21-07-51Z-A3405A/1f04defc7df9c696.zip",
+      "archiveSHA256": "e173ae3e9826e4e9ddc9b456c61c9bbe9b4b1ee518a4fc8a08bb574e71664237",
+      "archiveBytes": 3218033
+    },
+    {
+      "sessionID": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "snapshotSHA256": "147ee1e85625ec5b6dfe5393675ab2e0ab34c2487e27dceccd8ca069066da702",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 5694,
+          "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2913237,
+          "sha256": "5a47e50bc5c043f6f0ba85a13990bf5e703fcde4f51f939f296ca544e33bbba8"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 5022231,
+          "sha256": "1bf4da156951bcc1e8d3efdd605aee88ad441c40666b2fe50d53248950ddf93f"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2900926,
+          "sha256": "8cdd2d59e7a7834df734bbc17b1f3b15f65db5f44e569ed3f60edd11346daccf"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 3000248,
+          "sha256": "3cf8dbd4734ffc6f230ba6486fa42708ebec47951871a20105f3d7483cbad959"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 40730,
+          "sha256": "c1d846c6b5d53baf33b8487e90acd21368dfc508539a1daed53fa3aedc03e2ac"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 455,
+          "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd"
+        }
+      ],
+      "sources": [
+        "demo/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-14-06Z-65D27E",
+        "research/data/printed-grid-20261123-pass1/MagAir-2026-11-22T21-14-06Z-65D27E"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-22T21-14-06Z-65D27E/147ee1e85625ec5b.zip",
+      "archiveSHA256": "552181cdbba607c9ff53950938dbb92e58f9ff93b0a5f2de5e27d3f0257e86f1",
+      "archiveBytes": 2707105
+    }
+  ]
+}
