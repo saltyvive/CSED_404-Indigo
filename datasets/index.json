@@ -1642,6 +1642,56 @@
       "archive": "raw/MagAir-2026-11-23T20-17-13Z-C6602A/dc69f9f2c823c805.zip",
       "archiveSHA256": "e5ffac89cec350afd85faae8fb0e3ce2a2c73a4bca03a94f71e0efcc5fe7c129",
       "archiveBytes": 915923
+    },
+    {
+      "sessionID": "MagAir-2026-11-23T20-24-53Z-F74FB4",
+      "snapshotSHA256": "a65cdbbe331e7c569421917e587b95d4fe0222725f17e954ec6f8adff80da066",
+      "status": "completed",
+      "files": [
+        {
+          "file": "README.txt",
+          "bytes": 6806,
+          "sha256": "5f208f1fd9179608ed58559ca85a584baf1e4f527e71da1b1526f186871ec0f0"
+        },
+        {
+          "file": "accelerometer.csv",
+          "bytes": 2500747,
+          "sha256": "7e045dec7e832553d4d133505dfa54e8d4c08253e7bdf9fbf6659d24361d76a8"
+        },
+        {
+          "file": "device_motion.csv",
+          "bytes": 4210205,
+          "sha256": "f25974cfb2d48fb3b4993a54f4dcea3652689124a0fd0eb5a5913de402edf78e"
+        },
+        {
+          "file": "gyroscope.csv",
+          "bytes": 2490458,
+          "sha256": "cb8f3e763b28e79d15263dc2960032854cc489987dcc85f4e3fc26c02c96716c"
+        },
+        {
+          "file": "magnetometer.csv",
+          "bytes": 2567624,
+          "sha256": "db741bc923fa971fcadf253bf0f1bdec5b3b35b5cac68cc641df0098b7c5d1de"
+        },
+        {
+          "file": "manifest.json",
+          "bytes": 69210,
+          "sha256": "2f25867844b6e6b82321ef3f927f5ab824a1ffe0cb1dd16bed749564a0808a5a"
+        },
+        {
+          "file": "pencil_events.csv",
+          "bytes": 494,
+          "sha256": "70c6e3eabadee3c7b1db96cf7b0ae368f4c4da8686badf77de941720d8dab03b"
+        }
+      ],
+      "sources": [
+        "research/data/printed-grid-20261124-pass2/MagAir-2026-11-23T20-24-53Z-F74FB4"
+      ],
+      "protocol": "sweetspot_21x13_v1",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "archive": "raw/MagAir-2026-11-23T20-24-53Z-F74FB4/a65cdbbe331e7c56.zip",
+      "archiveSHA256": "69b012d400ec4503f09b375db4c08b2d72a15e2a3c4e130515575130e00b15c2",
+      "archiveBytes": 2198435
     }
   ]
 }
