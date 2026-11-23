@@ -42,6 +42,9 @@ final class Collector: ObservableObject {
         guard context.campaignID == printedCampaign.id, context.pose == printedCampaign.pose else {
             return "현재 배치·자세와 평가 모델이 다릅니다. 이 배치의 이전 회차 모델을 먼저 적용하세요."
         }
+        if batch.pass == 3 && gridLiveTester.knnModelSHA256 == nil {
+            return "3회차 평가를 위한 B 모델을 불러오지 못했습니다. A/B 모델 업데이트를 확인하세요."
+        }
         return nil
     }
     var nextPrintedBatch: PrintedGridBatch {
@@ -363,6 +366,7 @@ final class Collector: ObservableObject {
                 session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
                 if printedBatch.pass > 1 {
                     session.printedGrid?.evaluationModelSHA256 = bundledGridHash
+                    session.printedGrid?.evaluationKNNModelSHA256 = gridLiveTester.knnModelSHA256
                     session.printedGrid?.evaluationTrainingPasses = gridLiveTester.model?.printedGridContext?.passes
                 }
             }

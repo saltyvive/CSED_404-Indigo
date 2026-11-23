@@ -20,7 +20,7 @@ struct MagAirApp: App {
                     collector.selectPrinted(collector.nextPrintedBatch)
                     selectedTab = "printed"
                 }
-                    .tabItem { Label("273점 실시간 테스트", systemImage: "square.grid.3x3") }.tag("gridLive")
+                    .tabItem { Label("A/B 실시간 테스트", systemImage: "square.grid.3x3") }.tag("gridLive")
             }
                 .background(PencilEventBridge(onEvent: collector.receivePencil))
                 .preferredColorScheme(.light)

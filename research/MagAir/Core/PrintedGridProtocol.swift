@@ -156,6 +156,7 @@ struct PrintedGridMetadata: Codable {
     var timingRevision: String? = nil
     var autoAdvanceEnabledAtStart: Bool? = nil
     var evaluationModelSHA256: String? = nil
+    var evaluationKNNModelSHA256: String? = nil
     var evaluationTrainingPasses: [Int]? = nil
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."

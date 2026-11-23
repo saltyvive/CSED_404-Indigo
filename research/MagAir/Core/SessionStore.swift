@@ -71,6 +71,7 @@ final class SessionStore {
         scheduled_static_target_unverified is an instructed target, NOT sensed arrival/contact/stability.
         Pause/cancel excludes the current attempt; background and first hold always require a person.
         evaluationModelSHA256 / evaluationTrainingPasses freeze the pre-update model used for pass 2 or 3.
+        App 1.17 also records evaluationKNNModelSHA256 for the frozen B model before pass 3.
         Printed grid: manifest.printedGrid identifies sweetspot_21x13_v1 and a unique campaignID.
         All 39 batches (13 rows x 3 passes) are ONE training campaign: 273 targets x 3 independent placements.
         Each batch has one row: before background + 21 holds + after background; all 23 must complete.

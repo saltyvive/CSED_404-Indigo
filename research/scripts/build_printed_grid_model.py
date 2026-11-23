@@ -144,6 +144,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                 setup=m['setup'], pose=pose, poseAnnotation=pose_annotation,
                 timingRevision=timing, effectiveTimingRevision=effective_timing, timingAnnotation=timing_annotation,
                 evaluationModelSHA256=meta.get('evaluationModelSHA256'),
+                evaluationKNNModelSHA256=meta.get('evaluationKNNModelSHA256'),
                 evaluationTrainingPasses=meta.get('evaluationTrainingPasses'),
                 points=points, before=before, after=after,
                 driftUT=math.dist(before['raw'], after['raw']), motionEvents=events,

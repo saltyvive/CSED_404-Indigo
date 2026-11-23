@@ -1,27 +1,45 @@
 import SwiftUI
 import Combine
+import CryptoKit
+
+enum GridMappingMethod: String, CaseIterable, Identifiable {
+    case bilinear = "A · 기존 보간"
+    case neighbors = "B · k-NN 회귀"
+    var id: String { rawValue }
+}
 
 final class GridLiveTester: ObservableObject {
     @Published var model: GridLiveModel?
+    @Published var knnModel: KNNLiveModel?
+    @Published var selectedMethod: GridMappingMethod = .bilinear
     @Published var baseline: [Double]?
     @Published var calibrating = false
     @Published var remaining = 5.0
     @Published var status = "펜을 멀리 두고 배경을 맞추세요"
-    @Published var estimate: GridEstimate?
+    @Published private var gridEstimate: GridEstimate?
+    @Published private var knnEstimate: GridEstimate?
+    var estimate: GridEstimate? { selectedMethod == .bilinear ? gridEstimate : knnEstimate }
     @Published var exportURL: URL?
     @Published var logStatus = "배경을 맞추면 테스트 기록이 자동 저장됩니다"
     @Published var baselineAge = 0.0
     @Published var guide: GridGuide = .free
-    @Published var trail: [GridTrailPoint] = []
+    @Published private var gridTrail: [GridTrailPoint] = []
+    @Published private var knnTrail: [GridTrailPoint] = []
+    var trail: [GridTrailPoint] { selectedMethod == .bilinear ? gridTrail : knnTrail }
     private var lastAcceptedTime: Double?
+    private var lastKNNAcceptedTime: Double?
+    private(set) var knnModelSHA256: String?
+    private var gridModelData: Data?
+    private var knnModelData: Data?
     var calibrationSettle: Double { model?.printedGridContext == nil ? 2 : 3 }
     var calibrationCapture: Double { model?.printedGridContext == nil ? 3 : 10 }
     var calibrationTotal: Double { calibrationSettle + calibrationCapture }
 
-    func clearTrail() { trail = []; lastAcceptedTime = nil }
+    func clearTrail() { gridTrail = []; knnTrail = []; lastAcceptedTime = nil; lastKNNAcceptedTime = nil }
 
     var active = false
     private var projector: GridProjector?
+    private var knnProjector: KNNProjector?
     private var calibrationStart = 0.0
     private var calibrationSamples: [(Double, [Double])] = []
     private var baselineTime = 0.0
@@ -38,9 +56,25 @@ final class GridLiveTester: ObservableObject {
             guard let url = Bundle.main.url(forResource: "grid_model", withExtension: "json") else {
                 status = "격자 학습 모델을 찾을 수 없습니다"; return
             }
-            let loaded = try JSONDecoder().decode(GridLiveModel.self, from: Data(contentsOf: url))
+            let data = try Data(contentsOf: url)
+            let loaded = try JSONDecoder().decode(GridLiveModel.self, from: data)
             guard let projector = GridProjector(model: loaded) else { status = "격자 학습 모델 형식 오류"; return }
             self.model = loaded; self.projector = projector
+            gridModelData = data
+            if let knnURL = Bundle.main.url(forResource: "knn_model", withExtension: "json") {
+                let knnData = try Data(contentsOf: knnURL)
+                let neighbors = try JSONDecoder().decode(KNNLiveModel.self, from: knnData)
+                guard let knnProjector = KNNProjector(model: neighbors),
+                      neighbors.printedGridContext.campaignID == loaded.printedGridContext?.campaignID,
+                      neighbors.printedGridContext.passes == loaded.printedGridContext?.passes,
+                      neighbors.printedGridContext.pose == loaded.printedGridContext?.pose,
+                      Set(neighbors.sourceSessions) == Set(loaded.sourceSessions ?? []),
+                      Set(neighbors.trainingTrialIDs) == Set(loaded.trainingTrialIDs) else {
+                    status = "B 모델의 학습 조건이 A와 다릅니다"; return
+                }
+                self.knnModel = neighbors; self.knnProjector = knnProjector; knnModelData = knnData
+                knnModelSHA256 = SHA256.hash(data: knnData).map { String(format: "%02x", $0) }.joined()
+            }
         } catch { status = "모델 읽기 실패: \(error.localizedDescription)" }
     }
 
@@ -48,7 +82,7 @@ final class GridLiveTester: ObservableObject {
         guard active, model != nil else { return }
         closeLog(reason: "background_recalibration")
         clearTrail()
-        baseline = nil; estimate = nil; recent = []; calibrationSamples = []; exportURL = nil
+        baseline = nil; gridEstimate = nil; knnEstimate = nil; recent = []; calibrationSamples = []; exportURL = nil
         calibrationStart = ProcessInfo.processInfo.systemUptime
         calibrating = true; remaining = calibrationTotal; baselineAge = 0
         status = "준비 \(Int(calibrationSettle))초 · 펜슬과 이동 홀더를 충분히 멀리 치우세요"
@@ -56,7 +90,7 @@ final class GridLiveTester: ObservableObject {
 
     func invalidate(_ message: String) {
         clearTrail()
-        baseline = nil; estimate = nil; calibrating = false; recent = []
+        baseline = nil; gridEstimate = nil; knnEstimate = nil; calibrating = false; recent = []
         closeLog(reason: message); status = message
     }
 
@@ -104,8 +138,9 @@ final class GridLiveTester: ObservableObject {
         guard timestamp - lastDisplay >= 0.09, recent.count >= 3 else { return }
         lastDisplay = timestamp; baselineAge = max(0, timestamp - baselineTime)
         let filtered = (0..<3).map { axis in medianValue(recent.map { $0.1[axis] }) - baseline[axis] }
-        guard let result = projector.project(filtered) else { estimate = nil; return }
-        estimate = result; status = result.reason
+        guard let result = projector.project(filtered) else { gridEstimate = nil; knnEstimate = nil; return }
+        let neighborResult = knnProjector?.project(filtered)
+        gridEstimate = result; knnEstimate = neighborResult; status = estimate?.reason ?? result.reason
         var columns = [number(timestamp), number(Date().timeIntervalSince1970)]
         columns += field.map(number)
         columns += baseline.map(number)
@@ -113,12 +148,23 @@ final class GridLiveTester: ObservableObject {
         columns += [number(result.point.x), number(result.point.y), number(result.residual)]
         columns += [number(result.limit), number(result.signal), result.accepted ? "1" : "0", result.showCandidate ? "1" : "0"]
         columns += [result.ambiguous ? "1" : "0", number(baselineAge), number(result.otherLocationResidual), guide.rawValue]
+        if let b = neighborResult {
+            columns += [number(b.point.x),number(b.point.y),number(b.residual),number(b.limit),number(b.signal),
+                        b.accepted ? "1" : "0",b.showCandidate ? "1" : "0",b.ambiguous ? "1" : "0",number(b.otherLocationResidual)]
+        } else { columns += Array(repeating: "", count: 9) }
+        columns.append(selectedMethod.rawValue)
         if result.accepted {
             let begins = lastAcceptedTime.map { timestamp-$0 > 0.3 } ?? true
-            trail.append(GridTrailPoint(time: timestamp, point: result.point, beginsSegment: begins))
+            gridTrail.append(GridTrailPoint(time: timestamp, point: result.point, beginsSegment: begins))
             lastAcceptedTime = timestamp
         } else { lastAcceptedTime = nil }
-        trail.removeAll { timestamp-$0.time > 8 }
+        gridTrail.removeAll { timestamp-$0.time > 8 }
+        if let b = neighborResult, b.accepted {
+            let begins = lastKNNAcceptedTime.map { timestamp-$0 > 0.3 } ?? true
+            knnTrail.append(GridTrailPoint(time: timestamp, point: b.point, beginsSegment: begins))
+            lastKNNAcceptedTime = timestamp
+        } else { lastKNNAcceptedTime = nil }
+        knnTrail.removeAll { timestamp-$0.time > 8 }
         if let handle {
             let data = Data(csvRow(columns).utf8)
             let sync = timestamp - lastSync >= 2
@@ -139,15 +185,22 @@ final class GridLiveTester: ObservableObject {
             let header = ["timestamp_s", "callback_unix_s", "bx_uT", "by_uT", "bz_uT", "baseline_x_uT", "baseline_y_uT", "baseline_z_uT",
                           "filtered_delta_x_uT", "filtered_delta_y_uT", "filtered_delta_z_uT", "estimated_x", "estimated_y",
                           "residual_uT", "residual_limit_uT", "signal_uT", "accepted", "candidate_shown", "ambiguous", "baseline_age_s",
-                          "distant_location_residual_uT", "display_guide_only"]
+                          "distant_location_residual_uT", "display_guide_only",
+                          "knn_estimated_x", "knn_estimated_y", "knn_residual_uT", "knn_residual_limit_uT", "knn_signal_uT",
+                          "knn_accepted", "knn_candidate_shown", "knn_ambiguous", "knn_distant_location_residual_uT", "viewed_model"]
             try Data(csvRow(header).utf8).write(to: url, options: .atomic)
-            if let model {
-                try JSONEncoder().encode(model).write(to: url.deletingPathExtension().appendingPathExtension("model.json"), options: .atomic)
+            if let gridModelData {
+                try gridModelData.write(to: url.deletingPathExtension().appendingPathExtension("model.json"), options: .atomic)
+            }
+            if let knnModelData {
+                try knnModelData.write(to: url.deletingPathExtension().appendingPathExtension("knn-model.json"), options: .atomic)
             }
             let metadata: [String: Any] = ["baselineUT": baseline, "baselineNoiseUT": noise, "baselineTimestamp": baselineTime,
                                          "calibrationSamples": calibrationSamples.map { [$0.0] + $0.1 },
                                          "filter": "causal component median, 0.12 seconds; no coordinate smoothing or prediction",
-                                         "scope": "Two-dimensional search over the entire grid surface. display_guide_only never constrains prediction and is not timestamped ground truth. No Pencil IMU or measured contact."]
+                                         "modelASHA256": gridModelData.map { SHA256.hash(data: $0).map { String(format: "%02x", $0) }.joined() } ?? "",
+                                         "modelBSHA256": knnModelSHA256 ?? "",
+                                         "scope": "A and B run on identical filtered magnetic input and the same live baseline. Unprefixed estimate columns are A; knn_ columns are B. viewed_model only selects display. Guide is never timestamped ground truth. No Pencil IMU or measured contact."]
             try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys])
                 .write(to: url.deletingPathExtension().appendingPathExtension("metadata.json"), options: .atomic)
             handle = try FileHandle(forWritingTo: url); try handle?.seekToEnd()
@@ -209,10 +262,18 @@ struct GridLiveView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(printed == nil ? "격자 내부 실시간 테스트" : "스윗 스팟 · 273점 실시간 테스트").font(.largeTitle.bold())
+                    Picker("위치 추정 모델", selection: $tester.selectedMethod) {
+                        Text(GridMappingMethod.bilinear.rawValue).tag(GridMappingMethod.bilinear)
+                        Text(GridMappingMethod.neighbors.rawValue).tag(GridMappingMethod.neighbors).disabled(tester.knnModel == nil)
+                    }.pickerStyle(.segmented)
+                    Text(tester.selectedMethod == .bilinear ? "A: 각 위치의 반복값을 대표값으로 합친 보간 지도" : "B: 같은 위치의 여러 자력계 패턴을 유지하는 k-NN 회귀")
+                        .font(.headline)
+                    Text("배경은 한 번만 맞추면 됩니다. A/B는 같은 입력으로 함께 계산되며, 전환하면 각 모델의 최근 8초 궤적을 볼 수 있습니다.")
+                        .font(.subheadline).foregroundStyle(.secondary)
                     if let printed {
                         Text("21열 × 13행 · 50 × 30 mm · 사용 회차 \(printed.passes.map(String.init).joined(separator: ", "))")
                             .font(.headline).foregroundStyle(.teal)
-                        Text(printed.passes.count == 1 ? "첫 회차의 273점을 모두 사용한 임시 지도입니다. 점 사이는 보간으로 추정합니다. 반복 측정과 별도 정확도 검증은 아직 하지 않았습니다." : "273개 위치의 반복 측정을 모은 지도입니다. 점 사이 위치는 보간으로 추정하며, 별도 자료로 정확도를 검증해야 합니다.")
+                        Text(printed.passes.count == 1 ? "첫 회차 자료로 만든 초기 모델입니다." : "1+2회차의 546번 배치를 사용합니다. 현재 두 모델의 독립 평가는 3회차 수집 후 진행합니다.")
                             .foregroundStyle(.secondary)
                     } else {
                         Text("\(gridColumns)×\(gridRows) 정지점 지도입니다. 점 사이 위치는 보간으로 추정합니다.").foregroundStyle(.secondary)
@@ -270,8 +331,8 @@ struct GridLiveView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 10) {
                         if printed != nil {
-                            Text("같은 자세로 2·3회차 · 먼저 평가한 뒤 학습").font(.headline)
-                            Text("중앙·테두리·가로선·세로선·대각선을 천천히 움직여 보세요. 안내선은 추정을 제한하지 않습니다. 2회차를 마치면 먼저 분석을 요청하세요. 평가 결과를 기록한 뒤 1+2회차 모델을 적용하고 3회차를 시작합니다.")
+                            Text("두 모델을 직접 비교한 뒤 3회차 진행").font(.headline)
+                            Text("같은 점에서 자세를 조금 바꿔 보고, 가로·세로·대각선을 따라 움직여 보세요. A/B를 전환해 점프·흔들림·미표시를 비교하세요. 테스트가 괜찮으면 알려 주세요. 3회차는 자동으로 시작하지 않습니다.")
                             Button("273점 수집으로 이동") { collectPrinted() }
                                 .buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
                             if let included = tester.model?.movementIncludedRows, !included.isEmpty {
@@ -288,7 +349,7 @@ struct GridLiveView: View {
                     Text("같은 자세·책상 접촉 조건의 초기 모델입니다. 펜의 기울기·축 회전·접촉 여부는 측정하지 않습니다. 펜을 들어 옮길 때 궤적이 생길 수 있으니 내려놓고 궤적을 지우세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 2차원 지도 1.16")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · A/B 테스트 1.17")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }

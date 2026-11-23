@@ -217,6 +217,26 @@ enum PrintedGridProtocolTests {
             precondition(session.printedGrid?.timingRevision == PrintedGridMetadata.fastTimingRevision)
             print("Real pass 2 row 12 retained with its original 2s+2s timing")
         }
+        if CommandLine.arguments.count > 5 {
+            let root = URL(fileURLWithPath: CommandLine.arguments[5])
+            let timingAnnotations = try JSONDecoder().decode(PrintedTimingAnnotations.self,
+                from: Data(contentsOf: URL(fileURLWithPath: "MagAir/Resources/collection_timing_annotations.json")))
+            var completed = Set<String>()
+            for folder in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) {
+                let url = folder.appendingPathComponent("manifest.json")
+                guard let data = try? Data(contentsOf: url),
+                      let session = try? JSONDecoder().decode(SessionManifest.self, from: data),
+                      session.status == "completed", let meta = session.printedGrid else { continue }
+                precondition(meta.batch.pass == 2 && meta.campaignID == annotation.campaignID)
+                precondition(meta.batch.accepts(session, campaignID: annotation.campaignID, manifestData: data, timingAnnotations: timingAnnotations))
+                precondition(annotations.resolve(meta.pose, campaignID: meta.campaignID, sessionID: session.id) == known)
+                completed.insert(meta.batch.id)
+            }
+            precondition(completed.count == 13)
+            let next = PrintedGridBatch.all.first { $0.pass > 1 && !completed.contains($0.id) }!
+            precondition(next.pass == 3 && next.row == 7 && next.index == 26)
+            print("All 13 real pass-2 rows retained; next batch is 27/39, pass 3 row 7")
+        }
         var sequence = PrintedAutoSequence()
         sequence.begin(isHold: false)
         precondition(!sequence.advance(nextIsHold: true, sensorFresh: true, deviceMoving: false))

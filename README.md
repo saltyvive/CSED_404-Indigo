@@ -20,7 +20,9 @@ iPad 자력계와 Apple Pencil을 이용해 화면 밖 책상 영역에서 입�
 
 **A4 가로 / 실제 크기 100% / 페이지 맞춤·자동 축소 끄기**로 인쇄하세요. 도면에는 스윗 스팟 테두리와 점만 표시합니다. 인쇄 후 직사각형의 가로 50 mm·세로 30 mm와 용지 모서리 기준 오프셋을 실측해 인쇄 배율·위치 오차를 확인합니다. 테두리 치수와 오프셋은 빨간 선의 중심선 및 점 중심을 기준으로 합니다.
 
-앱의 **‘273점 수집’**에서 이 도면에 맞춰 한 행 21점과 앞뒤 배경을 묶어 자동 저장합니다. 첫 회차를 완료했고 같은 자세의 2·3회차를 이어갑니다. [측정 순서와 사용 안내](research/docs/PRINTED_GRID_PROTOCOL.md)를 참고하세요. **1.16.2는 준비 3초 + 정지 2초의 행 안 자동 진행과 안내음**을 제공합니다. [짧은 수집 안내](research/docs/FAST_COLLECTION.md)를 참고하세요. [첫 회차 테스트 안내](research/docs/PRINTED_GRID_PASS1_LIVE.md)에 데이터 점검 결과와 한계를 기록했습니다.
+앱의 **‘273점 수집’**에서 이 도면에 맞춰 한 행 21점과 앞뒤 배경을 묶어 자동 저장합니다. 첫 두 회차를 완료했고 같은 자세의 3회차를 준비합니다. [측정 순서와 사용 안내](research/docs/PRINTED_GRID_PROTOCOL.md)를 참고하세요. **준비 3초 + 정지 2초의 행 안 자동 진행과 안내음**을 제공합니다. [짧은 수집 안내](research/docs/FAST_COLLECTION.md)를 참고하세요. [첫 회차 테스트 안내](research/docs/PRINTED_GRID_PASS1_LIVE.md)에 초기 데이터 점검 결과와 한계를 보존했습니다.
+
+**1.17.0:** 2회차 273점 평가를 완료하고 1+2회차로 만든 보간 모델 A와 반복 패턴 k-NN 모델 B를 함께 적용했습니다. **A/B 실시간 테스트**에서 배경 한 번으로 전환·비교할 수 있습니다. [평가 결과와 모델 해시](research/evaluation/PASS2_RESULTS.md)를 보존했으며, 개인 테스트 후 3회차를 진행합니다. 준비 3초·수집 2초는 유지합니다.
 
 재생성 소스는 [generate_sweet_spot_template.py](output/pdf/generate_sweet_spot_template.py)입니다. `reportlab`이 설치된 Python으로 실행합니다.
 
