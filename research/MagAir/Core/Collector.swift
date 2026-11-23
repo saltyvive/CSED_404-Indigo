@@ -3,6 +3,8 @@ import Combine
 import CoreMotion
 import UIKit
 import AudioToolbox
+import AVFoundation
+import CryptoKit
 
 struct FieldSample: Identifiable {
     var t: Double
@@ -24,6 +26,24 @@ final class Collector: ObservableObject {
     @Published var printedCampaign = PrintedGridCampaign()
     @Published var printedCompleted: [String: String] = [:] // batch ID -> durable session ID
     @Published var printedReady = false
+    @Published var printedSequence = PrintedAutoSequence()
+    private var cuePlayers: [String: AVAudioPlayer] = [:]
+    private let bundledGridHash: String? = {
+        guard let url = Bundle.main.url(forResource: "grid_model", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }()
+    var printedEvaluationBlockReason: String? {
+        guard let batch = printedBatch, batch.pass > 1 else { return nil }
+        guard let context = gridLiveTester.model?.printedGridContext,
+              context.passes.sorted() == Array(1..<batch.pass), bundledGridHash != nil else {
+            return "\(batch.pass)회차 전에 1–\(batch.pass-1)회차로 만든 평가 모델을 적용해야 합니다. 이전 회차 완료 후 분석을 요청해 주세요."
+        }
+        guard context.campaignID == printedCampaign.id, context.pose == printedCampaign.pose else {
+            return "현재 배치·자세와 평가 모델이 다릅니다. 이 배치의 이전 회차 모델을 먼저 적용하세요."
+        }
+        return nil
+    }
     var nextPrintedBatch: PrintedGridBatch {
         PrintedGridBatch.all.first { printedCompleted[$0.id] == nil } ?? PrintedGridBatch.all[0]
     }
@@ -205,6 +225,10 @@ final class Collector: ObservableObject {
                 let moving = sqrt(a.x*a.x + a.y*a.y + a.z*a.z) > 0.03 || sqrt(r.x*r.x + r.y*r.y + r.z*r.z) > 0.05
                 if moving { self.liveTester.deviceMoved(); self.edgeLiveTester.deviceMoved(); self.gridLiveTester.deviceMoved() }
                 if self.deviceMoving != moving { self.deviceMoving = moving }
+                if moving && self.printedSequence.running {
+                    self.abortTrial(reason: "ipad_movement_during_auto_sequence")
+                    self.notice = "iPad 움직임으로 자동 진행을 멈췄습니다. 배치를 확인한 뒤 현재 점부터 다시 시작하세요."
+                }
                 if self.gravity.isEmpty || self.now - self.lastDisplay < 0.03 {
                     self.gravity = [g.x, g.y, g.z]; self.ipadInclinationDegrees = inclination
                 }
@@ -298,10 +322,16 @@ final class Collector: ObservableObject {
         else if trial.spec.kind == .cornersHeight { cue = trial.annotation(at: now).phase }
         else if trial.spec.kind == .edgePose { cue = trial.annotation(at: now).phase }
         else if trial.spec.isManual { cue = "self-paced" }
-        else { cue = "active-\(Int((now - trial.activeStart) / 3))" }
+        else { cue = "active-\(Int((now - trial.activeStart) / (printedBatch == nil ? 3 : 1)))" }
         if cue != lastCue {
             lastCue = cue
-            if soundEnabled { AudioServicesPlaySystemSound(cue == "end" ? 1057 : 1104) }
+            if soundEnabled {
+                if printedBatch != nil {
+                    if cue.hasPrefix("count-") { playPrintedCue("prepare") }
+                    else if cue == "active-0" { playPrintedCue("hold") }
+                    // The move cue is emitted when the next target appears, after delayed samples drain.
+                } else { AudioServicesPlaySystemSound(cue == "end" ? 1057 : 1104) }
+            }
         }
         if trial.spec.isManual && trial.endUptime == nil && now >= trial.plannedEnd {
             abortTrial(reason: "manual_sweep_timeout")
@@ -317,6 +347,7 @@ final class Collector: ObservableObject {
     func beginSession() {
         guard !sessionOpen, !isClosing, setup.confirmed, sensorFresh else { return }
         if printedBatch != nil && (!printedReady || !printedCampaign.pose.readyForCollection) { return }
+        if let reason = printedEvaluationBlockReason { errorMessage = reason; return }
         do {
             var sys = utsname(); uname(&sys)
             let model = withUnsafePointer(to: &sys.machine) { pointer in
@@ -329,6 +360,12 @@ final class Collector: ObservableObject {
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
             if let printedBatch {
                 session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
+                session.printedGrid?.timingRevision = "printed_2s_prepare_2s_hold_v2"
+                session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
+                if printedBatch.pass > 1 {
+                    session.printedGrid?.evaluationModelSHA256 = bundledGridHash
+                    session.printedGrid?.evaluationTrainingPasses = gridLiveTester.model?.printedGridContext?.passes
+                }
             }
             if let latestInclination, now - latestInclination.sensorUptime < 1.5 { session.ipadInclinationAtStart = latestInclination }
             let newStore = try SessionStore(manifest: session)
@@ -371,8 +408,9 @@ final class Collector: ObservableObject {
     func selectPrinted(_ batch: PrintedGridBatch) {
         guard !recording, !isClosing, !sessionOpen, PrintedGridBatch.all.contains(batch) else { return }
         printedBatch = batch; edgeScenario = nil; blockNumber += 1
+        printedSequence.pause()
         setup = printedCampaign.setup; setup.confirmed = printedReady
-        plan = batch.make(block: blockNumber, pose: printedCampaign.pose); planIndex = 0; elapsed = 0
+        plan = batch.make(block: blockNumber, pose: printedCampaign.pose, fast: true); planIndex = 0; elapsed = 0
         selected = .mapBaseline
     }
 
@@ -413,14 +451,32 @@ final class Collector: ObservableObject {
         checkpoint()
     }
 
-    func startTrial() {
+    private func playPrintedCue(_ name: String) {
+        guard soundEnabled else { return }
+        do {
+            if cuePlayers[name] == nil, let url = Bundle.main.url(forResource: name, withExtension: "wav") {
+                cuePlayers[name] = try AVAudioPlayer(contentsOf: url)
+            }
+            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+            cuePlayers[name]?.currentTime = 0
+            cuePlayers[name]?.play()
+        } catch { notice = "안내음 재생 실패 · 화면의 준비/정지 표시를 확인하세요." }
+    }
+
+    func startTrial(automatic: Bool = false) {
         if !sessionOpen { beginSession() }
         guard sessionOpen, sensorFresh, !recording, !isClosing, var spec = currentSpec else { return }
         attemptNumber += 1
         spec.id += "-a\(attemptNumber)"
-        let trial = TrialRecord(spec: spec, startUptime: now)
+        if printedBatch != nil && deviceMoving { printedSequence.pause(); notice = "iPad가 멈춘 뒤 다시 시작하세요."; return }
+        var trial = TrialRecord(spec: spec, startUptime: now, settleSeconds: spec.preparationSeconds ?? 3)
+        if printedBatch != nil {
+            printedSequence.begin(isHold: spec.kind == .mapHold)
+            trial.startTrigger = automatic ? "automatic_next_hold" : "manual"
+        }
         activeTrial = trial; manifest?.trials.append(trial); elapsed = 0
-        waitingForTail = false; lastCue = ""
+        waitingForTail = false; lastCue = automatic ? "count-2" : ""
         checkpoint()
     }
 
@@ -431,10 +487,17 @@ final class Collector: ObservableObject {
         activeTrial = nil; waitingForTail = false; planIndex += 1
         checkpoint()
         notice = currentSpec == nil ? "이 동작이 끝났습니다. 다음 동작을 선택하세요." : "지점 저장 완료 · 다음 위치로 옮긴 뒤 시작하세요."
+        if printedBatch != nil {
+            playPrintedCue("move")
+            if printedSequence.advance(nextIsHold: currentSpec?.kind == .mapHold, sensorFresh: sensorFresh, deviceMoving: deviceMoving) {
+                startTrial(automatic: true)
+            }
+        }
         if (edgeScenario != nil || printedBatch != nil) && currentSpec == nil { endSession() }
     }
 
     func abortTrial(reason: String = "user_cancelled") {
+        printedSequence.pause()
         guard var trial = activeTrial else { return }
         trial.endUptime = min(now, trial.plannedEnd); trial.status = "aborted"; trial.reason = reason
         update(trial); activeTrial = nil; waitingForTail = false; elapsed = 0

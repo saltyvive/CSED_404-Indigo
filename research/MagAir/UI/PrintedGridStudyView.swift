@@ -51,12 +51,12 @@ struct PrintedGridStudyView: View {
                     }
                     DisclosureGroup("전체 측정 순서 · 쉬는 방법") {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("한 회차는 273점입니다. 기존 3회차 슬롯(총 39행)은 보존하지만 다음 자세와 반복 횟수는 아직 미정입니다. 다른 자세의 자료는 새 배치로 구분하며 자동으로 한 모델에 섞지 않습니다.")
+                            Text("같은 φ=0°·θ=90°·α=0°·높이 0 mm로 3회차까지 수집합니다. 2회차는 먼저 1회차 모델로 평가하고, 3회차는 1+2회차 모델로 먼저 평가한 뒤 학습에 합칩니다.")
                             Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 7, 1, 13, 4, 10, 2, 12, 5, 9, 3, 11, 6, 8행")
-                            Text("한 행: 시작 배경 10초 → 21점 각각 준비 3초 + 정지 3초 → 종료 배경 10초 → 자동 저장. 배경도 준비 3초 후 측정합니다. 항목마다 위치를 확인하고 직접 시작하세요.")
-                            Text("행당 약 3–5분입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
+                            Text("한 행: 시작 배경(수동) → 첫 점에 놓고 연속 시작 → 이동·준비 2초 + 정지 2초로 21점 자동 진행 → 종료 배경(수동) → 저장. 배경은 준비 3초 + 측정 10초입니다.")
+                            Text("자동 진행 기준 행당 약 2분이며, 처음 위치 맞춤·배경 이동·휴식 시간은 별도입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
-                            Text("실시간 테스트에는 첫 회차 273점으로 만든 임시 모델이 적용됐습니다. 같은 자세의 2·3회차를 지금 반드시 할 필요는 없습니다. 다음 수집 조건은 논의 후 정합니다.")
+                            Text("실시간 테스트에는 첫 회차 273점으로 만든 임시 모델이 적용됐습니다. 2회차 13행이 끝나면 먼저 분석을 요청하세요. 3회차는 평가를 마친 새 모델을 적용한 뒤 시작합니다.")
                         }.font(.subheadline).padding(.vertical, 8)
                     }
                     HStack {
@@ -81,7 +81,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.15")
+                .navigationTitle("MagAir Research · 도면 수집 1.16")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
@@ -108,6 +108,9 @@ struct PrintedGridStudyView: View {
             #endif
         }
         .sheet(isPresented: $showSetup) { PrintedGridSetupView(collector: collector) }
+        .onDisappear {
+            if collector.printedSequence.running { collector.abortTrial(reason: "left_printed_screen") }
+        }
         .sheet(isPresented: $showLibrary) { LibraryView(collector: collector) }
         .alert("측정 안내", isPresented: Binding(get: { collector.errorMessage != nil }, set: { if !$0 { collector.errorMessage = nil } })) {
             Button("확인", role: .cancel) { collector.errorMessage = nil }
@@ -144,8 +147,11 @@ struct PrintedGridStudyView: View {
                 }
                 Text(spec.instruction ?? "").fixedSize(horizontal: false, vertical: true)
             }
-            Toggle("단계 안내음", isOn: $collector.soundEnabled).font(.footnote).fixedSize()
-            Text("주황색 점은 놓을 위치 안내이며, 추정한 펜 위치가 아닙니다. 다음 점으로 이동하는 시간은 자유입니다.")
+            Toggle("행 안 자동 진행", isOn: $collector.printedSequence.enabled).disabled(collector.recording)
+            Toggle("준비·측정·이동 안내음", isOn: $collector.soundEnabled).font(.footnote)
+            Text("짧은 음: 준비 · 높은 음: 정지 측정 시작 · 두 번 음: 다음 점으로 이동. 이동이 늦거나 잘못 놓았으면 일시정지 후 다시 측정하세요.").font(.footnote)
+            if let reason = collector.printedEvaluationBlockReason { Text(reason).foregroundStyle(.orange) }
+            Text("주황색은 놓을 위치 안내입니다. 자동 진행 중 표식에 실제로 도착했는지는 감지하지 못합니다. 안내에 맞춰 움직이고 준비가 부족하면 멈추세요.")
                 .font(.caption).foregroundStyle(.secondary)
         }.padding(20).background(.background, in: RoundedRectangle(cornerRadius: 18))
     }
@@ -155,7 +161,7 @@ struct PrintedGridStudyView: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text(collector.phaseText).font(.headline).foregroundStyle(.teal)
                 if collector.recording, let spec {
-                    Text("남은 시간 \(max(0, 3 + spec.duration - collector.elapsed), specifier: "%.0f")초").monospacedDigit()
+                    Text("남은 시간 \(max(0, (collector.activeTrial?.settleSeconds ?? spec.preparationSeconds ?? 3) + spec.duration - collector.elapsed), specifier: "%.0f")초").monospacedDigit()
                     ProgressView(value: collector.progress)
                 } else if !collector.sensorFresh {
                     Text("자력계 연결 대기").font(.caption).foregroundStyle(.orange)
@@ -165,15 +171,15 @@ struct PrintedGridStudyView: View {
             }
             Spacer(minLength: 0)
             if collector.recording {
-                Button("취소 · 다시 측정", role: .destructive) { collector.abortTrial() }.buttonStyle(.bordered)
+                Button("일시정지 · 이 점 다시", role: .destructive) { collector.abortTrial() }.buttonStyle(.bordered)
             } else {
                 if collector.sessionOpen && collector.planIndex > 0 {
                     Button("직전 다시") { collector.redoPrevious() }.buttonStyle(.bordered)
                 }
-                Button(!collector.printedReady ? "먼저 배치 확인" : (spec?.kind.isBaseline == true ? "펜을 멀리 두었음 · 배경 시작" : "이 점에 놓았음 · 측정 시작")) {
+                Button(!collector.printedReady ? "먼저 배치 확인" : (spec?.kind.isBaseline == true ? "펜을 멀리 두었음 · 배경 시작" : (collector.printedSequence.enabled ? "이 점에 놓았음 · 연속 시작" : "이 점에 놓았음 · 측정 시작"))) {
                     if !collector.printedReady { showSetup = true } else { collector.startTrial() }
                 }.buttonStyle(.borderedProminent).controlSize(.large)
-                    .disabled(collector.isClosing || spec == nil || (collector.printedReady && !collector.sensorFresh))
+                    .disabled(collector.isClosing || spec == nil || collector.printedEvaluationBlockReason != nil || (collector.printedReady && !collector.sensorFresh))
             }
         }.frame(maxWidth: 950)
     }
@@ -213,7 +219,7 @@ struct PrintedGridSetupView: View {
                 Section("이번 도면") {
                     Text("A4 가로 · 실제 크기 100% · 스윗 스팟 50 × 30 mm")
                     Text("왼쪽 아래 오프셋: 용지 왼쪽에서 115 mm, 아래에서 55 mm. 앱의 1행은 사각형의 위쪽(iPad 쪽), 1열은 왼쪽입니다.")
-                    Text("한 배치에서는 φ·θ·α·높이를 고정합니다. 기본값은 φ=0°, θ=90°, α=0°, 높이=0 mm·접촉입니다. 다음 실험 조건은 아직 정하지 않았습니다.")
+                    Text("한 배치에서는 φ·θ·α·높이를 고정합니다. 기본값은 φ=0°, θ=90°, α=0°, 높이=0 mm·접촉입니다. 이번에는 같은 조건으로 3회차까지 이어갑니다.")
                 }
                 Section("펜 장치 설정 · 수집 라벨") {
                     HStack {

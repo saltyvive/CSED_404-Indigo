@@ -14,7 +14,7 @@ team = team_match[1] if team_match else None
 def uid(s):
     return hashlib.sha1(s.encode()).hexdigest()[:24].upper()
 sources = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'MagAir').rglob('*.swift'))
-resources = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'MagAir/Resources').glob('*.json'))
+resources = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'MagAir/Resources').iterdir() if p.suffix in ('.json', '.wav'))
 objects = []
 def obj(key, body):
     objects.append(f'{uid(key)} = {{ {body} }};')
@@ -22,7 +22,8 @@ for source in sources:
     obj(source, f'isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "{source}"; sourceTree = SOURCE_ROOT;')
     obj('build'+source, f'isa = PBXBuildFile; fileRef = {uid(source)};')
 for resource in resources:
-    obj(resource, f'isa = PBXFileReference; lastKnownFileType = text.json; path = "{resource}"; sourceTree = SOURCE_ROOT;')
+    file_type = 'audio.wav' if resource.endswith('.wav') else 'text.json'
+    obj(resource, f'isa = PBXFileReference; lastKnownFileType = {file_type}; path = "{resource}"; sourceTree = SOURCE_ROOT;')
     obj('build'+resource, f'isa = PBXBuildFile; fileRef = {uid(resource)};')
 obj('product', 'isa = PBXFileReference; explicitFileType = wrapper.application; path = MagAir.app; sourceTree = BUILT_PRODUCTS_DIR;')
 obj('products', f'isa = PBXGroup; children = ({uid("product")},); name = Products; sourceTree = "<group>";')

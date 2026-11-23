@@ -10,6 +10,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
 import build_printed_grid_model as printed
 from build_grid_model import field, Projector
+from evaluate_printed_pass import score, metrics
 
 
 class PrintedModelTests(unittest.TestCase):
@@ -17,7 +18,7 @@ class PrintedModelTests(unittest.TestCase):
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
         cls.root = Path(cls.temp.name)
-        plan_path = Path(__file__).resolve().parents[1]/'build/tests/printed-grid-plans.json'
+        plan_path = Path(__file__).resolve().parents[1]/'build/tests/printed-grid-fast-plans.json'
         if not plan_path.exists():
             raise RuntimeError('Run Swift CoreTests first to generate actual collector plans')
         cls.plans = json.loads(plan_path.read_text())
@@ -34,15 +35,15 @@ class PrintedModelTests(unittest.TestCase):
         folder = cls.root/f'row{row}'; folder.mkdir()
         time = 100.0; trials = []; samples = []; motions = []
         for spec in specs:
-            hold = spec['kind'] == 'mapHold'; duration = 3 if hold else 10
-            trial = dict(spec=spec, status='completed', startUptime=time, endUptime=time+3+duration, settleSeconds=3)
+            hold = spec['kind'] == 'mapHold'; duration = 2 if hold else 10; prepare = 2 if hold else 3
+            trial = dict(spec=spec, status='completed', startUptime=time, endUptime=time+prepare+duration, settleSeconds=prepare)
             trials.append(trial)
             for i in range(duration*50):
-                t = time+3+i/50
+                t = time+prepare+i/50
                 x, y = (spec['point']['x'], spec['point']['y']) if hold else (0, 0)
                 b = [30*x, 40*y, 12+8*x*y] if hold else [0, 0, 0]
                 sample = dict(timestamp_s=t, trial_id=spec['id'], phase='hold' if hold else 'baseline',
-                              label_source='manual_static_target' if hold else 'none',
+                              label_source='scheduled_static_target_unverified' if hold else 'none',
                               dataset='printed_grid_train' if hold else 'printed_grid_baseline',
                               target_x=x if hold else '', target_y=y if hold else '',
                               fixture_phi_deg=0 if hold else '', fixture_theta_deg=90 if hold else '',
@@ -59,6 +60,7 @@ class PrintedModelTests(unittest.TestCase):
                         setup=dict(widthMM='50', heightMM='30', aspect=5/3),
                         sensorCounts=dict(magnetometer=len(samples), device_motion=len(motions)),
                         printedGrid=dict(protocolID=printed.PROTOCOL, campaignID='SYNTHETIC', batch=dict(row=row, **{'pass': 1}),
+                                         timingRevision='printed_2s_prepare_2s_hold_v2',
                                          pose=specs[1]['fixturePose'], **printed.GEOMETRY))
         (folder/'manifest.json').write_text(json.dumps(manifest))
         for name, rows in [('magnetometer', samples), ('device_motion', motions)]:
@@ -77,6 +79,31 @@ class PrintedModelTests(unittest.TestCase):
             self.assertLess(math.dist(field(model, x, y), [30*x, 40*y, 12+8*x*y]), 1e-9)
         pred = Projector(model).project(field(model, .5, .5))
         self.assertEqual(pred['xy'], [.5, .5])
+
+    def test_frozen_evaluation_then_learning_and_no_display_denominators(self):
+        frozen = json.loads(json.dumps(printed.build(self.batches, [1]))); before = copy.deepcopy(frozen)
+        evaluation = copy.deepcopy(self.batches)
+        for b in evaluation:
+            b.update(session='eval-'+b['session'], repetition=2,
+                     evaluationModelSHA256='frozen-hash', evaluationTrainingPasses=[1])
+            for p in b['points']: p.update(session=b['session'], repetition=2)
+        report, _ = score(frozen,self.batches,evaluation,2,'frozen-hash')
+        self.assertEqual(report['primary']['count'],273)
+        self.assertEqual(report['causalReplay']['count'],819)
+        self.assertEqual(frozen,before)
+        updated = printed.build(self.batches+evaluation,[1,2])
+        self.assertEqual(updated['printedGridContext']['passes'],[1,2])
+        with self.assertRaisesRegex(ValueError,'Wrong frozen'):
+            score(updated,self.batches+evaluation,evaluation,2,'frozen-hash')
+        evaluation[0]['evaluationModelSHA256'] = 'other'
+        with self.assertRaisesRegex(ValueError,'record this frozen'):
+            score(frozen,self.batches,evaluation,2,'frozen-hash')
+        evaluation[0]['session'] = self.batches[0]['session']
+        with self.assertRaisesRegex(ValueError,'overlap'):
+            score(frozen,self.batches,evaluation,2,'frozen-hash')
+        result = metrics([dict(errorMM=1,accepted=False,shown=False),dict(errorMM=2,accepted=True,shown=True)])
+        self.assertEqual(result['successWithin2p5MM'],.5)
+        self.assertEqual(result['acceptedDisplayRate'],.5)
 
     def test_reject_missing_rows_duplicate_batches_or_different_conditions(self):
         for batches, passes in [(self.batches[:-1], [1]), (self.batches, [2]),

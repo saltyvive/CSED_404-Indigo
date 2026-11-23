@@ -270,8 +270,8 @@ struct GridLiveView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 10) {
                         if printed != nil {
-                            Text("현재 자세로 자유 테스트 · 다음 수집 조건 미정").font(.headline)
-                            Text("중앙·테두리·가로선·세로선·대각선을 천천히 움직여 보세요. 안내선은 추정을 제한하지 않습니다. 같은 자세의 2·3회차를 지금 반드시 할 필요는 없습니다. 다음 조건은 논의 후 정하고, 기존 완료 이력은 보존합니다.")
+                            Text("같은 자세로 2·3회차 · 먼저 평가한 뒤 학습").font(.headline)
+                            Text("중앙·테두리·가로선·세로선·대각선을 천천히 움직여 보세요. 안내선은 추정을 제한하지 않습니다. 2회차를 마치면 먼저 분석을 요청하세요. 평가 결과를 기록한 뒤 1+2회차 모델을 적용하고 3회차를 시작합니다.")
                             Button("273점 수집으로 이동") { collectPrinted() }
                                 .buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
                             if let included = tester.model?.movementIncludedRows, !included.isEmpty {
@@ -288,7 +288,7 @@ struct GridLiveView: View {
                     Text("같은 자세·책상 접촉 조건의 초기 모델입니다. 펜의 기울기·축 회전·접촉 여부는 측정하지 않습니다. 펜을 들어 옮길 때 궤적이 생길 수 있으니 내려놓고 궤적을 지우세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 2차원 지도 1.15")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 2차원 지도 1.16")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }

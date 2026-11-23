@@ -44,6 +44,9 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
     require(row in range(1, 14) and repetition in (1, 2, 3) and meta.get('campaignID'), 'Invalid batch/campaign')
     raw_pose = meta['pose']
     pose, pose_annotation = resolve_pose(m, (path/'manifest.json').read_bytes())
+    timing = meta.get('timingRevision')
+    require(timing in (None, 'printed_2s_prepare_2s_hold_v2'), 'Unknown acquisition timing')
+    fast = timing is not None
     require(0 <= pose['phiDegrees'] < 360 and 0 <= pose['thetaDegrees'] <= 90 and
             math.isfinite(pose['tipHeightMM']) and (pose['tipHeightMM'] == 0 if pose['tipContact'] else pose['tipHeightMM'] > 0)
             and pose['source'] == 'operator_set_fixture_unmeasured', 'Invalid fixture labels')
@@ -64,8 +67,12 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                 spec.get('pointID') == (f'r{row}c{col}' if is_hold else f'pass{repetition}-row{row}-{action}') and
                 spec.get('point') == xy and spec.get('nominalPointMM') == (dict(x=(col-1)*2.5, y=(row-1)*2.5) if is_hold else None) and
                 spec.get('fixturePose') == (raw_pose if is_hold else None), 'Trial target/pose/order mismatch')
-        expected_end = trial['startUptime']+3+(3 if is_hold else 10)
-        require(trial.get('settleSeconds') == 3 and math.isfinite(expected_end) and
+        shorter = fast and is_hold
+        require(spec.get('acquisitionSeconds') == (2 if shorter else None) and
+                spec.get('preparationSeconds') == (2 if shorter else None), 'Acquisition timing metadata mismatch')
+        prepare, duration = (2, 2) if shorter else (3, 3 if is_hold else 10)
+        expected_end = trial['startUptime']+prepare+duration
+        require(trial.get('settleSeconds') == prepare and math.isfinite(expected_end) and
                 abs(trial.get('endUptime', 0)-expected_end) < 1e-3, 'Incomplete timing')
     require(all(t['endUptime'] <= u['startUptime'] for t, u in zip(trials, trials[1:])), 'Overlapping trials')
     ids = {t['spec']['id'] for t in trials}
@@ -73,7 +80,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
         if sample['trial_id'] not in ids or sample['phase'] != 'hold':
             continue
         spec = next(t['spec'] for t in trials if t['spec']['id'] == sample['trial_id'])
-        require(sample['label_source'] == 'manual_static_target' and sample['dataset'] == 'printed_grid_train' and
+        require(sample['label_source'] == ('scheduled_static_target_unverified' if fast else 'manual_static_target') and sample['dataset'] == 'printed_grid_train' and
                 abs(float(sample['target_x'])-spec['point']['x']) < 1e-8 and
                 abs(float(sample['target_y'])-spec['point']['y']) < 1e-8 and
                 float(sample['fixture_phi_deg']) == pose['phiDegrees'] and
@@ -106,7 +113,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
         require(math.hypot(*g) > .1, 'Invalid gravity vector')
         inclinations.append(math.degrees(math.acos(min(1, abs(g[2])/math.hypot(*g)))))
         if acceleration > .03 or rotation > .05:
-            steady = any(t['startUptime']+3 <= timestamp < t['endUptime'] for t in trials)
+            steady = any(t['startUptime']+t['settleSeconds'] <= timestamp < t['endUptime'] for t in trials)
             events.append(dict(timestamp=timestamp, phase=sample['phase'], trial=sample['trial_id'],
                                accelerationG=acceleration, rotationRadS=rotation, overlapsCompletedSteadyInterval=steady))
     require(not any(e['overlapsCompletedSteadyInterval'] for e in events), 'iPad motion during completed measurement; recollect row')
@@ -114,7 +121,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
         require(allow_transient_motion and review_note and review_note.strip(), 'Review non-measurement iPad motion explicitly')
     points = []
     for trial in trials[1:-1]:
-        spec = trial['spec']; obs = summarize_trial(trial, samples, 'hold')
+        spec = trial['spec']; obs = summarize_trial(trial, samples, 'hold',
+            minimum_samples=50 if fast else 75, minimum_span=1.25 if fast else 1.8)
         require(obs['noiseUT'] < 3, 'Unstable hold; recollect point/row')
         require(before['endTime'] < obs['startTime'] < obs['endTime'] < after['startTime'], 'Unbracketed point')
         fraction = (obs['time']-before['time'])/(after['time']-before['time'])
@@ -131,7 +139,10 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                            xy=[spec['point']['x'], spec['point']['y']], **obs,
                            deltaUT=[v-b for v, b in zip(obs['raw'], background)], causalFrames=frames))
     return dict(session=m['id'], campaignID=meta['campaignID'], row=row, repetition=repetition, device=m['device'],
-                setup=m['setup'], pose=pose, poseAnnotation=pose_annotation, points=points, before=before, after=after,
+                setup=m['setup'], pose=pose, poseAnnotation=pose_annotation,
+                timingRevision=timing, evaluationModelSHA256=meta.get('evaluationModelSHA256'),
+                evaluationTrainingPasses=meta.get('evaluationTrainingPasses'),
+                points=points, before=before, after=after,
                 driftUT=math.dist(before['raw'], after['raw']), motionEvents=events,
                 motionReviewNote=review_note if events else None, sourceWarnings=m.get('warnings', []),
                 inclinationRange=[min(inclinations), max(inclinations)],

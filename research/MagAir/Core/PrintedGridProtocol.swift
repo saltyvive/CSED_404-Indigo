@@ -79,7 +79,7 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     var direction: String { columns.first == 1 ? "왼쪽 → 오른쪽" : "오른쪽 → 왼쪽" }
     var next: Self? { index + 1 < Self.all.count ? Self.all[index + 1] : nil }
 
-    func make(block: Int, pose: PrintedGridPose = .init()) -> [TrialSpec] {
+    func make(block: Int, pose: PrintedGridPose = .init(), fast: Bool = false) -> [TrialSpec] {
         var specs: [TrialSpec] = []
         let group = "pass\(pass)-row\(row)"
         func append(column: Int?, action: String, instruction: String) {
@@ -92,12 +92,15 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
                                    calibrationGroup: group, gridRow: row, gridColumn: column,
                                    gridColumns: 21, gridRows: 13,
                                    nominalPointMM: column.map { Point2D(x: Double($0-1)*2.5, y: Double(row-1)*2.5) },
-                                   fixturePose: column == nil ? nil : pose.canonical))
+                                   fixturePose: column == nil ? nil : pose.canonical,
+                                   acquisitionSeconds: fast && column != nil ? 2 : nil,
+                                   preparationSeconds: fast && column != nil ? 2 : nil))
         }
         append(column: nil, action: "before", instruction: "\(row)행 시작 배경입니다. 펜슬과 이동하는 홀더를 항상 같은 먼 위치에 두세요. iPad·종이·스탠드·케이블은 그대로 두고 준비 3초 후 10초간 측정합니다.")
         for column in columns {
             let position = pose.tipContact ? "검은 점에 펜 끝을 가볍게 대세요." : "검은 점의 수직 위에 펜촉을 맞추세요."
-            append(column: column, action: "hold", instruction: "위에서 \(row)행, 왼쪽에서 \(column)열. \(position) \(pose.canonical.summary)를 유지합니다. 위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요.")
+            let timing = fast ? "이동·준비 2초 후 정지 2초입니다. 준비 중 다음 점에 놓고, 측정 시작음부터 정지하세요. 늦었다면 일시정지를 눌러 다시 잽니다." : "위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요."
+            append(column: column, action: "hold", instruction: "위에서 \(row)행, 왼쪽에서 \(column)열. \(position) \(pose.canonical.summary)를 유지합니다. \(timing)")
         }
         append(column: nil, action: "after", instruction: "\(row)행 종료 배경입니다. 펜슬과 이동하는 홀더를 시작 배경 때와 같은 먼 위치에 두세요. 10초 배경까지 끝나야 이 행이 완료됩니다. 자동 저장 후 쉬어도 됩니다.")
         return specs
@@ -110,7 +113,8 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
               session.setup.widthMM == "50", session.setup.heightMM == "30",
               abs(session.setup.aspect - 5.0/3.0) < 1e-9 else { return false }
         let completed = session.trials.filter { $0.status == "completed" }
-        let expected = make(block: 0, pose: meta.pose)
+        guard meta.timingRevision == nil || meta.timingRevision == "printed_2s_prepare_2s_hold_v2" else { return false }
+        let expected = make(block: 0, pose: meta.pose, fast: meta.timingRevision != nil)
         guard completed.count == expected.count, Set(completed.map { $0.spec.id }).count == expected.count else { return false }
         for (actual, target) in zip(completed, expected) {
             let s = actual.spec
@@ -120,7 +124,8 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
                   s.gridRows == 13, s.gridColumns == 21, s.gridSize == nil,
                   s.gridRow == row, s.gridColumn == target.gridColumn,
                   s.point == target.point, s.nominalPointMM == target.nominalPointMM, s.fixturePose == target.fixturePose,
-                  actual.startUptime.isFinite, actual.settleSeconds == 3,
+                  s.acquisitionSeconds == target.acquisitionSeconds, s.preparationSeconds == target.preparationSeconds,
+                  actual.startUptime.isFinite, actual.settleSeconds == (target.preparationSeconds ?? 3),
                   let end = actual.endUptime, end.isFinite,
                   abs(end - actual.plannedEnd) < 0.001 else { return false }
         }
@@ -141,12 +146,28 @@ struct PrintedGridMetadata: Codable {
     var paperHeightMM = 210.0
     var paperLowerLeftOffsetMM = Point2D(x: 115, y: 55)
     var pose = PrintedGridPose()
+    var timingRevision: String? = nil
+    var autoAdvanceEnabledAtStart: Bool? = nil
+    var evaluationModelSHA256: String? = nil
+    var evaluationTrainingPasses: [Int]? = nil
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
     var hasExpectedGeometry: Bool {
         protocolID == PrintedGridBatch.protocolID && columns == 21 && rows == 13 &&
         widthMM == 50 && heightMM == 30 && pitchMM == 2.5 &&
         paperWidthMM == 297 && paperHeightMM == 210 && paperLowerLeftOffsetMM == .init(x: 115, y: 55)
+    }
+}
+
+/// Only consecutive holds may auto-start. Backgrounds and row changes require a person.
+struct PrintedAutoSequence {
+    var enabled = true
+    private(set) var running = false
+    mutating func begin(isHold: Bool) { running = enabled && isHold }
+    mutating func pause() { running = false }
+    mutating func advance(nextIsHold: Bool, sensorFresh: Bool, deviceMoving: Bool) -> Bool {
+        guard running && enabled && nextIsHold && sensorFresh && !deviceMoving else { pause(); return false }
+        return true
     }
 }
 

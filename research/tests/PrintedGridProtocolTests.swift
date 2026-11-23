@@ -117,6 +117,45 @@ enum PrintedGridProtocolTests {
         }
         precondition(PrintedGridBatch.all.last?.next == nil)
         try JSONEncoder().encode(plans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-plans.json"))
+        var fastPlans: [String: [TrialSpec]] = [:]
+        for batch in PrintedGridBatch.all {
+            let plan = batch.make(block: 2, fast: true)
+            fastPlans[batch.id] = plan
+            var session = SessionManifest(id: "fast", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
+                device: "test", osVersion: "test", setup: PrintedGridCampaign().setup, availableSensors: [:])
+            session.status = "completed"
+            session.printedGrid = .init(campaignID: "campaign", batch: batch)
+            session.printedGrid?.timingRevision = "printed_2s_prepare_2s_hold_v2"
+            var time = 100.0
+            session.trials = plan.map { spec in
+                var t = TrialRecord(spec: spec, startUptime: time, settleSeconds: spec.preparationSeconds ?? 3)
+                t.status = "completed"; t.endUptime = t.plannedEnd; time = t.plannedEnd+0.4
+                if spec.kind == .mapHold {
+                    precondition(t.plannedEnd-t.startUptime == 4)
+                    precondition(t.annotation(at: t.startUptime+1.99).phase == "settle")
+                    precondition(t.annotation(at: t.startUptime+2).source == "scheduled_static_target_unverified")
+                    precondition(t.annotation(at: t.startUptime+4).phase == "outside")
+                } else { precondition(t.plannedEnd-t.startUptime == 13) }
+                return t
+            }
+            precondition(batch.accepts(session, campaignID: "campaign"))
+            session.trials[1].settleSeconds = 3
+            precondition(!batch.accepts(session, campaignID: "campaign"))
+        }
+        try JSONEncoder().encode(fastPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-fast-plans.json"))
+        var sequence = PrintedAutoSequence()
+        sequence.begin(isHold: false)
+        precondition(!sequence.advance(nextIsHold: true, sensorFresh: true, deviceMoving: false))
+        sequence.begin(isHold: true)
+        precondition(sequence.advance(nextIsHold: true, sensorFresh: true, deviceMoving: false))
+        sequence.pause(); precondition(!sequence.running)
+        sequence.begin(isHold: true)
+        precondition(!sequence.advance(nextIsHold: true, sensorFresh: false, deviceMoving: false))
+        sequence.begin(isHold: true)
+        precondition(!sequence.advance(nextIsHold: true, sensorFresh: true, deviceMoving: true))
+        sequence.begin(isHold: true)
+        precondition(!sequence.advance(nextIsHold: false, sensorFresh: true, deviceMoving: false))
+        sequence.enabled = false; sequence.begin(isHold: true); precondition(!sequence.running)
         // Optional real-source migration audit; no file is written or re-encoded.
         if CommandLine.arguments.count > 2 {
             let root = URL(fileURLWithPath: CommandLine.arguments[2])

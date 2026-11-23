@@ -1,0 +1,675 @@
+{
+  "version": 1,
+  "decidedOn": "2026-11-24",
+  "name": "whole_pass_test_then_train_v1",
+  "pose": {
+    "phi": 0,
+    "theta": 90,
+    "alpha": 0,
+    "tipHeightMM": 0
+  },
+  "frozenPass1Model": {
+    "path": "frozen/pass1.json",
+    "sha256": "2822aa5a099f18ad70eec08266a473f145a331a0edb1a54d57f1997dc2c8a509",
+    "sourceSessions": [
+      "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "MagAir-2026-11-22T20-51-27Z-543987",
+      "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "MagAir-2026-11-22T21-14-06Z-65D27E"
+    ]
+  },
+  "trainingSourceFiles": [
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "accelerometer.csv",
+      "bytes": 3803645,
+      "sha256": "f31c528da6ffffcb3e2f21bc5f30bfdf9e66da052d93d7d7c301e8f354b2d7e0",
+      "rows": 22839
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "device_motion.csv",
+      "bytes": 6958520,
+      "sha256": "0c245f611d0461be1859bf5e962eae0f3324ae3858b4877217d2099a8c6d99e3",
+      "rows": 22838
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "gyroscope.csv",
+      "bytes": 3782506,
+      "sha256": "1a360eea24dd73b11ae50bd2ec95065d57bee0fc971243701e5e54521dcf5552",
+      "rows": 22838
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "magnetometer.csv",
+      "bytes": 3938160,
+      "sha256": "934128aca4504e43006a38e39d607adbcbb5f2bc7da8ecbc14c9aa070c990c9a",
+      "rows": 22654
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "manifest.json",
+      "bytes": 40535,
+      "sha256": "71ee9e3f238ebb4475fcff6cbbc88bc8f14a8698b073204ea3dc75d2891d5e95"
+    },
+    {
+      "session": "MagAir-2026-11-22T19-40-44Z-EF73B8",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "accelerometer.csv",
+      "bytes": 3205224,
+      "sha256": "e3c262c905924e6c329791e946f41083e0aac1839bdf40f423f4e82aba93304c",
+      "rows": 17866
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "device_motion.csv",
+      "bytes": 5674421,
+      "sha256": "f625f0ffe1c47117b7baef7656c2ae884ef22214300f9698298e743f215b22b1",
+      "rows": 17866
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "gyroscope.csv",
+      "bytes": 3190899,
+      "sha256": "59650422c92534a1283ac410059c6b1fe13836e21e5af6e0364bd37f71e02bb0",
+      "rows": 17867
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "magnetometer.csv",
+      "bytes": 3309310,
+      "sha256": "74d6462b3042f728c15007a3c964e3a2e4900c941d1bc77023419c844e32edf4",
+      "rows": 17715
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "manifest.json",
+      "bytes": 40960,
+      "sha256": "4880d6b892273f42d3df37b78bdceb31e09dd8c78f1895abe120d4bd1275b5fc"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-04-37Z-28BE88",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "accelerometer.csv",
+      "bytes": 3192472,
+      "sha256": "f6e55eab6108334950d45f3104fa5bf66cad8440cbf6e81a8e2814016ce9619e",
+      "rows": 17013
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "device_motion.csv",
+      "bytes": 5543682,
+      "sha256": "194a5489c6b11feef8ce78d8dbe7eb81bc56155991ee0378672e7b8b733b2a4b",
+      "rows": 17013
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "gyroscope.csv",
+      "bytes": 3178334,
+      "sha256": "cf456f58a6a38b495dc17bf4fa50f9c64756663b591e1f572a9688276b03b5b5",
+      "rows": 17013
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "magnetometer.csv",
+      "bytes": 3289710,
+      "sha256": "03bdf2d030144de6a172460884a8bf91ab067258898b3eea74ad9272b80f2976",
+      "rows": 16868
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "manifest.json",
+      "bytes": 44393,
+      "sha256": "ba1109b7cd8e909d1c0bee2154d95541f6ee9328a0ca4f9aae152bacbba303c1"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-10-36Z-2EDAFF",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "accelerometer.csv",
+      "bytes": 2955927,
+      "sha256": "35a7e657b3a73c80ed5cd9fdde88a1bf36c3e9df94f9279a0c5185b46a24fcc0",
+      "rows": 15802
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "device_motion.csv",
+      "bytes": 5139944,
+      "sha256": "34fe97ba37b492a770d193a7ce81a8cc0d7426122191b1300d7dba14144c1456",
+      "rows": 15802
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "gyroscope.csv",
+      "bytes": 2943911,
+      "sha256": "fe65119a4e6a252632cc6bbfc01148eea708464b29f8e5cca8c838216a0cf112",
+      "rows": 15802
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "magnetometer.csv",
+      "bytes": 3047054,
+      "sha256": "7b6ab6cf9c1e786c9db017b0f3a6683eda001be5b50b38ffafc70d9b2c60c45f",
+      "rows": 15666
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "manifest.json",
+      "bytes": 40653,
+      "sha256": "bee96fae60c18108d66019ceb023b2e165f5a7eaf4b877539d604028bef99568"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-16-18Z-55F62B",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "accelerometer.csv",
+      "bytes": 2768341,
+      "sha256": "49676f654fa9e33537933f54c07ec14cb8c482581cdb3d385f18a5920455a46f",
+      "rows": 14193
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "device_motion.csv",
+      "bytes": 4729422,
+      "sha256": "4b9a60d03c10c341a6d1245c91af16fbb22dae30291f0abd2062ce5c7a013147",
+      "rows": 14193
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "gyroscope.csv",
+      "bytes": 2757797,
+      "sha256": "2d2f031019535ad0095b2205d152581a1619fffab28688b29cee197fbfb0c744",
+      "rows": 14193
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "magnetometer.csv",
+      "bytes": 2847607,
+      "sha256": "81004b00f339a903a546748273966b3dab5b0e9f0898128a2d1082e3e1fd801c",
+      "rows": 14072
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "manifest.json",
+      "bytes": 40940,
+      "sha256": "5987289ac2ab7310e9029040b60d432e77614d510d989e4ae8b2baf92f1a2ca2"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-21-36Z-DE4A90",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "accelerometer.csv",
+      "bytes": 2852600,
+      "sha256": "bbfe3130f121231e13464dba54bb951e7100b382d5079105942151393b0c3cb2",
+      "rows": 14881
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "device_motion.csv",
+      "bytes": 4909335,
+      "sha256": "3310eec592662d917563789480c212a8e35d64e5c04d0a8624438835384e5aad",
+      "rows": 14880
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "gyroscope.csv",
+      "bytes": 2840338,
+      "sha256": "4fd19d59877f06d1ef99599cb93fe36a06026a9e58ef07d1f55a0d30aa3b3152",
+      "rows": 14880
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "magnetometer.csv",
+      "bytes": 2937360,
+      "sha256": "e3ad2d6fd4a2f39650546a6f2a1f6261ac99cb6551248e6c3c6f11418c11a039",
+      "rows": 14753
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "manifest.json",
+      "bytes": 40991,
+      "sha256": "da37bed57f9d9910c12005164e9fbff8ad73851183084adf36e7097eff9f3cc4"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-26-56Z-3BBF34",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "accelerometer.csv",
+      "bytes": 2762222,
+      "sha256": "06d86d40ff04e84c9ec462bb91cce93bc834cb7851555e5e5f1a94ef3047bdda",
+      "rows": 14133
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "device_motion.csv",
+      "bytes": 4715662,
+      "sha256": "035aecf3d5cdfe255896fd270f07d84a19d45a31e396c288a3bc397a0f899302",
+      "rows": 14132
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "gyroscope.csv",
+      "bytes": 2750947,
+      "sha256": "8c7ae2688a93b21ef1bb4d7c586dbb1057d07902783044e8fcd157a9eb9e000a",
+      "rows": 14132
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "magnetometer.csv",
+      "bytes": 2842199,
+      "sha256": "f39d2bee5068df45de52faa77d145051a5044621998089ede54c10c4ae787bb5",
+      "rows": 14012
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "manifest.json",
+      "bytes": 40615,
+      "sha256": "2e15c921cf6e20d3cf251f294b39d600782c823a7f5492d2b2077cd8822f199f"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-31-55Z-6DADF9",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "accelerometer.csv",
+      "bytes": 2849157,
+      "sha256": "c13ccf90f73c61a35708502cad37a37e0b66e09c14c181ba3f91ea4c370a7667",
+      "rows": 14855
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "device_motion.csv",
+      "bytes": 4902397,
+      "sha256": "37dd4388bc97d68e77fef8704561a1fff84ff744f32b37c23a5d93ee3d465acf",
+      "rows": 14855
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "gyroscope.csv",
+      "bytes": 2837723,
+      "sha256": "20b7be82fb99cd3063729e615c24a159619086b45b347a9965e3728b95af3573",
+      "rows": 14855
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "magnetometer.csv",
+      "bytes": 2934164,
+      "sha256": "746e5eb103b53bc32e8da735706339d77376b23341df67b7761e93e7f0aff060",
+      "rows": 14728
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "manifest.json",
+      "bytes": 41000,
+      "sha256": "3800b52351214351fa2cce934617623653fd6071323ca35996c0289322369cd9"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-36-52Z-2ADB59",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "accelerometer.csv",
+      "bytes": 3016968,
+      "sha256": "9bbf92681391013dc9a4f3d1effaf6c2f0381e2db3370105948e95c9c11a7c59",
+      "rows": 15874
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "device_motion.csv",
+      "bytes": 5210260,
+      "sha256": "d39efe1cd4e82329d92d830722f3bdde619d8ffb642a7dd4c962acbd4f84dd3d",
+      "rows": 15873
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "gyroscope.csv",
+      "bytes": 3004624,
+      "sha256": "d666d306442a33f5c6ec8e591b280a696d6554f4d3869e00372d8c969a404fa8",
+      "rows": 15874
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "magnetometer.csv",
+      "bytes": 3107759,
+      "sha256": "494353947728a9432188f56f618bcb5622763f663dc4c8e8d3fb1df68fed44de",
+      "rows": 15737
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "manifest.json",
+      "bytes": 42679,
+      "sha256": "ed905a40cb7b32698efd90d2ea22d552f827266c7f07e11d236521d2aebb7a40"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-51-27Z-543987",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "accelerometer.csv",
+      "bytes": 3167182,
+      "sha256": "fbcb033e82da02ac0367c266cd54dbc792f9fd688c339943b5f57b67ee3b8d3d",
+      "rows": 16775
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "device_motion.csv",
+      "bytes": 5486052,
+      "sha256": "e2ef1b3293a1461eab74d32dd4093e4abc453395581ed8bbf960278e1fb694df",
+      "rows": 16775
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "gyroscope.csv",
+      "bytes": 3154344,
+      "sha256": "d6e36d73b1c35c41645219d94586e0e8c7bca2f91dfa9de8f24fe949a1efdcca",
+      "rows": 16775
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "magnetometer.csv",
+      "bytes": 3263616,
+      "sha256": "a6cfd9b327fd923b7d9a2e7f115a9d554788541d0de194693d387c85664b4ca9",
+      "rows": 16630
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "manifest.json",
+      "bytes": 44281,
+      "sha256": "149a48e78aba81192c09b1516540bec293f2a713e51a122ba25648514264b935"
+    },
+    {
+      "session": "MagAir-2026-11-22T20-56-46Z-0A3875",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "accelerometer.csv",
+      "bytes": 3098133,
+      "sha256": "71b6571d1ca4680f1bc41efd58c55a72df029a013fc6bbcd2437154b0d88526c",
+      "rows": 16410
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "device_motion.csv",
+      "bytes": 5366017,
+      "sha256": "c32c999b18da27040784a12ea5ba251b4d9d011d2c1ff2d21b1172992d7803ee",
+      "rows": 16409
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "gyroscope.csv",
+      "bytes": 3084712,
+      "sha256": "80b84a153f10e6cdb9a45fbdb03347c4bc50812ec09ef36701035ddb3c7c63dc",
+      "rows": 16409
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "magnetometer.csv",
+      "bytes": 3191911,
+      "sha256": "3424d5379c8692f9dea71ddcc829ff467e93c12f47c108adacfe959e92614937",
+      "rows": 16269
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "manifest.json",
+      "bytes": 42898,
+      "sha256": "b62fa70727ba6275c0dcee1a55ef99f514646bac1440a6d98dcd307076b4471f"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-02-22Z-D7B016",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "accelerometer.csv",
+      "bytes": 3309758,
+      "sha256": "28fb7320c460fbc36f822f669760a3a1087fa1621796755323067488a216fac6",
+      "rows": 18234
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "device_motion.csv",
+      "bytes": 5830353,
+      "sha256": "ff70bf1e007567ad35a0ce73e0e21701f948abedb3a8810232d695d56245e139",
+      "rows": 18234
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "gyroscope.csv",
+      "bytes": 3296125,
+      "sha256": "772fb33b4dbedbead5dc6c2a1c6d8af3b23221dbe074331e7254781e30852140",
+      "rows": 18234
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "magnetometer.csv",
+      "bytes": 3416173,
+      "sha256": "15bb18194aec39fd5102b5ad33bd5271ef9bd31f16694476234bf9123f103bde",
+      "rows": 18079
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "manifest.json",
+      "bytes": 42868,
+      "sha256": "3590579860a6b3299bab52fd53bedfa7bcf2d94b5c9f75a82bc9e5a5cb87e56f"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-07-51Z-A3405A",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "README.txt",
+      "bytes": 5694,
+      "sha256": "246334d3095a4df309538ec9e7f42fd45b4bd9a1f32313e684906afd5f11d117"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "accelerometer.csv",
+      "bytes": 2913237,
+      "sha256": "5a47e50bc5c043f6f0ba85a13990bf5e703fcde4f51f939f296ca544e33bbba8",
+      "rows": 15255
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "device_motion.csv",
+      "bytes": 5022231,
+      "sha256": "1bf4da156951bcc1e8d3efdd605aee88ad441c40666b2fe50d53248950ddf93f",
+      "rows": 15255
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "gyroscope.csv",
+      "bytes": 2900926,
+      "sha256": "8cdd2d59e7a7834df734bbc17b1f3b15f65db5f44e569ed3f60edd11346daccf",
+      "rows": 15255
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "magnetometer.csv",
+      "bytes": 3000248,
+      "sha256": "3cf8dbd4734ffc6f230ba6486fa42708ebec47951871a20105f3d7483cbad959",
+      "rows": 15126
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "manifest.json",
+      "bytes": 40730,
+      "sha256": "c1d846c6b5d53baf33b8487e90acd21368dfc508539a1daed53fa3aedc03e2ac"
+    },
+    {
+      "session": "MagAir-2026-11-22T21-14-06Z-65D27E",
+      "file": "pencil_events.csv",
+      "bytes": 455,
+      "sha256": "a5682aef1029c2e2a3ce865e8473d394c15ce1692e2c6c35f5f81aba65d446cd",
+      "rows": 0
+    }
+  ],
+  "stages": [
+    {
+      "trainPasses": [
+        1
+      ],
+      "testPass": 2,
+      "thenTrainPasses": [
+        1,
+        2
+      ],
+      "status": "awaiting_collection"
+    },
+    {
+      "trainPasses": [
+        1,
+        2
+      ],
+      "testPass": 3,
+      "thenTrainPasses": [
+        1,
+        2,
+        3
+      ],
+      "status": "awaiting_collection"
+    }
+  ],
+  "finalAllPassesModelIndependentEvaluation": "not_available",
+  "thresholdMM": [
+    2.5,
+    5
+  ],
+  "scoring": "Trimmed hold median minus preceding row background. Unaccepted predictions fail threshold success; causal replay reported separately. No future baseline in primary score."
+}

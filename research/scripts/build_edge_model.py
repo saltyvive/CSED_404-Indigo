@@ -62,14 +62,14 @@ def project(model, b):
                 otherEdgeResidualUT=min((c[0] for c in candidates if c[1] != edge), default=None))
 
 
-def summarize_trial(trial, rows, phase):
+def summarize_trial(trial, rows, phase, *, minimum_samples=75, minimum_span=1.8):
     start = trial['startUptime'] + trial.get('settleSeconds', 3)
     end = trial.get('endUptime', start)
     data = sorted((float(r['timestamp_s']), a.vector(r)) for r in rows
                   if r['trial_id'] == trial['spec']['id'] and r['phase'] == phase
                   and start+.4 <= float(r['timestamp_s']) < end-.2)
     data = [(t, b) for t, b in data if all(math.isfinite(v) for v in b)]
-    if len(data) < 75 or data[-1][0]-data[0][0] < 1.8:
+    if len(data) < minimum_samples or data[-1][0]-data[0][0] < minimum_span:
         raise ValueError(f"센서 샘플 부족: {trial['spec']['id']}")
     if max(t1-t0 for (t0, _), (t1, _) in zip(data, data[1:])) > .15:
         raise ValueError(f"센서 공백: {trial['spec']['id']}")

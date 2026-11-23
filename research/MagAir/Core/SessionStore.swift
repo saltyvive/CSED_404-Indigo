@@ -63,6 +63,13 @@ final class SessionStore {
         repetition identifies the pass (1...3), calibrationGroup pairs passN-rowR baselines.
         Do not pool historical 5x5 with dense data automatically; verify unchanged setup.
         Raw high-frequency samples are not independent repeated placements.
+        App 1.16 printed timingRevision=printed_2s_prepare_2s_hold_v2: holds prepare 2s + capture 2s.
+        Baselines remain prepare 3s + capture 10s. Missing timingRevision means historical 3s+3s holds.
+        acquisitionSeconds/preparationSeconds persist per-hold timing; trial.settleSeconds is authoritative.
+        startTrigger records manual or automatic_next_hold. Automatic progression only connects holds.
+        scheduled_static_target_unverified is an instructed target, NOT sensed arrival/contact/stability.
+        Pause/cancel excludes the current attempt; background and first hold always require a person.
+        evaluationModelSHA256 / evaluationTrainingPasses freeze the pre-update model used for pass 2 or 3.
         Printed grid: manifest.printedGrid identifies sweetspot_21x13_v1 and a unique campaignID.
         All 39 batches (13 rows x 3 passes) are ONE training campaign: 273 targets x 3 independent placements.
         Each batch has one row: before background + 21 holds + after background; all 23 must complete.

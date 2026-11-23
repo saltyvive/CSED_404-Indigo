@@ -150,7 +150,9 @@ struct TrialSpec: Codable, Identifiable {
     var gridRows: Int? = nil
     var nominalPointMM: Point2D? = nil // Printed target from top-left, NOT a measured tip position.
     var fixturePose: PrintedGridPose? = nil
-    var duration: Double { kind.duration }
+    var acquisitionSeconds: Double? = nil
+    var preparationSeconds: Double? = nil
+    var duration: Double { acquisitionSeconds ?? kind.duration }
     var dataset: String { purpose ?? kind.dataset }
     var isManual: Bool { kind == .edgeSweep || kind == .mapSweep }
     var locationName: String {
@@ -223,6 +225,7 @@ struct TrialRecord: Codable {
     var endUptime: Double?
     var status = "recording"
     var reason = ""
+    var startTrigger: String? = nil // manual / automatic_next_hold; absent in historical files.
     var activeStart: Double { startUptime + settleSeconds }
     var plannedEnd: Double { activeStart + spec.duration }
     func annotation(at timestamp: Double) -> (phase: String, point: Point2D?, source: String) {
@@ -245,7 +248,11 @@ struct TrialRecord: Codable {
             else { phase = "surface_return" }
             return (phase, spec.point, "manual_height_instruction")
         }
-        if spec.kind.isStatic { return ("hold", spec.point, "manual_static_target") }
+        if spec.kind.isStatic {
+            let source = spec.dataset == "printed_grid_train" && spec.preparationSeconds != nil
+                ? "scheduled_static_target_unverified" : "manual_static_target"
+            return ("hold", spec.point, source)
+        }
         if spec.kind.isBaseline { return ("baseline", nil, "none") }
         if spec.kind == .lift {
             return (Int(t / 3) % 2 == 0 ? "contact_instruction" : "lift_instruction", .init(x: 0.5, y: 0.5), "guide_only")
@@ -269,7 +276,7 @@ struct TrialRecord: Codable {
 
 struct SessionManifest: Codable {
     var schemaVersion = 2
-    var appVersion = "1.15.0"
+    var appVersion = "1.16.0"
     var id: String
     var startedAt: String
     var anchorUptime: Double
