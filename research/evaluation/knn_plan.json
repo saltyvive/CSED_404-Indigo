@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "decidedOn": "2026-11-24",
+  "method": "multiprototype_local_distance_weighted_knn_v1",
+  "decisionTiming": "Specified before inspecting pass-2 prediction scores. Pass 2 already collected; this is retrospective held-out replay for B, not a model deployed during its collection.",
+  "input": "Same background-subtracted Bx, By, Bz in microtesla and causal 0.12s component median as A; no tip coordinate, guide, elapsed movement time, pose label, or Pencil IMU input.",
+  "prototypesPerPlacement": "Four: trimmed whole-hold median plus the three already-defined causal windows. Each uses training-only row before/after linear background correction at its timestamp.",
+  "positionDistance": "Minimum Euclidean magnetic distance among all retained prototypes for that target. Repeated targets do not receive extra votes.",
+  "neighbors": 4,
+  "weightPower": 2,
+  "distanceFloorUT": 0.000001,
+  "localRadiusMM": 7.5,
+  "localRule": "Select at most four distinct targets within 7.5mm of the best magnetic target, then average their XY by inverse squared magnetic distance. Exact matches average only exact local matches.",
+  "ambiguityDistance": 0.2,
+  "ambiguityMarginUT": 0.75,
+  "qualityRules": "Nearest-prototype distance <= max(3uT,5*max training hold noise); signal >= max(3uT,0.2*minimum prototype magnitude). Reject if another target >=0.2 normalized XY away has magnetic distance within 0.75uT of best. Still log all candidate errors.",
+  "evaluation": "Freeze B1 built only from pass 1; compare A1 and B1 on exactly the same pass-2 observations and causal frames. Save before building A12/B12. No score-driven tuning on pass 2 in this implementation.",
+  "limits": "Three causal windows are correlated, not extra independent placements. Local averaging may bias grid edges inward. Data contain only naturally occurring small pose variation; arbitrary unseen tilt robustness is not established. A12/B12 have no independent test until pass 3."
+}
