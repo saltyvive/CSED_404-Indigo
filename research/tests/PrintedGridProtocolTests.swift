@@ -57,6 +57,10 @@ enum PrintedGridProtocolTests {
         precondition(ipadScreenInclination(gravity: [.nan,0,1]) == nil)
         precondition(PrintedGridBatch.all.count == 39)
         precondition(Set(PrintedGridBatch.all.map(\.id)).count == 39)
+        precondition(PrintedGridBatch.all.filter { $0.pass == 3 }.map(\.row) == Array(1...13))
+        for (index, batch) in PrintedGridBatch.all.filter({ $0.pass == 3 }).enumerated() {
+            precondition(batch.index == 26+index && batch.columns == PrintedGridBatch(pass: 1, row: batch.row).columns)
+        }
         var plans: [String: [TrialSpec]] = [:]
         for pass in 1...3 {
             let batches = PrintedGridBatch.all.filter { $0.pass == pass }
@@ -152,6 +156,8 @@ enum PrintedGridProtocolTests {
             session.status = "completed"
             session.printedGrid = .current(campaignID: "campaign", batch: batch, pose: .init())
             precondition(session.printedGrid?.timingRevision == PrintedGridMetadata.extendedPreparationTimingRevision)
+            precondition(session.printedGrid?.rowOrderRevision == "printed_pass3_ascending_v2")
+            precondition(session.printedGrid?.scheduledRowOrder == PrintedGridBatch.rowOrders[batch.pass-1])
             let plan = session.printedGrid!.makePlan(block: 3)
             currentPlans[batch.id] = plan
             var time = 100.0
@@ -234,8 +240,8 @@ enum PrintedGridProtocolTests {
             }
             precondition(completed.count == 13)
             let next = PrintedGridBatch.all.first { $0.pass > 1 && !completed.contains($0.id) }!
-            precondition(next.pass == 3 && next.row == 7 && next.index == 26)
-            print("All 13 real pass-2 rows retained; next batch is 27/39, pass 3 row 7")
+            precondition(next.pass == 3 && next.row == 1 && next.index == 26)
+            print("All 13 real pass-2 rows retained; next batch is 27/39, pass 3 row 1")
         }
         var sequence = PrintedAutoSequence()
         sequence.begin(isHold: false)

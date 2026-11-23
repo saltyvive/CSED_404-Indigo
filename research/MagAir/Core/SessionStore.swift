@@ -73,6 +73,8 @@ final class SessionStore {
         evaluationModelSHA256 / evaluationTrainingPasses freeze the pre-update model used for pass 2 or 3.
         App 1.17 also records evaluationKNNModelSHA256 for the frozen B model before pass 3.
         Printed grid: manifest.printedGrid identifies sweetspot_21x13_v1 and a unique campaignID.
+        App 1.17.1 schedules pass 3 rows 1...13; passes 1/2 keep their historical order.
+        rowOrderRevision/scheduledRowOrder record the intended row order; session timestamps record actual collection order.
         All 39 batches (13 rows x 3 passes) are ONE training campaign: 273 targets x 3 independent placements.
         Each batch has one row: before background + 21 holds + after background; all 23 must complete.
         printed_grid_train and printed_grid_baseline never mix automatically with historical datasets.

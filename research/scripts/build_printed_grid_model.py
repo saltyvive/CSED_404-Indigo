@@ -143,6 +143,7 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
     return dict(session=m['id'], campaignID=meta['campaignID'], row=row, repetition=repetition, device=m['device'],
                 setup=m['setup'], pose=pose, poseAnnotation=pose_annotation,
                 timingRevision=timing, effectiveTimingRevision=effective_timing, timingAnnotation=timing_annotation,
+                rowOrderRevision=meta.get('rowOrderRevision'), scheduledRowOrder=meta.get('scheduledRowOrder'),
                 evaluationModelSHA256=meta.get('evaluationModelSHA256'),
                 evaluationKNNModelSHA256=meta.get('evaluationKNNModelSHA256'),
                 evaluationTrainingPasses=meta.get('evaluationTrainingPasses'),

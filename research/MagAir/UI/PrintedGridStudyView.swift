@@ -52,7 +52,7 @@ struct PrintedGridStudyView: View {
                     DisclosureGroup("전체 측정 순서 · 쉬는 방법") {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("같은 φ=0°·θ=90°·α=0°·높이 0 mm로 3회차까지 수집합니다. 2회차는 먼저 1회차 모델로 평가하고, 3회차는 1+2회차 모델로 먼저 평가한 뒤 학습에 합칩니다.")
-                            Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 7, 1, 13, 4, 10, 2, 12, 5, 9, 3, 11, 6, 8행")
+                            Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 1 → 13행, 1회차와 같은 지그재그")
                             Text("한 행: 시작 배경(수동) → 첫 점에 놓고 연속 시작 → 이동·준비 3초 + 정지 2초로 21점 자동 진행 → 종료 배경(수동) → 저장. 배경은 준비 3초 + 측정 10초입니다.")
                             Text("자동 진행 기준 행당 약 2분 20초이며, 처음 위치 맞춤·배경 이동·휴식 시간은 별도입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
@@ -81,7 +81,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.17")
+                .navigationTitle("MagAir Research · 도면 수집 1.17.1")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {

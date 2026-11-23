@@ -63,8 +63,8 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     let pass: Int
     let row: Int
     static let protocolID = "sweetspot_21x13_v1"
-    static let rowOrders = [Array(1...13), Array((1...13).reversed()),
-                            [7, 1, 13, 4, 10, 2, 12, 5, 9, 3, 11, 6, 8]]
+    // Passes 1/2 retain their collected order. User requested ascending pass 3 on 2026-11-24.
+    static let rowOrders = [Array(1...13), Array((1...13).reversed()), Array(1...13)]
     static let all: [Self] = rowOrders.enumerated().flatMap { index, rows in
         rows.map { Self(pass: index + 1, row: $0) }
     }
@@ -72,8 +72,7 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     var index: Int { Self.all.firstIndex(of: self)! }
     var title: String { String(format: "%02d/39 · %d회차 · %d행", index + 1, pass, row) }
     var columns: [Int] {
-        // Reverse each row's approach on pass 2. Pass 3 changes row order;
-        // keep adjacent columns easy to identify on the unnumbered paper.
+        // Reverse each row's approach on pass 2; pass 3 repeats pass 1's serpentine path.
         (row + pass) % 2 == 0 ? Array(1...21) : Array((1...21).reversed())
     }
     var direction: String { columns.first == 1 ? "왼쪽 → 오른쪽" : "오른쪽 → 왼쪽" }
@@ -158,6 +157,8 @@ struct PrintedGridMetadata: Codable {
     var evaluationModelSHA256: String? = nil
     var evaluationKNNModelSHA256: String? = nil
     var evaluationTrainingPasses: [Int]? = nil
+    var rowOrderRevision: String? = nil
+    var scheduledRowOrder: [Int]? = nil
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
     /// Session startup must use the timing that its manifest declares.
@@ -169,6 +170,8 @@ struct PrintedGridMetadata: Codable {
     static func current(campaignID: String, batch: PrintedGridBatch, pose: PrintedGridPose) -> Self {
         var metadata = Self(campaignID: campaignID, batch: batch, pose: pose)
         metadata.timingRevision = extendedPreparationTimingRevision
+        metadata.rowOrderRevision = "printed_pass3_ascending_v2"
+        metadata.scheduledRowOrder = PrintedGridBatch.rowOrders[batch.pass-1]
         return metadata
     }
     var hasExpectedGeometry: Bool {
