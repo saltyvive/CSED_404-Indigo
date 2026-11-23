@@ -6,7 +6,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
-from collection_timing import resolve_timing, LEGACY, FAST
+from collection_timing import resolve_timing, LEGACY, FAST, PREPARE3
 
 
 class TimingRecoveryTests(unittest.TestCase):
@@ -25,7 +25,7 @@ class TimingRecoveryTests(unittest.TestCase):
 
     def test_unannotated_timing_stays_strict(self):
         empty = dict(version=1, annotations=[])
-        for declared, expected in [(None, LEGACY), (FAST, FAST)]:
+        for declared, expected in [(None, LEGACY), (FAST, FAST), (PREPARE3, PREPARE3)]:
             m = dict(id='normal', printedGrid=dict(campaignID='campaign', timingRevision=declared))
             self.assertEqual(resolve_timing(m, b'raw', empty), (expected, None))
         m['printedGrid']['timingRevision'] = 'unknown'

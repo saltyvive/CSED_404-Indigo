@@ -17,7 +17,7 @@
 
 연구 앱은 기존 `com.chohyeonjun.magair.collector` 식별자를 유지해 설치된 앱의 데이터와 완료 이력을 이어받습니다. 표시 이름은 **MagAir Research**입니다. 데모 프로젝트는 별도의 식별자를 사용합니다.
 
-- [준비 2초·수집 2초·자동 진행 사용법](docs/FAST_COLLECTION.md)
+- [준비 3초·수집 2초·자동 진행 사용법](docs/FAST_COLLECTION.md)
 - [회차 간 사전 평가 기록표](evaluation/README.md)
 - [원본 ZIP과 복원 안내](../datasets/README.md)
 - [φ·θ·α 정의와 사후 확인 라벨](docs/FIXTURE_POSE_LABELS.md)

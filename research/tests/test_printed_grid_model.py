@@ -30,12 +30,13 @@ class PrintedModelTests(unittest.TestCase):
         cls.temp.cleanup()
 
     @classmethod
-    def fixture(cls, row):
-        specs = cls.plans[f'sweetspot_21x13_v1_p1_r{row}']
-        folder = cls.root/f'row{row}'; folder.mkdir()
+    def fixture(cls, row, prepare3=False):
+        plans = json.loads((Path(__file__).resolve().parents[1]/'build/tests/printed-grid-current-plans.json').read_text()) if prepare3 else cls.plans
+        specs = plans[f'sweetspot_21x13_v1_p1_r{row}']
+        folder = cls.root/(f'row{row}-prepare3' if prepare3 else f'row{row}'); folder.mkdir()
         time = 100.0; trials = []; samples = []; motions = []
         for spec in specs:
-            hold = spec['kind'] == 'mapHold'; duration = 2 if hold else 10; prepare = 2 if hold else 3
+            hold = spec['kind'] == 'mapHold'; duration = 2 if hold else 10; prepare = spec.get('preparationSeconds', 3)
             trial = dict(spec=spec, status='completed', startUptime=time, endUptime=time+prepare+duration, settleSeconds=prepare)
             trials.append(trial)
             for i in range(duration*50):
@@ -60,13 +61,25 @@ class PrintedModelTests(unittest.TestCase):
                         setup=dict(widthMM='50', heightMM='30', aspect=5/3),
                         sensorCounts=dict(magnetometer=len(samples), device_motion=len(motions)),
                         printedGrid=dict(protocolID=printed.PROTOCOL, campaignID='SYNTHETIC', batch=dict(row=row, **{'pass': 1}),
-                                         timingRevision='printed_2s_prepare_2s_hold_v2',
+                                         timingRevision=printed.PREPARE3 if prepare3 else printed.FAST,
                                          pose=specs[1]['fixturePose'], **printed.GEOMETRY))
         (folder/'manifest.json').write_text(json.dumps(manifest))
         for name, rows in [('magnetometer', samples), ('device_motion', motions)]:
             with (folder/(name+'.csv')).open('w') as f:
                 writer = csv.DictWriter(f, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
         return folder
+
+    def test_three_second_preparation_keeps_two_second_capture(self):
+        folder = self.fixture(1, prepare3=True)
+        batch = printed.extract(folder)
+        self.assertEqual(batch['effectiveTimingRevision'], printed.PREPARE3)
+        self.assertEqual(len(batch['points']), 21)
+        self.assertTrue(all(p['samples'] >= 50 for p in batch['points']))
+        path = folder/'manifest.json'; m = json.loads(path.read_text())
+        m['printedGrid']['timingRevision'] = printed.FAST
+        path.write_text(json.dumps(m))
+        with self.assertRaisesRegex(ValueError, 'Acquisition timing metadata mismatch'):
+            printed.extract(folder)
 
     def test_rectangular_single_pass_and_background_drift(self):
         model = printed.build(self.batches, [1])

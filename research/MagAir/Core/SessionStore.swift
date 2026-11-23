@@ -64,6 +64,7 @@ final class SessionStore {
         Do not pool historical 5x5 with dense data automatically; verify unchanged setup.
         Raw high-frequency samples are not independent repeated placements.
         App 1.16 printed timingRevision=printed_2s_prepare_2s_hold_v2: holds prepare 2s + capture 2s.
+        App 1.16.2 timingRevision=printed_3s_prepare_2s_hold_v3: holds prepare 3s + capture 2s.
         Baselines remain prepare 3s + capture 10s. Missing timingRevision means historical 3s+3s holds.
         acquisitionSeconds/preparationSeconds persist per-hold timing; trial.settleSeconds is authoritative.
         startTrigger records manual or automatic_next_hold. Automatic progression only connects holds.

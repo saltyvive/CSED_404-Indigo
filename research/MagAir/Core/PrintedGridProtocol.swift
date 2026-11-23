@@ -79,7 +79,7 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     var direction: String { columns.first == 1 ? "왼쪽 → 오른쪽" : "오른쪽 → 왼쪽" }
     var next: Self? { index + 1 < Self.all.count ? Self.all[index + 1] : nil }
 
-    func make(block: Int, pose: PrintedGridPose = .init(), fast: Bool = false) -> [TrialSpec] {
+    func make(block: Int, pose: PrintedGridPose = .init(), fast: Bool = false, preparationSeconds: Double = 2) -> [TrialSpec] {
         var specs: [TrialSpec] = []
         let group = "pass\(pass)-row\(row)"
         func append(column: Int?, action: String, instruction: String) {
@@ -94,12 +94,12 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
                                    nominalPointMM: column.map { Point2D(x: Double($0-1)*2.5, y: Double(row-1)*2.5) },
                                    fixturePose: column == nil ? nil : pose.canonical,
                                    acquisitionSeconds: fast && column != nil ? 2 : nil,
-                                   preparationSeconds: fast && column != nil ? 2 : nil))
+                                   preparationSeconds: fast && column != nil ? preparationSeconds : nil))
         }
         append(column: nil, action: "before", instruction: "\(row)행 시작 배경입니다. 펜슬과 이동하는 홀더를 항상 같은 먼 위치에 두세요. iPad·종이·스탠드·케이블은 그대로 두고 준비 3초 후 10초간 측정합니다.")
         for column in columns {
             let position = pose.tipContact ? "검은 점에 펜 끝을 가볍게 대세요." : "검은 점의 수직 위에 펜촉을 맞추세요."
-            let timing = fast ? "이동·준비 2초 후 정지 2초입니다. 준비 중 다음 점에 놓고, 측정 시작음부터 정지하세요. 늦었다면 일시정지를 눌러 다시 잽니다." : "위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요."
+            let timing = fast ? "이동·준비 \(Int(preparationSeconds))초 후 정지 2초입니다. 준비 중 다음 점에 놓고, 측정 시작음부터 정지하세요. 늦었다면 일시정지를 눌러 다시 잽니다." : "위치를 확인하고 시작한 뒤 준비 3초 + 정지 3초 동안 손과 홀더를 멈추세요."
             append(column: column, action: "hold", instruction: "위에서 \(row)행, 왼쪽에서 \(column)열. \(position) \(pose.canonical.summary)를 유지합니다. \(timing)")
         }
         append(column: nil, action: "after", instruction: "\(row)행 종료 배경입니다. 펜슬과 이동하는 홀더를 시작 배경 때와 같은 먼 위치에 두세요. 10초 배경까지 끝나야 이 행이 완료됩니다. 자동 저장 후 쉬어도 됩니다.")
@@ -115,8 +115,9 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
               abs(session.setup.aspect - 5.0/3.0) < 1e-9 else { return false }
         let completed = session.trials.filter { $0.status == "completed" }
         let timing = timingAnnotations.effectiveRevision(for: session, manifestData: manifestData)
-        guard timing == PrintedGridMetadata.legacyTimingRevision || timing == PrintedGridMetadata.fastTimingRevision else { return false }
-        let expected = make(block: 0, pose: meta.pose, fast: timing == PrintedGridMetadata.fastTimingRevision)
+        guard let timing, PrintedGridMetadata.supportedTimingRevisions.contains(timing) else { return false }
+        let expected = make(block: 0, pose: meta.pose, fast: timing != PrintedGridMetadata.legacyTimingRevision,
+                            preparationSeconds: timing == PrintedGridMetadata.extendedPreparationTimingRevision ? 3 : 2)
         guard completed.count == expected.count, Set(completed.map { $0.spec.id }).count == expected.count else { return false }
         for (actual, target) in zip(completed, expected) {
             let s = actual.spec
@@ -138,6 +139,8 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
 struct PrintedGridMetadata: Codable {
     static let legacyTimingRevision = "printed_3s_prepare_3s_hold_v1"
     static let fastTimingRevision = "printed_2s_prepare_2s_hold_v2"
+    static let extendedPreparationTimingRevision = "printed_3s_prepare_2s_hold_v3"
+    static let supportedTimingRevisions = [legacyTimingRevision, fastTimingRevision, extendedPreparationTimingRevision]
     var protocolID = PrintedGridBatch.protocolID
     var campaignID: String
     var batch: PrintedGridBatch
@@ -158,7 +161,14 @@ struct PrintedGridMetadata: Codable {
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
     /// Session startup must use the timing that its manifest declares.
     func makePlan(block: Int) -> [TrialSpec] {
-        batch.make(block: block, pose: pose, fast: timingRevision == Self.fastTimingRevision)
+        batch.make(block: block, pose: pose,
+                   fast: timingRevision == Self.fastTimingRevision || timingRevision == Self.extendedPreparationTimingRevision,
+                   preparationSeconds: timingRevision == Self.extendedPreparationTimingRevision ? 3 : 2)
+    }
+    static func current(campaignID: String, batch: PrintedGridBatch, pose: PrintedGridPose) -> Self {
+        var metadata = Self(campaignID: campaignID, batch: batch, pose: pose)
+        metadata.timingRevision = extendedPreparationTimingRevision
+        return metadata
     }
     var hasExpectedGeometry: Bool {
         protocolID == PrintedGridBatch.protocolID && columns == 21 && rows == 13 &&

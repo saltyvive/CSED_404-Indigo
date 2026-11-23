@@ -145,6 +145,33 @@ enum PrintedGridProtocolTests {
             precondition(!batch.accepts(session, campaignID: "campaign"))
         }
         try JSONEncoder().encode(fastPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-fast-plans.json"))
+        var currentPlans: [String: [TrialSpec]] = [:]
+        for batch in PrintedGridBatch.all {
+            var session = SessionManifest(id: "prepare3", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
+                device: "test", osVersion: "test", setup: PrintedGridCampaign().setup, availableSensors: [:])
+            session.status = "completed"
+            session.printedGrid = .current(campaignID: "campaign", batch: batch, pose: .init())
+            precondition(session.printedGrid?.timingRevision == PrintedGridMetadata.extendedPreparationTimingRevision)
+            let plan = session.printedGrid!.makePlan(block: 3)
+            currentPlans[batch.id] = plan
+            var time = 100.0
+            session.trials = plan.map { spec in
+                var trial = TrialRecord(spec: spec, startUptime: time, settleSeconds: spec.preparationSeconds ?? 3)
+                trial.status = "completed"; trial.endUptime = trial.plannedEnd; time = trial.plannedEnd+0.4
+                if spec.kind == .mapHold {
+                    precondition(trial.settleSeconds == 3 && spec.duration == 2 && trial.plannedEnd-trial.startUptime == 5)
+                    precondition(trial.annotation(at: trial.startUptime+2.99).phase == "settle")
+                    precondition(trial.annotation(at: trial.startUptime+3).source == "scheduled_static_target_unverified")
+                    precondition(trial.annotation(at: trial.startUptime+5).phase == "outside")
+                } else { precondition(trial.plannedEnd-trial.startUptime == 13) }
+                return trial
+            }
+            let decoded = try JSONDecoder().decode(SessionManifest.self, from: SessionStore.encode(session))
+            precondition(batch.accepts(decoded, campaignID: "campaign"))
+            session.printedGrid?.timingRevision = PrintedGridMetadata.fastTimingRevision
+            precondition(!batch.accepts(session, campaignID: "campaign"))
+        }
+        try JSONEncoder().encode(currentPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-current-plans.json"))
         // Reproduce 1.16: a complete legacy plan was saved with the new timing declaration.
         let recoveryBatch = PrintedGridBatch(pass: 2, row: 13)
         var affected = SessionManifest(id: "timing-regression", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
@@ -182,6 +209,13 @@ enum PrintedGridProtocolTests {
             let unchanged = try Data(contentsOf: url)
             precondition(unchanged == original)
             print("Recovered real pass 2 row 13: all 23 trials accepted; original manifest unchanged")
+        }
+        if CommandLine.arguments.count > 4 {
+            let data = try Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[4]))
+            let session = try JSONDecoder().decode(SessionManifest.self, from: data)
+            precondition(session.printedGrid!.batch.accepts(session, campaignID: annotation.campaignID, manifestData: data))
+            precondition(session.printedGrid?.timingRevision == PrintedGridMetadata.fastTimingRevision)
+            print("Real pass 2 row 12 retained with its original 2s+2s timing")
         }
         var sequence = PrintedAutoSequence()
         sequence.begin(isHold: false)

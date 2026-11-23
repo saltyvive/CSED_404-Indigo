@@ -16,7 +16,7 @@ import analyze_session as a
 from build_edge_model import summarize_trial
 from build_grid_model import Projector
 from fixture_pose import resolve_pose
-from collection_timing import resolve_timing, FAST
+from collection_timing import resolve_timing, FAST, PREPARE3
 
 PROTOCOL = 'sweetspot_21x13_v1'
 GEOMETRY = dict(columns=21, rows=13, widthMM=50, heightMM=30, pitchMM=2.5,
@@ -47,7 +47,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
     pose, pose_annotation = resolve_pose(m, (path/'manifest.json').read_bytes())
     timing = meta.get('timingRevision')
     effective_timing, timing_annotation = resolve_timing(m, (path/'manifest.json').read_bytes())
-    fast = effective_timing == FAST
+    fast = effective_timing in (FAST, PREPARE3)
+    hold_preparation = 3 if effective_timing == PREPARE3 else 2
     require(0 <= pose['phiDegrees'] < 360 and 0 <= pose['thetaDegrees'] <= 90 and
             math.isfinite(pose['tipHeightMM']) and (pose['tipHeightMM'] == 0 if pose['tipContact'] else pose['tipHeightMM'] > 0)
             and pose['source'] == 'operator_set_fixture_unmeasured', 'Invalid fixture labels')
@@ -70,8 +71,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                 spec.get('fixturePose') == (raw_pose if is_hold else None), 'Trial target/pose/order mismatch')
         shorter = fast and is_hold
         require(spec.get('acquisitionSeconds') == (2 if shorter else None) and
-                spec.get('preparationSeconds') == (2 if shorter else None), 'Acquisition timing metadata mismatch')
-        prepare, duration = (2, 2) if shorter else (3, 3 if is_hold else 10)
+                spec.get('preparationSeconds') == (hold_preparation if shorter else None), 'Acquisition timing metadata mismatch')
+        prepare, duration = (hold_preparation, 2) if shorter else (3, 3 if is_hold else 10)
         expected_end = trial['startUptime']+prepare+duration
         require(trial.get('settleSeconds') == prepare and math.isfinite(expected_end) and
                 abs(trial.get('endUptime', 0)-expected_end) < 1e-3, 'Incomplete timing')

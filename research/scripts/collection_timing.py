@@ -5,13 +5,14 @@ from pathlib import Path
 
 LEGACY = 'printed_3s_prepare_3s_hold_v1'
 FAST = 'printed_2s_prepare_2s_hold_v2'
+PREPARE3 = 'printed_3s_prepare_2s_hold_v3'
 ANNOTATIONS = Path(__file__).resolve().parents[1]/'MagAir/Resources/collection_timing_annotations.json'
 
 
 def resolve_timing(manifest, manifest_bytes, annotations=None):
     meta = manifest['printedGrid']
     declared = meta.get('timingRevision')
-    if declared not in (None, FAST):
+    if declared not in (None, FAST, PREPARE3):
         raise ValueError('Unknown acquisition timing')
     document = json.loads(ANNOTATIONS.read_text()) if annotations is None else annotations
     if document.get('version') != 1:

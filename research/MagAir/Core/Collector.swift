@@ -359,8 +359,7 @@ final class Collector: ObservableObject {
             var session = SessionManifest(id: id, startedAt: stamp, anchorUptime: uptime, anchorUnix: date.timeIntervalSince1970,
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
             if let printedBatch {
-                session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
-                session.printedGrid?.timingRevision = PrintedGridMetadata.fastTimingRevision
+                session.printedGrid = .current(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
                 session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
                 if printedBatch.pass > 1 {
                     session.printedGrid?.evaluationModelSHA256 = bundledGridHash
@@ -410,7 +409,8 @@ final class Collector: ObservableObject {
         printedBatch = batch; edgeScenario = nil; blockNumber += 1
         printedSequence.pause()
         setup = printedCampaign.setup; setup.confirmed = printedReady
-        plan = batch.make(block: blockNumber, pose: printedCampaign.pose, fast: true); planIndex = 0; elapsed = 0
+        plan = PrintedGridMetadata.current(campaignID: printedCampaign.id, batch: batch, pose: printedCampaign.pose).makePlan(block: blockNumber)
+        planIndex = 0; elapsed = 0
         selected = .mapBaseline
     }
 
@@ -476,7 +476,7 @@ final class Collector: ObservableObject {
             trial.startTrigger = automatic ? "automatic_next_hold" : "manual"
         }
         activeTrial = trial; manifest?.trials.append(trial); elapsed = 0
-        waitingForTail = false; lastCue = automatic ? "count-2" : ""
+        waitingForTail = false; lastCue = automatic ? "count-\(Int(ceil(trial.settleSeconds)))" : ""
         checkpoint()
     }
 
