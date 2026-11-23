@@ -28,22 +28,18 @@ final class Collector: ObservableObject {
     @Published var printedReady = false
     @Published var printedSequence = PrintedAutoSequence()
     private var cuePlayers: [String: AVAudioPlayer] = [:]
-    private let bundledGridHash: String? = {
-        guard let url = Bundle.main.url(forResource: "grid_model", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-    }()
+    private var collectionEvaluationPair: GridModelPair? {
+        guard let batch = printedBatch, batch.pass > 1 else { return nil }
+        return gridLiveTester.library?.pair((1..<batch.pass).map(String.init).joined())
+    }
     var printedEvaluationBlockReason: String? {
         guard let batch = printedBatch, batch.pass > 1 else { return nil }
-        guard let context = gridLiveTester.model?.printedGridContext,
-              context.passes.sorted() == Array(1..<batch.pass), bundledGridHash != nil else {
+        guard let pair = collectionEvaluationPair, let context = pair.modelA.printedGridContext,
+              context.passes.sorted() == Array(1..<batch.pass) else {
             return "\(batch.pass)회차 전에 1–\(batch.pass-1)회차로 만든 평가 모델을 적용해야 합니다. 이전 회차 완료 후 분석을 요청해 주세요."
         }
         guard context.campaignID == printedCampaign.id, context.pose == printedCampaign.pose else {
             return "현재 배치·자세와 평가 모델이 다릅니다. 이 배치의 이전 회차 모델을 먼저 적용하세요."
-        }
-        if batch.pass == 3 && gridLiveTester.knnModelSHA256 == nil {
-            return "3회차 평가를 위한 B 모델을 불러오지 못했습니다. A/B 모델 업데이트를 확인하세요."
         }
         return nil
     }
@@ -365,9 +361,9 @@ final class Collector: ObservableObject {
                 session.printedGrid = .current(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
                 session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
                 if printedBatch.pass > 1 {
-                    session.printedGrid?.evaluationModelSHA256 = bundledGridHash
-                    session.printedGrid?.evaluationKNNModelSHA256 = gridLiveTester.knnModelSHA256
-                    session.printedGrid?.evaluationTrainingPasses = gridLiveTester.model?.printedGridContext?.passes
+                    session.printedGrid?.evaluationModelSHA256 = collectionEvaluationPair?.entry.sha256A
+                    session.printedGrid?.evaluationKNNModelSHA256 = collectionEvaluationPair?.entry.sha256B
+                    session.printedGrid?.evaluationTrainingPasses = collectionEvaluationPair?.entry.passes
                 }
             }
             if let latestInclination, now - latestInclination.sensorUptime < 1.5 { session.ipadInclinationAtStart = latestInclination }

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "decidedOn": "2026-11-24",
+  "decisionTiming": "Requested after pass 3 collection; retrospective comparisons, with the original pre-collection A12/B12 test recorded separately.",
+  "combinations": [[1], [2], [3], [1, 2], [2, 3], [1, 3], [1, 2, 3]],
+  "algorithms": "Unchanged A bilinear forward-surface inversion and B multiprototype local distance-weighted k-NN; no score-driven parameter tuning.",
+  "evaluation": "Each combination is replayed on all three whole passes. A pass in the training set is labelled training_replay and NEVER included in held-out metrics. 123 has no held-out evaluation.",
+  "primary": "273 trimmed hold medians minus preceding row background per pass; equal weight per position. No future background, pose, target, guide, or temporal coordinate input.",
+  "secondary": "Three correlated causal 0.12s frames per placement; end-background correction reported only as an offline diagnostic.",
+  "thresholdSuccess": "Accepted AND radial error <= 2.5 or 5 mm, divided by all targets; rejected candidates remain in unconditional error statistics.",
+  "matchedLearningCurve": "Hold out pass t; compare each of the other single passes with their pair on this same t. Pool the six singleton-to-test combinations versus three pair-to-test combinations descriptively, preserving separate fold tables. Test targets repeat across singleton comparisons; no independent n=1638 claim.",
+  "limits": "Only three passes, one fixture pose and one desk setup. Different row orders and acquisition timing confound a universal data-size claim. Known grid coordinates, not unseen-space, arbitrary-pose, contact, or handwriting accuracy. No independent accuracy for 123. No significance claims."
+}
