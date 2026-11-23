@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "purpose": "Raw app 1.18 live-test snapshot for spatial rejection diagnosis; no ground-truth coordinates.",
+  "rawPublicationAuthorizedOn": "2026-11-24",
+  "snapshots": [
+    {
+      "snapshotSHA256": "4cd080d83f03575486a74ae7bcdbdad9399cedcb20a95bbc519989eb63653714",
+      "archive": "4cd080d83f035754.zip",
+      "archiveSHA256": "de808eb87ccfe4c1c65cfaf9281a1e13d5ae84abb2fc5587d16ba9e9bf2f3360",
+      "archiveBytes": 1694763,
+      "source": "research/data/live-diagnosis-20261124",
+      "sessions": [
+        {
+          "id": "GridLive-2026-11-23T22-37-20Z-3DEB76",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-39-02Z-02D862",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-39-46Z-A61E2C",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-40-52Z-1FBB67",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-41-07Z-F50399",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-41-42Z-A0D623",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-41-42Z-E773FD",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-41-57Z-2E7729",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-42-40Z-ADA11F",
+          "status": "closed"
+        },
+        {
+          "id": "GridLive-2026-11-23T22-45-42Z-2E2F43",
+          "status": "open_snapshot"
+        }
+      ],
+      "files": [
+        {
+          "file": "GridLive-2026-11-23T22-37-20Z-3DEB76.csv",
+          "bytes": 294553,
+          "sha256": "1fdc04f8b01ec304dd6bfe1e008b2c754344dd09fd7dad90d1429734b3ce491a"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-37-20Z-3DEB76.end.json",
+          "bytes": 125,
+          "sha256": "30915580cfa802526be54ad8ee7cd039a97fcb414267d78756c52eb5a5d3bbba"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-37-20Z-3DEB76.knn-model.json",
+          "bytes": 532120,
+          "sha256": "ac2e872c9baf6925c2689a3012fb3976b9e85ce2ffd408776d04eeddfc803d85"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-37-20Z-3DEB76.metadata.json",
+          "bytes": 57230,
+          "sha256": "441862fe94b19b09c1c02e96d501a4316124f8dcccda6d28763e2b798b346bbe"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-37-20Z-3DEB76.model.json",
+          "bytes": 95640,
+          "sha256": "c260496a7e36231f52f1c1c82a1073d418f0140f992f8b78821967561a617566"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-02Z-02D862.csv",
+          "bytes": 112608,
+          "sha256": "eb1f7950383a5347baaaddba9c972f266345395ca7dcf5faf1effa689ed54089"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-02Z-02D862.end.json",
+          "bytes": 81,
+          "sha256": "1c411ebd77e830fa097c6ce5f12cbe423d6344bc221a92f0d5b1d2184dc73128"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-02Z-02D862.knn-model.json",
+          "bytes": 367415,
+          "sha256": "3aba79fdc78a3547c819312014446e59b50e0e13b709577fe5e324bc1788584d"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-02Z-02D862.metadata.json",
+          "bytes": 57025,
+          "sha256": "05155f2e522f233a2579680db698ad5bd5fd5f315bf95ac8c4c52d831abb9466"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-02Z-02D862.model.json",
+          "bytes": 73960,
+          "sha256": "bd8a3137f8bac8874a99901ef547f1c9ccb0d2e39495f9c089d42f3ab796b7fa"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-46Z-A61E2C.csv",
+          "bytes": 241706,
+          "sha256": "d79528404c76afdbbf745d79fe3ada67ca043c6851678b72f30c677f96306f08"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-46Z-A61E2C.end.json",
+          "bytes": 92,
+          "sha256": "eb8413f29e25fe91a592512f643f88a6368c0786221b16603de1fc8050d209eb"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-46Z-A61E2C.knn-model.json",
+          "bytes": 367415,
+          "sha256": "3aba79fdc78a3547c819312014446e59b50e0e13b709577fe5e324bc1788584d"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-46Z-A61E2C.metadata.json",
+          "bytes": 57175,
+          "sha256": "6405c4efb14a0bde1b832fd78a87b77ad4bbc7a1b5459f725b7c41814625f6a7"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-39-46Z-A61E2C.model.json",
+          "bytes": 73960,
+          "sha256": "bd8a3137f8bac8874a99901ef547f1c9ccb0d2e39495f9c089d42f3ab796b7fa"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-40-52Z-1FBB67.csv",
+          "bytes": 5632,
+          "sha256": "e7946647a07cfcd6e0191cc486156178ef4ae8e4a96a37fa79cb96b0ea0d0d7e"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-40-52Z-1FBB67.end.json",
+          "bytes": 79,
+          "sha256": "fedc5913eb4d5d6d7a670c5aabbcdb572e8dbb5911f4e771ad3a1b01a135d3fb"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-40-52Z-1FBB67.knn-model.json",
+          "bytes": 532120,
+          "sha256": "ac2e872c9baf6925c2689a3012fb3976b9e85ce2ffd408776d04eeddfc803d85"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-40-52Z-1FBB67.metadata.json",
+          "bytes": 57183,
+          "sha256": "ac42c906aa508b32e7d3d473419eada75143e03b9145c2c36b4ca2ef30929d03"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-40-52Z-1FBB67.model.json",
+          "bytes": 95640,
+          "sha256": "c260496a7e36231f52f1c1c82a1073d418f0140f992f8b78821967561a617566"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-07Z-F50399.csv",
+          "bytes": 127686,
+          "sha256": "d95eb8d361098a4ecdf048a2787d7bf1fa07243e36a6b04576e886a4723f8926"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-07Z-F50399.end.json",
+          "bytes": 92,
+          "sha256": "fcdbbcd73f348ca2cfa2f9c82e3f9dd60c774f3404aa6f106cd3946063b0ae35"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-07Z-F50399.knn-model.json",
+          "bytes": 532120,
+          "sha256": "ac2e872c9baf6925c2689a3012fb3976b9e85ce2ffd408776d04eeddfc803d85"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-07Z-F50399.metadata.json",
+          "bytes": 57264,
+          "sha256": "e21c17eeb69cdefa8199481a38875a15bc5f669d018e97332683833a24e24ba4"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-07Z-F50399.model.json",
+          "bytes": 95640,
+          "sha256": "c260496a7e36231f52f1c1c82a1073d418f0140f992f8b78821967561a617566"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-A0D623.csv",
+          "bytes": 7466,
+          "sha256": "bd7cddb1129259cacee75d087d7778928c09ba68edfc3b8ea326d0990907214f"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-A0D623.end.json",
+          "bytes": 81,
+          "sha256": "e3b2df714ce462be4844e0d14264a9046d9aa774c352299862764742e855cec6"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-A0D623.knn-model.json",
+          "bytes": 367147,
+          "sha256": "f2ae0708a5ea48ff794c3d6616203e73e75e87e83c5fbf29a53bc99baf2d32d1"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-A0D623.metadata.json",
+          "bytes": 57256,
+          "sha256": "4d48171e4fb592f070296769b62cfeefeb496bed18a1aba4b071ea9c7c7e04dc"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-A0D623.model.json",
+          "bytes": 73711,
+          "sha256": "a488a0c02bbc48978cefce7025dec192bbc9c883d5c4ef157dd452ae89f2640a"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-E773FD.csv",
+          "bytes": 2343,
+          "sha256": "10ddf0fa50d76ea0208562641a45f0b112d779cf2f3de5e83891c6f6e162114b"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-E773FD.end.json",
+          "bytes": 91,
+          "sha256": "7dda0da3b3d015ada1d296273617bb40edf135ffe42229348781c2d06f307a35"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-E773FD.knn-model.json",
+          "bytes": 532120,
+          "sha256": "ac2e872c9baf6925c2689a3012fb3976b9e85ce2ffd408776d04eeddfc803d85"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-E773FD.metadata.json",
+          "bytes": 57264,
+          "sha256": "e21c17eeb69cdefa8199481a38875a15bc5f669d018e97332683833a24e24ba4"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-42Z-E773FD.model.json",
+          "bytes": 95640,
+          "sha256": "c260496a7e36231f52f1c1c82a1073d418f0140f992f8b78821967561a617566"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-57Z-2E7729.csv",
+          "bytes": 111720,
+          "sha256": "ea4804ce11c9339264e85eb053162e36c9790d9173e895f51167538577550da1"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-57Z-2E7729.end.json",
+          "bytes": 81,
+          "sha256": "e091c76d7b1c23b3dda5daae53bd75a212e047d0e539cafca4fa201ce650d790"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-57Z-2E7729.knn-model.json",
+          "bytes": 367147,
+          "sha256": "f2ae0708a5ea48ff794c3d6616203e73e75e87e83c5fbf29a53bc99baf2d32d1"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-57Z-2E7729.metadata.json",
+          "bytes": 57239,
+          "sha256": "d153d89e7899a6280734c986a24b057ed0a3736413f3ec87a1e25a1b79fc7dc4"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-41-57Z-2E7729.model.json",
+          "bytes": 73711,
+          "sha256": "a488a0c02bbc48978cefce7025dec192bbc9c883d5c4ef157dd452ae89f2640a"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-42-40Z-ADA11F.csv",
+          "bytes": 618446,
+          "sha256": "e352d6a359b8f7ba781cf7a712b9df2f3424fade867e7e7bfc158949d4b95687"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-42-40Z-ADA11F.end.json",
+          "bytes": 81,
+          "sha256": "2850990144e10b49abf21d2c0258176f6c3d3ea0d8a2d6a756392d82cea3bff2"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-42-40Z-ADA11F.knn-model.json",
+          "bytes": 367147,
+          "sha256": "f2ae0708a5ea48ff794c3d6616203e73e75e87e83c5fbf29a53bc99baf2d32d1"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-42-40Z-ADA11F.metadata.json",
+          "bytes": 57321,
+          "sha256": "6985e28781f22a9e73c77ded63f8890daf0a8b0473e564c000c86d1bae225681"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-42-40Z-ADA11F.model.json",
+          "bytes": 73711,
+          "sha256": "a488a0c02bbc48978cefce7025dec192bbc9c883d5c4ef157dd452ae89f2640a"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-45-42Z-2E2F43.csv",
+          "bytes": 93850,
+          "sha256": "0d77366c2b55c34a9a1c757365acdfc01ca7f570843d4b8b753e7e140b82dd2d"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-45-42Z-2E2F43.knn-model.json",
+          "bytes": 367147,
+          "sha256": "f2ae0708a5ea48ff794c3d6616203e73e75e87e83c5fbf29a53bc99baf2d32d1"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-45-42Z-2E2F43.metadata.json",
+          "bytes": 57149,
+          "sha256": "26e4640dcfb9e549c869c7ba55c9bb3feab0c7bcdd5c8d3b205d0caecfb1e33a"
+        },
+        {
+          "file": "GridLive-2026-11-23T22-45-42Z-2E2F43.model.json",
+          "bytes": 73711,
+          "sha256": "a488a0c02bbc48978cefce7025dec192bbc9c883d5c4ef157dd452ae89f2640a"
+        }
+      ]
+    }
+  ]
+}
