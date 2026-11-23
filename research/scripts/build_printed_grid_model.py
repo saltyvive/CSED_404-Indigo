@@ -16,6 +16,7 @@ import analyze_session as a
 from build_edge_model import summarize_trial
 from build_grid_model import Projector
 from fixture_pose import resolve_pose
+from collection_timing import resolve_timing, FAST
 
 PROTOCOL = 'sweetspot_21x13_v1'
 GEOMETRY = dict(columns=21, rows=13, widthMM=50, heightMM=30, pitchMM=2.5,
@@ -45,8 +46,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
     raw_pose = meta['pose']
     pose, pose_annotation = resolve_pose(m, (path/'manifest.json').read_bytes())
     timing = meta.get('timingRevision')
-    require(timing in (None, 'printed_2s_prepare_2s_hold_v2'), 'Unknown acquisition timing')
-    fast = timing is not None
+    effective_timing, timing_annotation = resolve_timing(m, (path/'manifest.json').read_bytes())
+    fast = effective_timing == FAST
     require(0 <= pose['phiDegrees'] < 360 and 0 <= pose['thetaDegrees'] <= 90 and
             math.isfinite(pose['tipHeightMM']) and (pose['tipHeightMM'] == 0 if pose['tipContact'] else pose['tipHeightMM'] > 0)
             and pose['source'] == 'operator_set_fixture_unmeasured', 'Invalid fixture labels')
@@ -140,7 +141,8 @@ def extract(path, *, allow_transient_motion=False, review_note=None):
                            deltaUT=[v-b for v, b in zip(obs['raw'], background)], causalFrames=frames))
     return dict(session=m['id'], campaignID=meta['campaignID'], row=row, repetition=repetition, device=m['device'],
                 setup=m['setup'], pose=pose, poseAnnotation=pose_annotation,
-                timingRevision=timing, evaluationModelSHA256=meta.get('evaluationModelSHA256'),
+                timingRevision=timing, effectiveTimingRevision=effective_timing, timingAnnotation=timing_annotation,
+                evaluationModelSHA256=meta.get('evaluationModelSHA256'),
                 evaluationTrainingPasses=meta.get('evaluationTrainingPasses'),
                 points=points, before=before, after=after,
                 driftUT=math.dist(before['raw'], after['raw']), motionEvents=events,

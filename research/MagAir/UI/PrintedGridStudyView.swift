@@ -81,7 +81,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.16")
+                .navigationTitle("MagAir Research · 도면 수집 1.16.1")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
@@ -199,7 +199,7 @@ struct PrintedGridStudyView: View {
                 }
                 Button("이 행 처음부터 다시 측정") { collector.selectPrinted(batch) }.buttonStyle(.bordered)
             } else {
-                Text("완료 저장이 확인되지 않았습니다. 저장 공간과 오류 안내를 확인하고 이 행을 다시 측정하세요.").foregroundStyle(.orange)
+                Text("완료 여부를 확인하지 못했습니다. ‘저장 기록’과 오류 안내를 확인해 주세요. 원본이 남아 있을 수 있으니 재측정 전에 분석을 요청하세요.").foregroundStyle(.orange)
                 Button("이 행 다시 준비") { collector.selectPrinted(batch) }.buttonStyle(.borderedProminent)
             }
             Text("맥북에 연결되어 있으면 직접 자료를 가져올 수 있습니다. ZIP을 하나씩 옮길 필요는 없습니다.").font(.footnote)

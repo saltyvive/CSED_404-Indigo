@@ -360,7 +360,7 @@ final class Collector: ObservableObject {
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
             if let printedBatch {
                 session.printedGrid = .init(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
-                session.printedGrid?.timingRevision = "printed_2s_prepare_2s_hold_v2"
+                session.printedGrid?.timingRevision = PrintedGridMetadata.fastTimingRevision
                 session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
                 if printedBatch.pass > 1 {
                     session.printedGrid?.evaluationModelSHA256 = bundledGridHash
@@ -379,8 +379,8 @@ final class Collector: ObservableObject {
             if printedBatch != nil { printedCampaign.hasStarted = true; persistPrintedCampaign() }
             UserDefaults.standard.set(try JSONEncoder().encode(setup), forKey: "setup.v1")
             UIApplication.shared.isIdleTimerDisabled = true
-            if let printedBatch {
-                blockNumber += 1; plan = printedBatch.make(block: blockNumber, pose: printedCampaign.pose); planIndex = 0
+            if let printedMetadata = session.printedGrid {
+                blockNumber += 1; plan = printedMetadata.makePlan(block: blockNumber); planIndex = 0
             } else if let edgeScenario {
                 blockNumber += 1; plan = edgeScenario.make(block: blockNumber); planIndex = 0
             } else { select(selected) }
@@ -566,7 +566,7 @@ final class Collector: ObservableObject {
                   let meta = session.printedGrid,
                   FixturePoseAnnotations.bundled.resolve(meta.pose, campaignID: meta.campaignID, sessionID: session.id) == printedCampaign.pose,
                   PrintedGridBatch.all.contains(meta.batch),
-                  meta.batch.accepts(session, campaignID: printedCampaign.id) else { continue }
+                  meta.batch.accepts(session, campaignID: printedCampaign.id, manifestData: data) else { continue }
             // Preserve every raw session; prefer the newest complete remeasurement in the UI.
             if completed[meta.batch.id] == nil { completed[meta.batch.id] = session.id }
         }

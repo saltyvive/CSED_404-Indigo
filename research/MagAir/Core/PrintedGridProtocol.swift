@@ -107,14 +107,16 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
     }
 
     /// Completion is reconstructed from files, not a count of button presses.
-    func accepts(_ session: SessionManifest, campaignID: String) -> Bool {
+    func accepts(_ session: SessionManifest, campaignID: String, manifestData: Data? = nil,
+                 timingAnnotations: PrintedTimingAnnotations = .bundled) -> Bool {
         guard session.status == "completed", let meta = session.printedGrid,
               meta.campaignID == campaignID, meta.batch == self, meta.hasExpectedGeometry, meta.pose.isValid,
               session.setup.widthMM == "50", session.setup.heightMM == "30",
               abs(session.setup.aspect - 5.0/3.0) < 1e-9 else { return false }
         let completed = session.trials.filter { $0.status == "completed" }
-        guard meta.timingRevision == nil || meta.timingRevision == "printed_2s_prepare_2s_hold_v2" else { return false }
-        let expected = make(block: 0, pose: meta.pose, fast: meta.timingRevision != nil)
+        let timing = timingAnnotations.effectiveRevision(for: session, manifestData: manifestData)
+        guard timing == PrintedGridMetadata.legacyTimingRevision || timing == PrintedGridMetadata.fastTimingRevision else { return false }
+        let expected = make(block: 0, pose: meta.pose, fast: timing == PrintedGridMetadata.fastTimingRevision)
         guard completed.count == expected.count, Set(completed.map { $0.spec.id }).count == expected.count else { return false }
         for (actual, target) in zip(completed, expected) {
             let s = actual.spec
@@ -134,6 +136,8 @@ struct PrintedGridBatch: Codable, Hashable, Identifiable {
 }
 
 struct PrintedGridMetadata: Codable {
+    static let legacyTimingRevision = "printed_3s_prepare_3s_hold_v1"
+    static let fastTimingRevision = "printed_2s_prepare_2s_hold_v2"
     var protocolID = PrintedGridBatch.protocolID
     var campaignID: String
     var batch: PrintedGridBatch
@@ -152,6 +156,10 @@ struct PrintedGridMetadata: Codable {
     var evaluationTrainingPasses: [Int]? = nil
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
+    /// Session startup must use the timing that its manifest declares.
+    func makePlan(block: Int) -> [TrialSpec] {
+        batch.make(block: block, pose: pose, fast: timingRevision == Self.fastTimingRevision)
+    }
     var hasExpectedGeometry: Bool {
         protocolID == PrintedGridBatch.protocolID && columns == 21 && rows == 13 &&
         widthMM == 50 && heightMM == 30 && pitchMM == 2.5 &&

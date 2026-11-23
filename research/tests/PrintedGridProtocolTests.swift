@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 enum PrintedGridProtocolTests {
     static func run() throws {
@@ -119,13 +120,14 @@ enum PrintedGridProtocolTests {
         try JSONEncoder().encode(plans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-plans.json"))
         var fastPlans: [String: [TrialSpec]] = [:]
         for batch in PrintedGridBatch.all {
-            let plan = batch.make(block: 2, fast: true)
-            fastPlans[batch.id] = plan
             var session = SessionManifest(id: "fast", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
                 device: "test", osVersion: "test", setup: PrintedGridCampaign().setup, availableSensors: [:])
             session.status = "completed"
             session.printedGrid = .init(campaignID: "campaign", batch: batch)
-            session.printedGrid?.timingRevision = "printed_2s_prepare_2s_hold_v2"
+            session.printedGrid?.timingRevision = PrintedGridMetadata.fastTimingRevision
+            // Exercise the same metadata-driven factory used when Collector begins a session.
+            let plan = session.printedGrid!.makePlan(block: 2)
+            fastPlans[batch.id] = plan
             var time = 100.0
             session.trials = plan.map { spec in
                 var t = TrialRecord(spec: spec, startUptime: time, settleSeconds: spec.preparationSeconds ?? 3)
@@ -143,6 +145,44 @@ enum PrintedGridProtocolTests {
             precondition(!batch.accepts(session, campaignID: "campaign"))
         }
         try JSONEncoder().encode(fastPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-fast-plans.json"))
+        // Reproduce 1.16: a complete legacy plan was saved with the new timing declaration.
+        let recoveryBatch = PrintedGridBatch(pass: 2, row: 13)
+        var affected = SessionManifest(id: "timing-regression", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
+            device: "test", osVersion: "test", setup: PrintedGridCampaign().setup, availableSensors: [:])
+        affected.status = "completed"
+        affected.printedGrid = .init(campaignID: "campaign", batch: recoveryBatch)
+        affected.printedGrid?.timingRevision = PrintedGridMetadata.fastTimingRevision
+        var recoveryTime = 100.0
+        affected.trials = recoveryBatch.make(block: 1).map { spec in
+            var trial = TrialRecord(spec: spec, startUptime: recoveryTime)
+            trial.status = "completed"; trial.endUptime = trial.plannedEnd; recoveryTime = trial.plannedEnd+0.4
+            return trial
+        }
+        let affectedData = try SessionStore.encode(affected)
+        let recovery = PrintedTimingAnnotations(version: 1, annotations: [.init(id: "test-recovery", campaignID: "campaign",
+            sessionID: affected.id, manifestSHA256: SHA256.hash(data: affectedData).map { String(format: "%02x", $0) }.joined(),
+            declaredTimingRevision: PrintedGridMetadata.fastTimingRevision,
+            effectiveTimingRevision: PrintedGridMetadata.legacyTimingRevision, reason: "Regression fixture")])
+        precondition(!recoveryBatch.accepts(affected, campaignID: "campaign"))
+        precondition(recoveryBatch.accepts(affected, campaignID: "campaign", manifestData: affectedData, timingAnnotations: recovery))
+        precondition(!recoveryBatch.accepts(affected, campaignID: "campaign", manifestData: affectedData + Data(" ".utf8), timingAnnotations: recovery))
+        var incomplete = affected; incomplete.trials.removeLast()
+        precondition(!recoveryBatch.accepts(incomplete, campaignID: "campaign", manifestData: affectedData, timingAnnotations: recovery))
+        // Audit the actual recovered file when supplied; completion must survive decoding without rewriting it.
+        if CommandLine.arguments.count > 3 {
+            let url = URL(fileURLWithPath: CommandLine.arguments[3])
+            let original = try Data(contentsOf: url)
+            let session = try JSONDecoder().decode(SessionManifest.self, from: original)
+            let timingAnnotations = try JSONDecoder().decode(PrintedTimingAnnotations.self,
+                from: Data(contentsOf: URL(fileURLWithPath: "MagAir/Resources/collection_timing_annotations.json")))
+            precondition(!recoveryBatch.accepts(session, campaignID: annotation.campaignID))
+            precondition(recoveryBatch.accepts(session, campaignID: annotation.campaignID, manifestData: original,
+                                              timingAnnotations: timingAnnotations))
+            precondition(annotations.resolve(session.printedGrid!.pose, campaignID: annotation.campaignID, sessionID: session.id) == known)
+            let unchanged = try Data(contentsOf: url)
+            precondition(unchanged == original)
+            print("Recovered real pass 2 row 13: all 23 trials accepted; original manifest unchanged")
+        }
         var sequence = PrintedAutoSequence()
         sequence.begin(isHold: false)
         precondition(!sequence.advance(nextIsHold: true, sensorFresh: true, deviceMoving: false))

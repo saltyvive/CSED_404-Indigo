@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "annotations": [
+    {
+      "id": "app-1.16-pass2-row13-legacy-timing-20261124",
+      "campaignID": "SweetSpot-1EBFFD3B-454D-4F78-90F2-6F50069B43C8",
+      "sessionID": "MagAir-2026-11-23T20-12-20Z-F6C5F6",
+      "manifestSHA256": "37f8174d247580340931579f7afa6faf00c66e20ff6fa4a9ed395ffef4b056c0",
+      "declaredTimingRevision": "printed_2s_prepare_2s_hold_v2",
+      "effectiveTimingRevision": "printed_3s_prepare_3s_hold_v1",
+      "reason": "App 1.16 beginSession rebuilt the displayed fast plan with the legacy default. All 21 holds actually used prepare 3s + capture 3s, with legacy per-trial fields and CSV label sources; both 10s backgrounds and all 23 trials completed. Interpret only this exact raw manifest using the legacy timing checks. Preserve all raw bytes and the original declared revision."
+    }
+  ]
+}

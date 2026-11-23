@@ -32,7 +32,7 @@ open MagAir.xcodeproj
 mkdir -p build/tests
 swiftc -module-cache-path build/SwiftModuleCache \
   MagAir/Core/Experiment.swift MagAir/Core/EdgeExperiment.swift MagAir/Core/DenseGridProtocol.swift \
-  MagAir/Core/PrintedGridProtocol.swift MagAir/Core/FixturePoseAnnotation.swift \
+  MagAir/Core/PrintedGridProtocol.swift MagAir/Core/FixturePoseAnnotation.swift MagAir/Core/PrintedTimingAnnotation.swift \
   MagAir/Core/GridLiveModel.swift MagAir/Core/SessionStore.swift \
   tests/CoreTests.swift tests/PrintedGridProtocolTests.swift -o build/tests/CoreTests
 build/tests/CoreTests "$PWD/build/tests"
