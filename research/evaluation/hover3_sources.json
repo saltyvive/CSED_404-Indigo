@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "hoverCampaignID": "SweetSpot-FB8B1625-27C7-4190-B577-128C7EE38D04",
+  "contactSourcesFile": "evaluation/combination_sources.json",
+  "hoverSessions": [
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-31-04Z-53976B",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-35-50Z-DC7FFC",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-38-55Z-46246B",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-42-05Z-FDB8BA",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-45-36Z-4B2C5A",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-48-49Z-72B53A",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-54-26Z-6EBFDA",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T18-59-39Z-443D28",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T19-03-11Z-7B50BF",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T19-06-42Z-DF899F",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T19-09-34Z-64663B",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T19-12-25Z-71021C",
+    "data/hover3-20261125-pass1/MagAir-2026-11-24T19-15-17Z-8932AD"
+  ],
+  "motionReviews": {
+    "MagAir-2026-11-24T18-42-05Z-FDB8BA": {
+      "manifestSHA256": "92dc830c0cf4d69653fc535dfaace9e4f32b96cb9f7bc0dd7038511205015d87",
+      "note": "Two acceleration events during end-background preparation, 0.04 s apart; no completed steady interval overlap. Median inclination before/after 52.398/52.408 degrees. Retain provisionally; translation/yaw not ruled out."
+    },
+    "MagAir-2026-11-24T18-54-26Z-6EBFDA": {
+      "manifestSHA256": "0eb37a6bb18395eb95b8c1a73c12018c0e1cd96864cfaa6cd260f70ff22107bc",
+      "note": "Six motion events during idle, spanning 0.199 s; no completed steady interval overlap. Median inclination before/after 52.436/52.456 degrees. Retain provisionally; translation/yaw not ruled out."
+    }
+  },
+  "purpose": "Post-hoc 0mm contact versus 3mm air feasibility. Only one air pass: no independent air-repeat evaluation. Prior contact pass2 sensitivity is reported separately."
+}
