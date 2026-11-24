@@ -1,0 +1,25 @@
+{
+  "campaignID": "SweetSpot-FB8B1625-27C7-4190-B577-128C7EE38D04",
+  "passID": 2,
+  "sessions": [
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-02-15Z-9F2D99",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-05-28Z-662521",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-08-14Z-D4C2EB",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-11-13Z-15FF44",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-13-56Z-E136E3",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-16-40Z-833330",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-19-20Z-EFBEC4",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-22-02Z-D99C2A",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-24-48Z-B9974F",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-27-43Z-0C24C6",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-30-31Z-33F958",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-33-36Z-1B3159",
+    "data/hover3-20261125-pass2/MagAir-2026-11-24T22-36-28Z-01A0D9"
+  ],
+  "motionReviews": {
+    "MagAir-2026-11-24T22-30-31Z-33F958": {
+      "manifestSHA256": "d1ea64688b5e30347c62c12d710e8e7f9b7b171ada2b1baa62e2a00b401e34ef",
+      "note": "Two transient IMU threshold crossings (0.031/0.053 g, ~20ms apart) around aborted r11c13 preparation. No completed steady interval overlaps motion; point retaken and row complete. Pre/post gravity medians differ by ~0.007 degrees; translation/yaw cannot be ruled out. Retain row provisionally and report a row-11-excluded sensitivity score without retraining."
+    }
+  }
+}
