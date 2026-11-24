@@ -75,6 +75,8 @@ final class SessionStore {
         Printed grid: manifest.printedGrid identifies sweetspot_21x13_v1 and a unique campaignID.
         App 1.17.1 schedules pass 3 rows 1...13; passes 1/2 keep their historical order.
         rowOrderRevision/scheduledRowOrder record the intended row order; session timestamps record actual collection order.
+        App 1.23 extends the existing 3mm campaign to pass 2, rows 1...13; within-row pass-2 directions remain reversed.
+        evaluationJointModelSHA256 freezes contact13/air1 A/B and shared C weights before air pass 2; it is not a live accuracy result.
         All 39 batches (13 rows x 3 passes) are ONE training campaign: 273 targets x 3 independent placements.
         Each batch has one row: before background + 21 holds + after background; all 23 must complete.
         printed_grid_train and printed_grid_baseline never mix automatically with historical datasets.

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "decidedOn": "2026-11-25",
+  "campaignID": "SweetSpot-FB8B1625-27C7-4190-B577-128C7EE38D04",
+  "testPass": 2,
+  "heightMM": 3,
+  "phiDegrees": 0,
+  "thetaDegrees": 90,
+  "alphaDegrees": 0,
+  "rowOrder": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13
+  ],
+  "firstPoint": {
+    "row": 1,
+    "column": 21
+  },
+  "withinRow": "odd rows 21->1; even rows 1->21",
+  "preparationSeconds": 3,
+  "holdSeconds": 2,
+  "baselineSeconds": 10,
+  "frozenModels": {
+    "A_contact13": "bd8a3137f8bac8874a99901ef547f1c9ccb0d2e39495f9c089d42f3ab796b7fa",
+    "B_contact13": "3aba79fdc78a3547c819312014446e59b50e0e13b709577fe5e324bc1788584d",
+    "A_air1": "de8aaf4fd455588468559401d401f668f987b5251a977766558d4451c3a37e86",
+    "B_air1": "7c30aaa5a1ac0ee3ce67de302026726155e75ffdd4720817931dfd013e2dd2e3",
+    "C_joint": "a1a719a15220a2ae2fe6ddcd3ff18f37e0ed3a99b7983b7cff37f4c979df0caa"
+  },
+  "evaluation": "Before retraining: frozen air1 A/B position; contact13+air1 joint A/B and shared C height+XY on identical completed pass2 placements. No tuning or training on pass2 before reporting this evaluation.",
+  "primaryInput": "Trimmed hold 3-axis median minus preceding row background; causal 0.12s replay reported separately. End background only for separately labelled offline diagnostics.",
+  "metrics": [
+    "all-candidate XY median, p95, RMSE mm",
+    "accepted correct air, incorrect contact, abstention counts with denominator 273",
+    "correct air AND accepted XY within 2.5mm/5mm",
+    "reason counts: weak signal, height ambiguity, spatial ambiguity, support/residual rejection"
+  ],
+  "limitations": [
+    "Air-only new pass: measures air recall and misclassification into contact, not fresh contact specificity, precision or balanced accuracy.",
+    "Same fixed setup/pose/height; does not validate arbitrary pose, unseen intermediate height or a new device.",
+    "Stationary placements, not ground truth for continuous writing."
+  ]
+}

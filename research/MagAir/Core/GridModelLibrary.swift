@@ -61,6 +61,13 @@ struct GridModelLibrary {
     var defaultLiveCombination: String { "hover3_1" }
     private let pairs: [String: GridModelPair]
     func pair(_ id: String) -> GridModelPair? { pairs[id] }
+    func evaluationPair(campaign: PrintedGridCampaign, batch: PrintedGridBatch) -> GridModelPair? {
+        guard batch.pass > 1, campaign.batches.contains(batch) else { return nil }
+        return allEntries.compactMap { pair($0.id) }.first { pair in
+            guard let c = pair.modelA.printedGridContext else { return false }
+            return c.campaignID == campaign.id && c.pose == campaign.pose && c.passes == Array(1..<batch.pass)
+        }
+    }
     func condition(for combination: String) -> GridModelCondition? {
         conditions.first { $0.entries.contains { $0.id == combination } }
     }

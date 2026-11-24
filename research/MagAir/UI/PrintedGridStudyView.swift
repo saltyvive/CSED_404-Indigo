@@ -53,8 +53,14 @@ struct PrintedGridStudyView: View {
                     DisclosureGroup("전체 측정 순서 · 쉬는 방법") {
                         VStack(alignment: .leading, spacing: 10) {
                             if campaign.preparationID == PrintedGridCampaign.hover3PreparationID {
-                                Text("이번에는 높이 3 mm·비접촉으로 1회차 273점만 수집합니다. 기존 0 mm 접촉 자료와 구분되는지 분석한 뒤 반복 수집을 정합니다.")
-                                Text("1 → 13행 순서. 홀수 행은 왼쪽 → 오른쪽, 짝수 행은 오른쪽 → 왼쪽입니다. 각 점의 수직 위 3 mm에 펜촉을 놓으세요. 종이에 닿게 내리지 않습니다.")
+                                if campaign.passCount == 2 {
+                                    Text("기존 공중 1회차를 보존하고 3 mm 2회차 273점을 추가합니다. 새 자료로 고정된 A/B/C를 먼저 평가한 뒤 학습에 합칩니다.")
+                                    Text("2회차도 1 → 13행 순서입니다. 2회차 홀수 행은 오른쪽 → 왼쪽, 짝수 행은 왼쪽 → 오른쪽입니다. 각 행 첫 점을 화면에서 확인하세요.")
+                                } else {
+                                    Text("이번에는 높이 3 mm·비접촉으로 1회차 273점만 수집합니다. 기존 0 mm 접촉 자료와 구분되는지 분석한 뒤 반복 수집을 정합니다.")
+                                    Text("1 → 13행 순서. 홀수 행은 왼쪽 → 오른쪽, 짝수 행은 오른쪽 → 왼쪽입니다.")
+                                }
+                                Text("각 점의 수직 위 3 mm에 펜촉을 놓으세요. 종이에 닿게 내리지 않습니다. φ=0°·θ=90°·α=0°와 iPad 배치를 유지합니다.")
                             } else {
                                 Text("이번 조건으로 \(campaign.passCount)회차까지 수집합니다. 2회차는 먼저 1회차 모델로 평가하고, 3회차는 1+2회차 모델로 평가한 뒤 학습에 합칩니다.")
                                 Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 1 → 13행, 1회차와 같은 지그재그")
@@ -62,7 +68,7 @@ struct PrintedGridStudyView: View {
                             Text("한 행: 시작 배경(수동) → 첫 점에 놓고 연속 시작 → 이동·준비 3초 + 정지 2초로 21점 자동 진행 → 종료 배경(수동) → 저장. 배경은 준비 3초 + 측정 10초입니다.")
                             Text("자동 진행 기준 행당 약 2분 20초이며, 처음 위치 맞춤·배경 이동·휴식 시간은 별도입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
-                            Text("실시간 테스트에서 1·2·3·1+2·2+3·1+3·1+2+3의 A/B 모델을 비교할 수 있습니다. 수집 시 기록하는 사전 평가 모델은 실시간 화면의 선택과 무관하게 이전 회차 모델로 고정됩니다.")
+                            Text(campaign.isHover3 ? "실시간 A/B/C 선택과 무관하게 공중 2회차의 평가 모델은 공중 1회차 및 접촉 1+3회차로 만든 모델로 고정됩니다. 수집 중 모델을 다시 학습하지 않습니다." : "실시간 테스트에서 1·2·3·1+2·2+3·1+3·1+2+3의 A/B 모델을 비교할 수 있습니다. 수집 시 기록하는 사전 평가 모델은 실시간 화면의 선택과 무관하게 이전 회차 모델로 고정됩니다.")
                         }.font(.subheadline).padding(.vertical, 8)
                     }
                     HStack {
@@ -87,7 +93,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.20")
+                .navigationTitle("MagAir Research · 도면 수집 1.23")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {

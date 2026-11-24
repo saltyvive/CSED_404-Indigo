@@ -17,6 +17,46 @@ enum PrintedGridProtocolTests {
         precondition(PrintedGridCampaign.hover3(from: hover) == nil)
         var changed = contact; changed.pose.phiDegrees = 45
         precondition(PrintedGridCampaign.hover3(from: changed) == nil)
+        // Explicit air extension preserves identity/settings and starts pass 2 at row 1, rightmost.
+        let repeatedAir = hover.extendingHover3ToPass2()!
+        precondition(repeatedAir.id == hover.id && repeatedAir.createdAt == hover.createdAt)
+        precondition(repeatedAir.pose == hover.pose && repeatedAir.referenceCampaignID == hover.referenceCampaignID)
+        precondition(repeatedAir.passCount == 2 && repeatedAir.batches.count == 26)
+        let pass2 = repeatedAir.batches.filter { $0.pass == 2 }
+        precondition(pass2.map(\.row) == Array(1...13) && pass2.first!.columns.first == 21)
+        precondition(pass2[1].columns.first == 1 && pass2.last!.columns.first == 21)
+        precondition(hover.passCount == 1 && contact.batches.filter { $0.pass == 2 }.map(\.row) == Array((1...13).reversed()))
+        precondition(contact.extendingHover3ToPass2() == nil)
+        let stable = repeatedAir.extendingHover3ToPass2()!
+        let sortedEncoder = JSONEncoder(); sortedEncoder.outputFormatting = .sortedKeys
+        let stableBytes = try sortedEncoder.encode(stable), repeatedBytes = try sortedEncoder.encode(repeatedAir)
+        precondition(stableBytes == repeatedBytes)
+        var repeatedPlans: [String: [TrialSpec]] = [:]
+        for batch in pass2 {
+            var meta = repeatedAir.metadata(for: batch)
+            precondition(meta.scheduledRowOrder == Array(1...13) && meta.rowOrderRevision == PrintedGridCampaign.hover3Pass2ExtensionID)
+            precondition(meta.plannedPasses == 2)
+            meta.evaluationJointModelSHA256 = ["A_contact13": "a", "B_contact13": "b", "A_air1": "c", "B_air1": "d", "C_joint": "e"]
+            let plan = meta.makePlan(block: 1); repeatedPlans[batch.id] = plan
+            precondition(plan.count == 23 && plan.first?.edgeAction == "before" && plan.last?.edgeAction == "after")
+            var session = SessionManifest(id: "hover3-pass2", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
+                device: "test", osVersion: "test", setup: repeatedAir.setup, availableSensors: [:])
+            session.status = "completed"; session.printedGrid = meta
+            var time = 100.0
+            session.trials = plan.map { spec in
+                var trial = TrialRecord(spec: spec, startUptime: time, settleSeconds: spec.preparationSeconds ?? 3)
+                trial.status = "completed"; trial.endUptime = trial.plannedEnd; time = trial.plannedEnd+1
+                if spec.kind == .mapHold { precondition(spec.duration == 2 && trial.settleSeconds == 3 && spec.fixturePose == hover.pose) }
+                return trial
+            }
+            let decoded = try JSONDecoder().decode(SessionManifest.self, from: SessionStore.encode(session))
+            precondition(batch.accepts(decoded, campaignID: hover.id))
+            precondition(decoded.printedGrid?.evaluationJointModelSHA256?["C_joint"] == "e")
+            session.trials[1].spec.gridColumn = 0
+            precondition(!batch.accepts(session, campaignID: hover.id))
+        }
+        precondition(repeatedPlans.values.flatMap { $0 }.filter { $0.kind == .mapHold }.count == 273)
+        try JSONEncoder().encode(repeatedPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-hover3-pass2-plans.json"))
         var hoverPlans: [String: [TrialSpec]] = [:]
         for batch in hover.batches {
             let metadata = hover.metadata(for: batch)

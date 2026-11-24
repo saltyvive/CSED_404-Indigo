@@ -30,7 +30,7 @@ final class Collector: ObservableObject {
     private var cuePlayers: [String: AVAudioPlayer] = [:]
     private var collectionEvaluationPair: GridModelPair? {
         guard let batch = printedBatch, batch.pass > 1 else { return nil }
-        return gridLiveTester.library?.pair((1..<batch.pass).map(String.init).joined())
+        return gridLiveTester.library?.evaluationPair(campaign: printedCampaign, batch: batch)
     }
     var printedEvaluationBlockReason: String? {
         guard let batch = printedBatch, batch.pass > 1 else { return nil }
@@ -40,6 +40,9 @@ final class Collector: ObservableObject {
         }
         guard context.campaignID == printedCampaign.id, context.pose == printedCampaign.pose else {
             return "현재 배치·자세와 평가 모델이 다릅니다. 이 배치의 이전 회차 모델을 먼저 적용하세요."
+        }
+        if printedCampaign.isHover3 && batch.pass == 2 && gridLiveTester.neuralBundle == nil {
+            return "공중 2회차 평가용 C 모델이 없습니다. 모델을 복원한 뒤 수집하세요."
         }
         return nil
     }
@@ -158,6 +161,7 @@ final class Collector: ObservableObject {
         }
         if ProcessInfo.processInfo.arguments.contains("--prepare-hover3") { prepareHover3Campaign() }
         refreshLibrary()
+        if ProcessInfo.processInfo.arguments.contains("--prepare-hover3-pass2") { prepareHover3Pass2() }
         startSensors()
         timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.tick() }
     }
@@ -365,6 +369,13 @@ final class Collector: ObservableObject {
                     session.printedGrid?.evaluationModelSHA256 = collectionEvaluationPair?.entry.sha256A
                     session.printedGrid?.evaluationKNNModelSHA256 = collectionEvaluationPair?.entry.sha256B
                     session.printedGrid?.evaluationTrainingPasses = collectionEvaluationPair?.entry.passes
+                    if printedCampaign.isHover3 && printedBatch.pass == 2,
+                       let contact = gridLiveTester.library?.pair("13"), let air = collectionEvaluationPair,
+                       let neural = gridLiveTester.neuralBundle {
+                        session.printedGrid?.evaluationJointModelSHA256 = [
+                            "A_contact13": contact.entry.sha256A, "B_contact13": contact.entry.sha256B,
+                            "A_air1": air.entry.sha256A, "B_air1": air.entry.sha256B, "C_joint": neural.sha256]
+                    }
                 }
             }
             if let latestInclination, now - latestInclination.sensorUptime < 1.5 { session.ipadInclinationAtStart = latestInclination }
@@ -465,6 +476,32 @@ final class Collector: ObservableObject {
             UserDefaults.standard.set(next.id, forKey: marker)
             printedCampaign = next; printedReady = false; printedCompleted = [:]
         } catch { errorMessage = "새 배치 준비 실패: \(error.localizedDescription)" }
+    }
+
+    private func prepareHover3Pass2() {
+        guard !sessionOpen, !isClosing, let next = printedCampaign.extendingHover3ToPass2(),
+              let air = gridLiveTester.library?.pair("hover3_1"),
+              air.modelA.printedGridContext?.campaignID == printedCampaign.id,
+              air.modelA.printedGridContext?.pose == printedCampaign.pose,
+              gridLiveTester.neuralBundle != nil else {
+            errorMessage = "현재 3 mm 배치와 고정된 1회차 평가 모델을 확인해야 합니다."; return
+        }
+        guard (1...13).allSatisfy({ printedCompleted[PrintedGridBatch(pass: 1, row: $0).id] != nil }) else {
+            errorMessage = "3 mm 1회차 13행의 완료 기록을 먼저 확인해야 합니다."; return
+        }
+        do {
+            if printedCampaign.extensionID != PrintedGridCampaign.hover3Pass2ExtensionID {
+                try archivePrintedCampaign(printedCampaign)
+                try archivePrintedCampaign(next)
+                let data = try JSONEncoder().encode(next)
+                UserDefaults.standard.set(data, forKey: "printedGrid.campaign.v1")
+                printedCampaign = next
+            }
+            printedReady = false
+            refreshLibrary()
+            selectPrinted(nextPrintedBatch)
+            notice = "3 mm 공중 2회차 준비 · 기존 1회차 원본 보존 · 완료 후 고정 A/B/C 평가부터 진행합니다."
+        } catch { errorMessage = "2회차 준비 기록 저장 실패: \(error.localizedDescription)" }
     }
 
     private func archivePrintedCampaign(_ campaign: PrintedGridCampaign) throws {

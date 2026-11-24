@@ -157,6 +157,7 @@ struct PrintedGridMetadata: Codable {
     var evaluationModelSHA256: String? = nil
     var evaluationKNNModelSHA256: String? = nil
     var evaluationTrainingPasses: [Int]? = nil
+    var evaluationJointModelSHA256: [String: String]? = nil
     var rowOrderRevision: String? = nil
     var scheduledRowOrder: [Int]? = nil
     var referenceCampaignID: String? = nil
@@ -198,6 +199,7 @@ struct PrintedAutoSequence {
 
 struct PrintedGridCampaign: Codable {
     static let hover3PreparationID = "hover3_phi0_theta90_alpha0_20261124_v1"
+    static let hover3Pass2ExtensionID = "hover3_pass2_ascending_20261125_v1"
     var id = "SweetSpot-" + UUID().uuidString
     var createdAt = ISO8601DateFormatter().string(from: Date())
     var hasStarted = false
@@ -206,8 +208,19 @@ struct PrintedGridCampaign: Codable {
     var referenceCampaignID: String? = nil
     var collectionIntent: String? = nil
     var plannedPasses: Int? = nil // nil preserves the historical three-pass schedule.
+    var ascendingPasses: [Int]? = nil // Explicit later extensions; never reinterpret old manifests.
+    var extensionID: String? = nil
     var passCount: Int { plannedPasses ?? 3 }
-    var batches: [PrintedGridBatch] { PrintedGridBatch.all.filter { $0.pass <= passCount } }
+    var batches: [PrintedGridBatch] {
+        (1...passCount).flatMap { pass in
+            let rows = ascendingPasses?.contains(pass) == true ? Array(1...13) : PrintedGridBatch.rowOrders[pass-1]
+            return rows.map { PrintedGridBatch(pass: pass, row: $0) }
+        }
+    }
+    var isHover3: Bool {
+        preparationID == Self.hover3PreparationID && pose.tipHeightMM == 3 && !pose.tipContact &&
+        pose.phiDegrees == 0 && pose.thetaDegrees == 90 && pose.alphaDegrees == 0
+    }
     func title(for batch: PrintedGridBatch) -> String {
         String(format: "%02d/%d · %d회차 · %d행", (batches.firstIndex(of: batch) ?? 0)+1, batches.count, batch.pass, batch.row)
     }
@@ -216,7 +229,22 @@ struct PrintedGridCampaign: Codable {
         meta.referenceCampaignID = referenceCampaignID
         meta.collectionIntent = collectionIntent
         meta.plannedPasses = plannedPasses
+        if ascendingPasses?.contains(batch.pass) == true {
+            meta.rowOrderRevision = Self.hover3Pass2ExtensionID
+            meta.scheduledRowOrder = Array(1...13)
+        }
         return meta
+    }
+    /// Extend the same height campaign, keeping all pass-1 IDs and original settings.
+    func extendingHover3ToPass2() -> Self? {
+        guard isHover3, passCount == 1 || (passCount == 2 && extensionID == Self.hover3Pass2ExtensionID) else { return nil }
+        if passCount == 2 { return self }
+        var next = self
+        next.plannedPasses = 2
+        next.ascendingPasses = [2]
+        next.extensionID = Self.hover3Pass2ExtensionID
+        next.collectionIntent = "contact_0mm_vs_air_3mm_feasibility; operator-set height, no sensed contact; pass2 independent air repeat; evaluate frozen air1 and joint contact13+air1 A/B/C before retraining"
+        return next
     }
     /// A new label condition, not a change to old contact sessions or inference inputs.
     static func hover3(from reference: Self) -> Self? {

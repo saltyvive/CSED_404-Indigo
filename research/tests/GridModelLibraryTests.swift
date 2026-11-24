@@ -30,6 +30,17 @@ struct GridModelLibraryTests {
         precondition(!library.pair("hover3_1")!.modelB.printedGridContext.pose.tipContact)
         precondition(library.pair("hover3_1")!.entry.evaluations.count == 1)
         precondition(library.pair("hover3_1")!.entry.evaluations[0].role == "training_replay")
+        var campaign = PrintedGridCampaign()
+        let contactContext = library.pair("1")!.modelA.printedGridContext!
+        campaign.id = contactContext.campaignID; campaign.pose = contactContext.pose
+        precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 2, row: 1))?.entry.id == "1")
+        precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 3, row: 1))?.entry.id == "12")
+        let airContext = library.pair("hover3_1")!.modelA.printedGridContext!
+        campaign.id = airContext.campaignID; campaign.pose = airContext.pose; campaign.plannedPasses = 2
+        precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 2, row: 1))?.entry.id == "hover3_1")
+        precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 1, row: 1)) == nil)
+        campaign.pose.tipHeightMM = 4
+        precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 2, row: 1)) == nil)
         precondition(library.canReuseBaseline(from: "1", to: "123"))
         precondition(library.canReuseBaseline(from: "hover3_1", to: "hover3_1"))
         precondition(!library.canReuseBaseline(from: "123", to: "hover3_1"))
