@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "defaultCombination": "hover3_1",
+  "entries": [
+    {
+      "id": "hover3_1",
+      "passes": [
+        1
+      ],
+      "evaluations": [
+        {
+          "testPass": 1,
+          "role": "training_replay",
+          "primaryA": {
+            "role": "training_replay",
+            "count": 273,
+            "meanRadialErrorMM": 0.7177109470282274,
+            "medianRadialErrorMM": 0.3333333333333338,
+            "p95RadialErrorMM": 2.63523138347365,
+            "radialRMSEMM": 1.1466882548377493,
+            "acceptedDisplayRate": 0.945054945054945,
+            "candidateDisplayRate": 1.0,
+            "medianAcceptedErrorMM": 0.33333333333333215,
+            "successWithin2p5MM": 0.8791208791208791,
+            "successWithin5MM": 0.945054945054945,
+            "ambiguousRate": 0.01098901098901099,
+            "rejectedCount": 15
+          },
+          "primaryB": {
+            "role": "training_replay",
+            "count": 273,
+            "meanRadialErrorMM": 0.688275966317426,
+            "medianRadialErrorMM": 0.349960097464593,
+            "p95RadialErrorMM": 2.5145673369572115,
+            "radialRMSEMM": 1.0481755603515588,
+            "acceptedDisplayRate": 0.945054945054945,
+            "candidateDisplayRate": 1.0,
+            "medianAcceptedErrorMM": 0.32647521657454676,
+            "successWithin2p5MM": 0.8901098901098901,
+            "successWithin5MM": 0.945054945054945,
+            "ambiguousRate": 0.007326007326007326,
+            "rejectedCount": 15
+          }
+        }
+      ],
+      "resourceA": "model_A_hover3_1",
+      "sha256A": "de8aaf4fd455588468559401d401f668f987b5251a977766558d4451c3a37e86",
+      "resourceB": "model_B_hover3_1",
+      "sha256B": "7c30aaa5a1ac0ee3ce67de302026726155e75ffdd4720817931dfd013e2dd2e3"
+    }
+  ],
+  "analysisSummarySHA256": "5d4d050a4aa181bcb00bec2fb39fe6a4e4095611b7557fd1586878fb669457b6",
+  "scope": "Fixed 3mm position mapping only; no automatic height/contact classification; one training pass, no independent repeat."
+}

@@ -87,7 +87,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.19")
+                .navigationTitle("MagAir Research · 도면 수집 1.20")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {

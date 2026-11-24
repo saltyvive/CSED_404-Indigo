@@ -15,6 +15,8 @@ final class GridLiveTester: ObservableObject {
     @Published private(set) var selectedCombination = "123"
     private(set) var library: GridModelLibrary?
     var selectedEntry: GridModelEntry? { library?.pair(selectedCombination)?.entry }
+    var selectedCondition: GridModelCondition? { library?.condition(for: selectedCombination) }
+    private static let selectionKey = "gridLive.selectedCombination.v2"
     private(set) var gridModelSHA256: String?
     @Published var baseline: [Double]?
     @Published var calibrating = false
@@ -65,24 +67,34 @@ final class GridLiveTester: ObservableObject {
                 }
                 return try Data(contentsOf: url)
             }
-            selectCombination(library!.catalog.defaultCombination)
+            let saved = UserDefaults.standard.string(forKey: Self.selectionKey)
+            let initial = ProcessInfo.processInfo.arguments.contains("--live-hover3") ? "hover3_1" : saved
+            selectCombination(initial.flatMap { library!.pair($0) == nil ? nil : $0 } ?? library!.defaultLiveCombination)
         } catch { status = "모델 읽기 실패: \(error.localizedDescription)" }
     }
 
     func selectCombination(_ id: String) {
-        guard !calibrating, let pair = library?.pair(id),
+        guard !calibrating, id != selectedCombination || model == nil, let pair = library?.pair(id),
               let a = GridProjector(model: pair.modelA), let b = KNNProjector(model: pair.modelB) else { return }
-        closeLog(reason: "training_combination_changed_to_" + id)
+        let sameCondition = library?.canReuseBaseline(from: selectedCombination, to: id) == true
+        if !sameCondition { invalidate("학습 높이 조건 변경 · 펜과 홀더를 멀리 두고 배경을 다시 맞추세요") }
+        else { closeLog(reason: "training_combination_changed_to_" + id) }
         clearTrail(); gridEstimate = nil; knnEstimate = nil; exportURL = nil
         selectedCombination = id
+        UserDefaults.standard.set(id, forKey: Self.selectionKey)
         model = pair.modelA; knnModel = pair.modelB; projector = a; knnProjector = b
         gridModelData = pair.dataA; knnModelData = pair.dataB
         gridModelSHA256 = pair.entry.sha256A; knnModelSHA256 = pair.entry.sha256B
         // The same baseline and causal sensor window remain valid for every same-condition pair.
         if let baseline, active {
             startLog(baseline: baseline, noise: baselineNoise)
-            status = "\(pair.entry.title)회차 모델 · 같은 배경으로 비교 중"
+            status = "\(selectedCondition?.title ?? "") · \(pair.entry.title)회차 모델 · 같은 배경으로 비교 중"
         } else { status = "펜을 멀리 두고 배경을 맞추세요" }
+    }
+
+    func selectCondition(_ id: String) {
+        guard let condition = library?.conditions.first(where: { $0.id == id }) else { return }
+        selectCombination(condition.defaultCombination)
     }
 
     func calibrate() {
@@ -159,7 +171,10 @@ final class GridLiveTester: ObservableObject {
             columns += [number(b.point.x),number(b.point.y),number(b.residual),number(b.limit),number(b.signal),
                         b.accepted ? "1" : "0",b.showCandidate ? "1" : "0",b.ambiguous ? "1" : "0",number(b.otherLocationResidual)]
         } else { columns += Array(repeating: "", count: 9) }
-        columns += [selectedMethod.rawValue, selectedCombination]
+        columns += [selectedMethod.rawValue, selectedCombination, selectedCondition?.id ?? "",
+                    model?.printedGridContext.map { number($0.pose.tipHeightMM) } ?? "",
+                    model?.printedGridContext.map { $0.pose.tipContact ? "contact" : "air" } ?? "",
+                    model?.printedGridContext?.campaignID ?? ""]
         if result.accepted {
             let begins = lastAcceptedTime.map { timestamp-$0 > 0.3 } ?? true
             gridTrail.append(GridTrailPoint(time: timestamp, point: result.point, beginsSegment: begins))
@@ -194,7 +209,8 @@ final class GridLiveTester: ObservableObject {
                           "residual_uT", "residual_limit_uT", "signal_uT", "accepted", "candidate_shown", "ambiguous", "baseline_age_s",
                           "distant_location_residual_uT", "display_guide_only",
                           "knn_estimated_x", "knn_estimated_y", "knn_residual_uT", "knn_residual_limit_uT", "knn_signal_uT",
-                          "knn_accepted", "knn_candidate_shown", "knn_ambiguous", "knn_distant_location_residual_uT", "viewed_model", "training_combination"]
+                          "knn_accepted", "knn_candidate_shown", "knn_ambiguous", "knn_distant_location_residual_uT", "viewed_model", "training_combination",
+                          "model_training_condition", "model_tip_height_mm", "model_tip_state", "model_campaign_id"]
             try Data(csvRow(header).utf8).write(to: url, options: .atomic)
             if let gridModelData {
                 try gridModelData.write(to: url.deletingPathExtension().appendingPathExtension("model.json"), options: .atomic)
@@ -202,14 +218,19 @@ final class GridLiveTester: ObservableObject {
             if let knnModelData {
                 try knnModelData.write(to: url.deletingPathExtension().appendingPathExtension("knn-model.json"), options: .atomic)
             }
-            let metadata: [String: Any] = ["baselineUT": baseline, "baselineNoiseUT": noise, "baselineTimestamp": baselineTime,
+            var metadata: [String: Any] = ["baselineUT": baseline, "baselineNoiseUT": noise, "baselineTimestamp": baselineTime,
                                          "trainingCombination": selectedCombination,
+                                         "modelTrainingCondition": selectedCondition?.id ?? "",
+                                         "contactDetectionAvailable": false,
                                          "trainingPasses": model?.printedGridContext?.passes ?? [],
                                          "calibrationSamples": baselineSamples.map { [$0.0] + $0.1 },
                                          "filter": "causal component median, 0.12 seconds; no coordinate smoothing or prediction",
                                          "modelASHA256": gridModelData.map { SHA256.hash(data: $0).map { String(format: "%02x", $0) }.joined() } ?? "",
                                          "modelBSHA256": knnModelSHA256 ?? "",
-                                         "scope": "A and B run on identical filtered magnetic input and the same live baseline. Unprefixed estimate columns are A; knn_ columns are B. viewed_model only selects display. Guide is never timestamped ground truth. No Pencil IMU or measured contact."]
+                                         "scope": "A and B run on identical filtered magnetic input and the same live baseline. Unprefixed estimate columns are A; knn_ columns are B. viewed_model only selects display. model_* height/state/condition are selected model training labels, not detected live pose/contact. Guide is never timestamped ground truth. No Pencil IMU or measured contact."]
+            if let context = model?.printedGridContext {
+                metadata["modelTrainingContext"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(context))
+            }
             try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys])
                 .write(to: url.deletingPathExtension().appendingPathExtension("metadata.json"), options: .atomic)
             handle = try FileHandle(forWritingTo: url); try handle?.seekToEnd()
@@ -279,7 +300,7 @@ struct GridLiveView: View {
                 Text("학습에 쓰지 않은 회차의 정지점 평가").font(.headline)
                 let held = entry.evaluations.filter { $0.role == "held_out_pass" }
                 if held.isEmpty {
-                    Text("1+2+3은 모든 회차로 학습한 최종 모델입니다. 별도 시험 회차가 없어 독립 정확도는 아직 모릅니다.")
+                    Text("선택한 모델은 별도 시험 회차가 없어 독립 정확도를 아직 모릅니다. 아래 학습 자료 재생 수치는 참고용입니다.")
                         .foregroundStyle(.orange)
                 } else {
                     ForEach(held, id: \.testPass) { e in Text(metricLine(e)).font(.subheadline.monospacedDigit()) }
@@ -300,25 +321,31 @@ struct GridLiveView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(printed == nil ? "격자 내부 실시간 테스트" : "스윗 스팟 · 273점 실시간 테스트").font(.largeTitle.bold())
-                    if let printed, printed.pose.tipHeightMM != collector.printedCampaign.pose.tipHeightMM ||
-                        printed.pose.tipContact != collector.printedCampaign.pose.tipContact {
-                        Text("현재 A/B 모델은 \(printed.pose.summary) 조건입니다. 이번 수집은 \(collector.printedCampaign.pose.summary)입니다. 접촉·비접촉 구분 모델은 수집 후 분석할 예정입니다.")
-                            .font(.subheadline).padding(14).background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    Text("학습에 사용한 회차").font(.headline)
-                    Picker("학습 회차 조합", selection: Binding(get: { tester.selectedCombination }, set: { tester.selectCombination($0) })) {
-                        ForEach(tester.library?.catalog.entries ?? []) { entry in
-                            Text(entry.title).tag(entry.id)
+                    Text("학습 높이 조건").font(.headline)
+                    Picker("학습 높이 조건", selection: Binding(get: { tester.selectedCondition?.id ?? "air3" }, set: { tester.selectCondition($0) })) {
+                        ForEach(tester.library?.conditions ?? []) { condition in
+                            Text(condition.title).tag(condition.id)
                         }
                     }.pickerStyle(.segmented)
                         .disabled(tester.calibrating || collector.sessionOpen || collector.isClosing)
+                    Text("선택한 높이를 장치에서 직접 맞춰 주세요. 높이·접촉 여부를 자동 판정하는 기능은 아직 없습니다.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    if let entries = tester.selectedCondition?.entries, entries.count > 1 {
+                        Text("학습에 사용한 회차").font(.headline)
+                        Picker("학습 회차 조합", selection: Binding(get: { tester.selectedCombination }, set: { tester.selectCombination($0) })) {
+                            ForEach(entries) { entry in Text(entry.title).tag(entry.id) }
+                        }.pickerStyle(.segmented)
+                            .disabled(tester.calibrating || collector.sessionOpen || collector.isClosing)
+                    } else {
+                        Text("3 mm 공중 · 1회차 273점 모델").font(.headline).foregroundStyle(.teal)
+                    }
                     Picker("위치 추정 모델", selection: $tester.selectedMethod) {
                         Text(GridMappingMethod.bilinear.rawValue).tag(GridMappingMethod.bilinear)
                         Text(GridMappingMethod.neighbors.rawValue).tag(GridMappingMethod.neighbors).disabled(tester.knnModel == nil)
                     }.pickerStyle(.segmented)
                     Text(tester.selectedMethod == .bilinear ? "A: 각 위치의 반복값을 대표값으로 합친 보간 지도" : "B: 같은 위치의 여러 자력계 패턴을 유지하는 k-NN 회귀")
                         .font(.headline)
-                    Text("배경은 한 번 맞춘 뒤 모든 조합에 그대로 사용합니다. A/B는 같은 입력으로 함께 계산됩니다. 학습 조합을 바꾸면 궤적을 지우고 새 기록으로 이어갑니다.")
+                    Text("같은 높이 조건에서는 배경을 한 번 맞춰 A/B와 회차 조합을 비교합니다. 높이 조건을 바꾸면 배경을 다시 맞춥니다. A/B는 같은 입력으로 함께 계산됩니다.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     if let printed {
                         Text("21열 × 13행 · 50 × 30 mm · 사용 회차 \(printed.passes.map(String.init).joined(separator: ", "))")
@@ -338,7 +365,7 @@ struct GridLiveView: View {
                     }
                     evaluationCard
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("① 펜을 멀리  ② 배경 맞추기  ③ 책상에 대고 이동").font(.headline)
+                        Text(printed?.pose.tipContact == false ? "① 펜을 멀리  ② 배경 맞추기  ③ 높이 3 mm로 이동" : "① 펜을 멀리  ② 배경 맞추기  ③ 책상에 대고 이동").font(.headline)
                         Text("iPad·종이·스탠드·케이블을 수집 때와 같은 배치로 유지하세요.")
                         Text(printed?.pose.summary ?? "펜은 책상에 수직, 로고는 왼쪽입니다.").font(.headline)
                         if let printed, let min = printed.ipadInclinationRange.first, let max = printed.ipadInclinationRange.last {
@@ -382,8 +409,13 @@ struct GridLiveView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 10) {
                         if printed != nil {
-                            Text("같은 점과 경로에서 14개 모델 비교").font(.headline)
-                            Text("먼저 1+2+3의 A/B를 비교하고, 같은 자세와 경로로 다른 학습 조합도 전환해 보세요. 고정점의 흔들림, 선을 따라갈 때의 점프, 주황색 후보를 비교하세요. 자유 이동에는 정답 좌표가 없어 자동 정확도 점수로 사용하지 않습니다.")
+                            Text("같은 점과 경로에서 A/B 비교").font(.headline)
+                            if printed?.pose.tipContact == false {
+                                Text("φ=0°·θ=90°·α=0°를 유지하고 펜촉을 표식의 수직 위 3 mm에 놓으세요. 같은 점과 선에서 A/B를 전환하며 흔들림·점프·주황색 후보를 비교하세요. 3 mm의 첫 모델이며 반복 수집 검증은 아직 없습니다.")
+                            } else {
+                                Text("같은 자세와 경로에서 7개 회차 조합의 A/B를 비교하세요. 고정점의 흔들림, 선을 따라갈 때의 점프, 주황색 후보를 비교하세요.")
+                            }
+                            Text("자유 이동에는 정답 좌표가 없어 자동 정확도 점수로 사용하지 않습니다.").font(.footnote)
                             Button("273점 수집으로 이동") { collectPrinted() }
                                 .buttonStyle(.bordered).disabled(collector.sessionOpen || collector.isClosing || tester.calibrating)
                             if let included = tester.model?.movementIncludedRows, !included.isEmpty {
@@ -397,10 +429,10 @@ struct GridLiveView: View {
                         Button("기록 공유본 만들기 (선택)") { tester.shareSnapshot() }.buttonStyle(.bordered)
                         if let url = tester.exportURL { ShareLink("CSV 공유", item: url) }
                     }
-                    Text("같은 자세·책상 접촉 조건의 초기 모델입니다. 펜의 기울기·축 회전·접촉 여부는 측정하지 않습니다. 펜을 들어 옮길 때 궤적이 생길 수 있으니 내려놓고 궤적을 지우세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
+                    Text("선택한 자세·높이를 유지하는 위치 추정 모델입니다. 실제 펜의 기울기·회전·접촉 여부는 측정하지 않습니다. 높이가 달라도 점이 표시될 수 있습니다. 펜을 이동 배치한 뒤 궤적을 지우고 테스트하세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 7조합 A/B 테스트 1.19")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 높이별 A/B 테스트 1.20")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }
