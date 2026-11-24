@@ -4,6 +4,7 @@
 
 ## 현재 범위
 
+- **현재 수집: 1.19.0(24), φ=0°·θ=90°·α=0°·높이 3 mm·비접촉, 별도 배치 1회차 273점.** [수집 안내와 0 mm 비교 범위](docs/HOVER_3MM_COLLECTION.md). 추가 반복과 접촉 판정 모델은 첫 분석 후 결정합니다.
 - iPad 수집 앱, φ·θ·α·펜촉 높이·접촉 라벨, 중력 기준 iPad 경사 기록.
 - 행별 시작/종료 배경과 정지점 수집, 원본 파일 보관, 완료 이력 복원.
 - 3회차까지 819번의 배치를 수집했습니다. 앱 1.18은 보간 A·반복 패턴 k-NN B 각각 1/2/3/12/23/13/123 조합을 실시간 비교하며 기본값은 A123입니다. 여러 자세를 자유롭게 사용하는 성능은 아직 검증하지 않았습니다.
@@ -19,6 +20,7 @@
 연구 앱은 기존 `com.chohyeonjun.magair.collector` 식별자를 유지해 설치된 앱의 데이터와 완료 이력을 이어받습니다. 표시 이름은 **MagAir Research**입니다. 데모 프로젝트는 별도의 식별자를 사용합니다.
 
 - [준비 3초·수집 2초·자동 진행 사용법](docs/FAST_COLLECTION.md)
+- [3 mm 비접촉 수집 안내](docs/HOVER_3MM_COLLECTION.md)
 - [3회차·7개 조합 A/B 평가와 학습량 분석](evaluation/COMBINATIONS_RESULTS.md)
 - [2회차 평가 결과](evaluation/PASS2_RESULTS.md)
 - [회차 간 사전 평가 기록표](evaluation/README.md)
