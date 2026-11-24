@@ -6,8 +6,8 @@
 <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
 <key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.23.0</string>
-<key>CFBundleVersion</key><string>28</string>
+<key>CFBundleShortVersionString</key><string>1.24.0</string>
+<key>CFBundleVersion</key><string>29</string>
 <key>LSRequiresIPhoneOS</key><true/>
 <key>NSMotionUsageDescription</key><string>화면 밖 펜슬 움직임 연구를 위해 iPad의 자력계와 동작 센서를 기록합니다.</string>
 <key>UIFileSharingEnabled</key><true/>

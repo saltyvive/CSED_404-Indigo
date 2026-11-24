@@ -22,7 +22,10 @@ final class GridLiveTester: ObservableObject {
     @Published var selectedMethod: GridMappingMethod = .bilinear
     @Published private(set) var selectedCombination = "123"
     private(set) var library: GridModelLibrary?
-    var isJoint: Bool { selectedCombination == JointHeightProjector.id }
+    var isJoint: Bool { JointHeightProjector.allIDs.contains(selectedCombination) }
+    var jointAirCombination: String? { JointHeightProjector.airCombination(for: selectedCombination) }
+    var jointAirTitle: String { library?.pair(jointAirCombination ?? "hover3_1")?.entry.title ?? "1" }
+    var jointAirPlacements: Int { 273 * (library?.pair(jointAirCombination ?? "hover3_1")?.entry.passes.count ?? 1) }
     var selectedEntry: GridModelEntry? { library?.pair(selectedCombination)?.entry }
     var selectedCondition: GridModelCondition? { library?.condition(for: selectedCombination) }
     var conditionID: String { isJoint ? JointHeightProjector.id : selectedCondition?.id ?? "air3" }
@@ -37,8 +40,11 @@ final class GridLiveTester: ObservableObject {
     @Published private var jointA: JointHeightEstimate?
     @Published private var jointB: JointHeightEstimate?
     @Published private(set) var neuralEstimate: JointNeuralEstimate?
-    private(set) var neuralBundle: JointNeuralBundle?
-    private(set) var neuralLoadError: String?
+    private var neuralBundles: [String: JointNeuralBundle] = [:]
+    private var neuralLoadErrors: [String: String] = [:]
+    var neuralBundle: JointNeuralBundle? { neuralBundles[jointAirCombination ?? "hover3_1"] }
+    var collectionNeuralBundle: JointNeuralBundle? { neuralBundles["hover3_1"] }
+    var neuralLoadError: String? { neuralLoadErrors[jointAirCombination ?? "hover3_1"] }
     var jointEstimate: JointHeightEstimate? {
         selectedMethod == .neural ? nil : selectedMethod == .bilinear ? jointA : jointB
     }
@@ -109,29 +115,32 @@ final class GridLiveTester: ObservableObject {
                 }
                 return try Data(contentsOf: url)
             }
-            do {
-                neuralBundle = try JointNeuralBundle.load(library: library!) { resource in
+            for air in ["hover3_1", "hover3_2", "hover3_12"] {
+              do {
+                neuralBundles[air] = try JointNeuralBundle.load(library: library!, airCombination: air) { resource in
                     guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
                         throw GridModelLibrary.LoadError.invalid("C 모델 파일 누락")
                     }
                     return try Data(contentsOf: url)
                 }
-            } catch { neuralLoadError = error.localizedDescription }
+              } catch { neuralLoadErrors[air] = error.localizedDescription }
+            }
             let saved = UserDefaults.standard.string(forKey: Self.selectionKey)
             let args = ProcessInfo.processInfo.arguments
-            let initial: String? = args.contains("--live-joint-height") || args.contains("--live-joint-mlp") ? JointHeightProjector.id : args.contains("--live-hover3") ? "hover3_1" : saved
-            selectCombination(initial.flatMap { $0 == JointHeightProjector.id || library!.pair($0) != nil ? $0 : nil } ?? JointHeightProjector.id)
+            let initial: String? = args.contains("--live-joint-air12") ? JointHeightProjector.expandedID : args.contains("--live-joint-height") || args.contains("--live-joint-mlp") ? JointHeightProjector.id : args.contains("--live-hover3") ? "hover3_12" : saved
+            selectCombination(initial.flatMap { JointHeightProjector.allIDs.contains($0) || library!.pair($0) != nil ? $0 : nil } ?? JointHeightProjector.expandedID)
             if args.contains("--live-joint-mlp"), neuralBundle != nil { selectedMethod = .neural }
         } catch { status = "모델 읽기 실패: \(error.localizedDescription)" }
     }
 
     func selectCombination(_ id: String) {
+        let airID = JointHeightProjector.airCombination(for: id)
         guard !calibrating, id != selectedCombination || model == nil, let library,
-              let pair = library.pair(id == JointHeightProjector.id ? "13" : id),
+              let pair = library.pair(airID != nil ? "13" : id),
               let a = GridProjector(model: pair.modelA), let b = KNNProjector(model: pair.modelB) else { return }
-        let joint = id == JointHeightProjector.id ? JointHeightProjector(library: library) : nil
-        guard id != JointHeightProjector.id || joint != nil else { status = "통합 모델 읽기 실패"; return }
-        let sameCondition = library.canReuseBaseline(from: selectedCombination, to: id)
+        let joint = airID.flatMap { JointHeightProjector(library: library, airCombination: $0) }
+        guard airID == nil || joint != nil else { status = "통합 모델 읽기 실패"; return }
+        let sameCondition = (isJoint && airID != nil) || library.canReuseBaseline(from: selectedCombination, to: id)
         if !sameCondition { invalidate("학습 높이 조건 변경 · 펜과 홀더를 멀리 두고 배경을 다시 맞추세요") }
         else { closeLog(reason: "training_combination_changed_to_" + id) }
         clearTrail(); gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; neuralEstimate = nil; exportURL = nil
@@ -150,7 +159,7 @@ final class GridLiveTester: ObservableObject {
     }
 
     func selectCondition(_ id: String) {
-        if id == JointHeightProjector.id { selectCombination(id); return }
+        if id == JointHeightProjector.id { selectCombination(JointHeightProjector.expandedID); return }
         guard let condition = library?.conditions.first(where: { $0.id == id }) else { return }
         selectCombination(condition.defaultCombination)
     }
@@ -337,12 +346,12 @@ final class GridLiveTester: ObservableObject {
                     ["combination": pair.entry.id, "modelASHA256": pair.entry.sha256A, "modelBSHA256": pair.entry.sha256B,
                      "context": try JSONSerialization.jsonObject(with: JSONEncoder().encode(pair.modelA.printedGridContext!))]
                 }
-                metadata["scope"] = "Experimental joint XY and 0/3mm inference. Contact uses passes 1+3 only; air uses pass 1. Both height models search all XY on the same magnetic input. Smaller raw residual wins; gap <= 0.75uT or winner position rejection abstains. Not calibrated probabilities or measured contact; other heights unvalidated. A/B run together; unprefixed XY is A and knn_ XY is B. Joint columns preserve both height candidates. Model height/state/campaign single-label columns are empty. No Pencil IMU, fixture labels or guide used as live inputs. B has 8 contact vs 4 air patterns per XY, which may bias nearest residuals. No independent air repeat validation."
+                metadata["scope"] = "Experimental joint XY and 0/3mm inference. Contact passes 1+3; air passes \(air.entry.title). Both heights search all XY on identical magnetic input. Residual gap <= 0.75uT or winner position rejection abstains. B stores 4 patterns per placement, so class pattern counts depend on selected passes. Unprefixed XY is A, knn_ is B. No Pencil IMU, fixture labels or guide as inputs. Air1 evaluated on held-out air2 before training; air2 evaluated retrospectively on held-out air1; air12 has no independent repeat validation."
                 if let neuralBundle {
                     try neuralBundle.data.write(to: url.deletingPathExtension().appendingPathExtension("c-model.json"), options: .atomic)
                     metadata["modelCSHA256"] = neuralBundle.sha256
                     metadata["modelCPlanSHA256"] = neuralBundle.projector.model.planSHA256
-                    metadata["modelCScope"] = "Single shared MLP jointly trained on contact passes 1+3 and air pass 1; equal total loss weight per height. Predicts XY and uncalibrated sigmoid contact score from the same filtered field as A/B. c_ columns are C; support distance only gates display, never selects XY or height. Scores 0.35 < p < 0.65 abstain. Other display gates: minimum signal, training support distance, XY bounds. C has no independent air repeat validation; five-fold spatial row holdout is separate from final model training replay."
+                    metadata["modelCScope"] = "Shared MLP: contact 1+3, air \(air.entry.title); equal loss weight per height. Same input as A/B; XY and uncalibrated contact score. Support distance gates only. Scores 0.35 < p < 0.65 abstain. C1 evaluated on held-out air2 before training; C2 on held-out air1 retrospectively. C12 includes both air passes; its replay/row holdout is not independent repeat validation."
                 }
             } else if let context = model?.printedGridContext {
                 metadata["modelTrainingContext"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(context))
@@ -418,7 +427,7 @@ struct GridLiveView: View {
                 Text("● 청록색: 접촉 추정 · 0 mm").foregroundStyle(.teal)
                 Text("● 보라색: 공중 추정 · 3 mm").foregroundStyle(.purple)
                 Text("◯ 주황색: 위치 또는 접촉·공중 구분이 불확실함").foregroundStyle(.orange)
-                Text("0 mm의 1+3회차와 3 mm의 1회차를 함께 비교합니다. 같은 점에서 높이만 바꾸어 색이 바뀌는지 확인하세요. 독립적인 공중 반복 검증은 아직 없습니다.")
+                Text("0 mm는 1+3회차, 3 mm는 \(tester.jointAirTitle)회차입니다. 공중 1·2 단독 모델은 각각 반대 회차로 평가했습니다. 1+2 모델은 두 회차를 모두 학습했으므로 별도 독립 평가가 없습니다.")
                     .font(.subheadline)
             }.padding(16).background(.teal.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
         } else if let entry = tester.selectedEntry {
@@ -487,7 +496,13 @@ struct GridLiveView: View {
                         }.pickerStyle(.segmented)
                             .disabled(tester.calibrating || collector.sessionOpen || collector.isClosing)
                     } else if tester.isJoint {
-                        Text("0 mm: 1+3회차  ·  3 mm: 1회차").font(.headline)
+                        Text("0 mm: 1+3회차 고정 · 3 mm 학습 회차").font(.headline)
+                        Picker("통합 모델의 공중 학습 회차", selection: Binding(get: { tester.selectedCombination }, set: { tester.selectCombination($0) })) {
+                            Text("1 · 기존").tag(JointHeightProjector.id)
+                            Text("2 · 단독").tag(JointHeightProjector.air2ID)
+                            Text("1+2 · 추가 학습").tag(JointHeightProjector.expandedID)
+                        }.pickerStyle(.segmented)
+                            .disabled(tester.calibrating || collector.sessionOpen || collector.isClosing)
                     } else {
                         Text("3 mm 공중 · 1회차 273점 모델").font(.headline).foregroundStyle(.teal)
                     }
@@ -506,7 +521,7 @@ struct GridLiveView: View {
                     Text(tester.isJoint ? "배경을 한 번 맞춘 뒤 높이만 바꾸세요. A/B/C는 같은 입력으로 함께 계산됩니다. 테스트 모드를 바꾸면 배경을 다시 맞춥니다." : "같은 높이 조건에서는 배경을 한 번 맞춰 A/B와 회차 조합을 비교합니다. 높이 조건을 바꾸면 배경을 다시 맞춥니다. A/B는 같은 입력으로 함께 계산됩니다.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     if tester.isJoint {
-                        Text("21열 × 13행 · 50 × 30 mm · 접촉 546회 + 공중 273회 배치").font(.subheadline)
+                        Text("21열 × 13행 · 50 × 30 mm · 접촉 546회 + 공중 \(tester.jointAirPlacements)회 배치").font(.subheadline)
                     } else if let printed {
                         Text("21열 × 13행 · 50 × 30 mm · 사용 회차 \(printed.passes.map(String.init).joined(separator: ", "))")
                             .font(.headline).foregroundStyle(.teal)
@@ -589,7 +604,7 @@ struct GridLiveView: View {
                             if tester.isJoint {
                                 Text("중앙과 네 모서리에서 펜촉의 수평 위치를 유지하며 0 → 3 → 0 mm로 바꿔 보세요. 색이 맞는지와 높이를 바꿀 때 위치가 튀는지를 A/B/C 각각 비교하세요. 움직이는 중간 높이는 아직 학습하지 않았습니다.")
                             } else if printed?.pose.tipContact == false {
-                                Text("φ=0°·θ=90°·α=0°를 유지하고 펜촉을 표식의 수직 위 3 mm에 놓으세요. 같은 점과 선에서 A/B를 전환하며 흔들림·점프·주황색 후보를 비교하세요. 3 mm의 첫 모델이며 반복 수집 검증은 아직 없습니다.")
+                                Text("φ=0°·θ=90°·α=0°를 유지하고 펜촉을 표식의 수직 위 3 mm에 놓으세요. 같은 점과 선에서 A/B를 전환하며 흔들림·점프·주황색 후보를 비교하세요. 1·2 단독 모델은 각각 반대 회차로 평가했고, 1+2 모델의 별도 독립 회차 평가는 아직 없습니다.")
                             } else {
                                 Text("같은 자세와 경로에서 7개 회차 조합의 A/B를 비교하세요. 고정점의 흔들림, 선을 따라갈 때의 점프, 주황색 후보를 비교하세요.")
                             }
@@ -610,7 +625,7 @@ struct GridLiveView: View {
                     Text(tester.isJoint ? "A/B는 높이별 모델을 비교하고 C는 두 높이를 공동 학습합니다. 모두 자력계로 접촉을 추정하는 실험 기능입니다. 색이 틀릴 수 있고, 0/3 mm 외 높이와 다른 자세는 검증하지 않았습니다. 실제 펜의 기울기·회전은 측정하지 않습니다. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다." : "선택한 자세·높이를 유지하는 위치 추정 모델입니다. 실제 펜의 기울기·회전·접촉 여부는 측정하지 않습니다. 높이가 달라도 점이 표시될 수 있습니다. 펜을 이동 배치한 뒤 궤적을 지우고 테스트하세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · A/B/C 테스트 1.22")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · A/B/C 테스트 1.24")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }

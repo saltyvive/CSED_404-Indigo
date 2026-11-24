@@ -41,7 +41,7 @@ final class Collector: ObservableObject {
         guard context.campaignID == printedCampaign.id, context.pose == printedCampaign.pose else {
             return "현재 배치·자세와 평가 모델이 다릅니다. 이 배치의 이전 회차 모델을 먼저 적용하세요."
         }
-        if printedCampaign.isHover3 && batch.pass == 2 && gridLiveTester.neuralBundle == nil {
+        if printedCampaign.isHover3 && batch.pass == 2 && gridLiveTester.collectionNeuralBundle == nil {
             return "공중 2회차 평가용 C 모델이 없습니다. 모델을 복원한 뒤 수집하세요."
         }
         return nil
@@ -371,7 +371,7 @@ final class Collector: ObservableObject {
                     session.printedGrid?.evaluationTrainingPasses = collectionEvaluationPair?.entry.passes
                     if printedCampaign.isHover3 && printedBatch.pass == 2,
                        let contact = gridLiveTester.library?.pair("13"), let air = collectionEvaluationPair,
-                       let neural = gridLiveTester.neuralBundle {
+                       let neural = gridLiveTester.collectionNeuralBundle {
                         session.printedGrid?.evaluationJointModelSHA256 = [
                             "A_contact13": contact.entry.sha256A, "B_contact13": contact.entry.sha256B,
                             "A_air1": air.entry.sha256A, "B_air1": air.entry.sha256B, "C_joint": neural.sha256]
@@ -483,7 +483,7 @@ final class Collector: ObservableObject {
               let air = gridLiveTester.library?.pair("hover3_1"),
               air.modelA.printedGridContext?.campaignID == printedCampaign.id,
               air.modelA.printedGridContext?.pose == printedCampaign.pose,
-              gridLiveTester.neuralBundle != nil else {
+              gridLiveTester.collectionNeuralBundle != nil else {
             errorMessage = "현재 3 mm 배치와 고정된 1회차 평가 모델을 확인해야 합니다."; return
         }
         guard (1...13).allSatisfy({ printedCompleted[PrintedGridBatch(pass: 1, row: $0).id] != nil }) else {

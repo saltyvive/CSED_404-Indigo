@@ -21,7 +21,8 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def load_records(source):
+def load_records(source, air_passes=(1,)):
+    assert list(air_passes) in ([1], [2], [1, 2])
     records, inventory = [], []
     for state, name in [('contact', 'contact_observations.json'), ('air', 'hover_observations.json')]:
         raw = (source/name).read_bytes()
@@ -29,10 +30,12 @@ def load_records(source):
         for b in json.loads(raw):
             if state == 'contact' and b['repetition'] not in (1, 3):
                 continue
+            if state == 'air' and b['repetition'] not in air_passes:
+                continue
             assert b['pose']['tipContact'] == (state == 'contact')
             assert b['pose']['tipHeightMM'] == (0 if state == 'contact' else 3)
             assert [b['pose'][k] for k in ('phiDegrees', 'thetaDegrees', 'alphaDegrees')] == [0, 90, 0]
-            assert state == 'contact' or b['repetition'] == 1
+            assert state == 'contact' or b['repetition'] in air_passes
             for p in b['points']:
                 corrected = [list(p['deltaUT'])]
                 for frame in p['causalFrames']:
@@ -42,10 +45,11 @@ def load_records(source):
                     xy=p['xy'], fields=corrected, primary=[v-s for v,s in zip(p['raw'],b['before']['raw'])],
                     causal=[f['filteredDeltaUT'] for f in p['causalFrames']], noiseUT=p['noiseUT'],
                     session=p['session'], trial=p['trial'], campaign=b['campaignID']))
-    assert len(records) == 819 and len({r['session']+'/'+r['trial'] for r in records}) == 819
+    expected = 273*(2+len(air_passes))
+    assert len(records) == expected and len({r['session']+'/'+r['trial'] for r in records}) == expected
     assert sum(r['contact'] for r in records) == 546
     assert all(len(r['fields']) == 4 for r in records)
-    for state, passes in [('contact', [1,3]), ('air', [1])]:
+    for state, passes in [('contact', [1,3]), ('air', list(air_passes))]:
         selected = [r for r in records if r['state']==state]
         assert len({r['campaign'] for r in selected}) == 1
         assert {(r['passID'],r['row'],r['column']) for r in selected} == {(p,r,c) for p in passes for r in range(1,14) for c in range(1,22)}
@@ -128,7 +132,7 @@ def fit(records, plan, label):
         sourceSessions=sorted({r['session'] for r in records}),
         conditions=[dict(state=state,passes=passes,campaignID=next(r['campaign'] for r in records if r['state']==state),
                          tipHeightMM=0 if state=='contact' else 3,phiDegrees=0,thetaDegrees=90,alphaDegrees=0)
-                    for state,passes in [('contact',[1,3]),('air',[1])]],
+                    for state,passes in [('contact',[1,3]),('air',plan['airPasses'])]],
         scope=plan['limitations'])
     return model,history
 
@@ -177,10 +181,10 @@ def summarize(rows):
     return {state:stats([r for r in rows if r['truth']==state]) for state in ('contact','air')}
 
 
-def run(source,out):
+def run(source,out,plan_path=ROOT/'evaluation/joint_mlp_plan.json'):
     assert not out.exists(), 'Use a fresh report directory'
-    plan_raw=(ROOT/'evaluation/joint_mlp_plan.json').read_bytes();plan=json.loads(plan_raw)
-    records,inventory=load_records(source);out.mkdir(parents=True)
+    plan_raw=plan_path.read_bytes();plan=json.loads(plan_raw)
+    records,inventory=load_records(source, plan['airPasses']);out.mkdir(parents=True)
     save(out/'source_inventory.json',inventory);save(out/'plan.json',plan)
     held=[]; folds=[]
     for fold in range(5):
@@ -201,7 +205,7 @@ def run(source,out):
         parity.append(dict(field=field,**predict(model,[field])[0]))
     save(out/'swift_parity.json',parity)
     summary=dict(method=plan['method'],modelSHA256=sha((out/'joint_mlp.json').read_bytes()),planSHA256=sha(plan_raw),
-        placements=819,correlatedRepresentatives=3276,independentAirRepeatValidation=False,
+        placements=len(records),correlatedRepresentatives=4*len(records),independentAirRepeatValidation=False,
         rowHoldout=dict(role='same_campaign_spatial_row_holdout_not_independent_repeat',summary=summarize(held)),
         trainingReplay=dict(role='training_replay',summary=summarize(replay)),
         trainingCausalReplay=dict(role='correlated_training_frame_replay',summary=summarize(causal)))
@@ -212,4 +216,5 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source',type=Path,default=ROOT/'reports/hover3-20261125-pass1')
     parser.add_argument('--out',type=Path,required=True)
-    args=parser.parse_args();run(args.source,args.out)
+    parser.add_argument('--plan',type=Path,default=ROOT/'evaluation/joint_mlp_plan.json')
+    args=parser.parse_args();run(args.source,args.out,args.plan)

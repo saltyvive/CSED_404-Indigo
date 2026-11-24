@@ -22,14 +22,18 @@ struct GridModelLibraryTests {
             try JSONDecoder().decode([LibraryReplayCase].self, from: Data(contentsOf: URL(fileURLWithPath: path)))
         }
         precondition(library.catalog.entries.count == 7 && library.catalog.defaultCombination == "123")
-        precondition(library.allEntries.count == 8 && library.defaultLiveCombination == "hover3_1")
+        precondition(library.allEntries.count == 10 && library.defaultLiveCombination == "hover3_12")
         precondition(library.conditions.map(\.id) == ["contact0", "air3"])
         precondition(library.condition(for: "13")?.entries.count == 7)
-        precondition(library.condition(for: "hover3_1")?.entries.count == 1)
+        precondition(library.condition(for: "hover3_1")?.entries.count == 3)
         precondition(library.pair("hover3_1")!.modelA.printedGridContext!.pose.tipHeightMM == 3)
         precondition(!library.pair("hover3_1")!.modelB.printedGridContext.pose.tipContact)
-        precondition(library.pair("hover3_1")!.entry.evaluations.count == 1)
+        precondition(library.pair("hover3_1")!.entry.evaluations.count == 2)
         precondition(library.pair("hover3_1")!.entry.evaluations[0].role == "training_replay")
+        precondition(library.pair("hover3_1")!.entry.evaluations[1].role == "held_out_pass")
+        precondition(library.pair("hover3_2")!.entry.evaluations[0].role == "held_out_pass")
+        precondition(library.pair("hover3_12")!.entry.evaluations.allSatisfy { $0.role == "training_replay" })
+        precondition(library.pair("hover3_12")!.modelA.trainingTrialIDs.count == 546)
         var campaign = PrintedGridCampaign()
         let contactContext = library.pair("1")!.modelA.printedGridContext!
         campaign.id = contactContext.campaignID; campaign.pose = contactContext.pose
@@ -43,6 +47,8 @@ struct GridModelLibraryTests {
         precondition(library.evaluationPair(campaign: campaign, batch: .init(pass: 2, row: 1)) == nil)
         precondition(library.canReuseBaseline(from: "1", to: "123"))
         precondition(library.canReuseBaseline(from: "hover3_1", to: "hover3_1"))
+        precondition(library.canReuseBaseline(from: "hover3_1", to: "hover3_12"))
+        precondition(library.canReuseBaseline(from: "hover3_2", to: "hover3_12"))
         precondition(!library.canReuseBaseline(from: "123", to: "hover3_1"))
         precondition(!library.canReuseBaseline(from: "hover3_1", to: "1"))
         precondition(!library.canReuseBaseline(from: "missing", to: "1"))
@@ -76,7 +82,8 @@ struct GridModelLibraryTests {
         let contactEntry = library.pair("1")!.entry
         hoverEntry["resourceA"] = contactEntry.resourceA; hoverEntry["resourceB"] = contactEntry.resourceB
         hoverEntry["sha256A"] = contactEntry.sha256A; hoverEntry["sha256B"] = contactEntry.sha256B
-        hoverCatalog["entries"] = [hoverEntry]
+        var hoverEntries = hoverCatalog["entries"] as! [[String: Any]]
+        hoverEntries[0] = hoverEntry; hoverCatalog["entries"] = hoverEntries
         let wrongHeight = try JSONSerialization.data(withJSONObject: hoverCatalog)
         do {
             _ = try GridModelLibrary.load { name in name == "hover3_model_catalog" ? wrongHeight : try read(name) }
@@ -85,8 +92,11 @@ struct GridModelLibraryTests {
         hoverCatalog = try JSONSerialization.jsonObject(with: read("hover3_model_catalog")) as! [String: Any]
         hoverEntry = (hoverCatalog["entries"] as! [[String: Any]])[0]
         var hoverEvaluation = (hoverEntry["evaluations"] as! [[String: Any]])[0]
-        hoverEvaluation["role"] = "held_out_pass"; hoverEntry["evaluations"] = [hoverEvaluation]
-        hoverCatalog["entries"] = [hoverEntry]
+        hoverEvaluation["role"] = "held_out_pass"
+        var hoverEvaluations = hoverEntry["evaluations"] as! [[String: Any]]
+        hoverEvaluations[0] = hoverEvaluation; hoverEntry["evaluations"] = hoverEvaluations
+        hoverEntries = hoverCatalog["entries"] as! [[String: Any]]
+        hoverEntries[0] = hoverEntry; hoverCatalog["entries"] = hoverEntries
         let falseValidation = try JSONSerialization.data(withJSONObject: hoverCatalog)
         do {
             _ = try GridModelLibrary.load { name in name == "hover3_model_catalog" ? falseValidation : try read(name) }
@@ -103,6 +113,10 @@ struct GridModelLibraryTests {
         } catch { }
         precondition(cases.contains { $0.combination == "hover3_1" && $0.family == "A" })
         precondition(cases.contains { $0.combination == "hover3_1" && $0.family == "B" })
-        print("Library: all 16 models validated; \(tested) Swift/Python predictions matched; corrupt hash, wrong height and evaluation leakage rejected; baseline policy checked.")
+        for id in ["hover3_2", "hover3_12"] {
+            precondition(cases.contains { $0.combination == id && $0.family == "A" })
+            precondition(cases.contains { $0.combination == id && $0.family == "B" })
+        }
+        print("Library: all 20 models validated; \(tested) Swift/Python predictions matched; corrupt hash, wrong height and evaluation leakage rejected; baseline policy checked.")
     }
 }

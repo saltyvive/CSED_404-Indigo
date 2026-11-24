@@ -45,5 +45,24 @@ class JointMLPTests(unittest.TestCase):
             seen += [r['session']+'/'+r['trial'] for r in test]
         self.assertEqual(len(seen),819);self.assertEqual(len(set(seen)),819)
 
+    def test_added_air_repeat_preserves_contact_and_holdout_groups(self):
+        records,_=load_records(ROOT/'reports/hover3-20261125-pass2',(1,2))
+        _,y,w=arrays(records)
+        self.assertEqual(len(records),1092)
+        self.assertEqual({r['passID'] for r in records if r['contact']},{1,3})
+        self.assertEqual({r['passID'] for r in records if not r['contact']},{1,2})
+        self.assertAlmostEqual(w[y[:,2]==0].sum(),.5)
+        self.assertAlmostEqual(w[y[:,2]==1].sum(),.5)
+        for fold in range(5):
+            train,test=row_split(records,fold)
+            self.assertFalse({r['row'] for r in train}&{r['row'] for r in test})
+            self.assertEqual(len({(r['state'],r['passID']) for r in test}),4)
+
+    def test_air2_model_excludes_entire_first_air_pass(self):
+        records,_=load_records(ROOT/'reports/hover3-20261125-pass2',(2,))
+        self.assertEqual(len(records),819)
+        self.assertEqual({r['passID'] for r in records if not r['contact']},{2})
+        self.assertEqual({r['passID'] for r in records if r['contact']},{1,3})
+
 
 if __name__=='__main__': unittest.main()

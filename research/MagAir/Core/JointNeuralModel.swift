@@ -35,16 +35,18 @@ struct JointNeuralModel: Decodable {
     var planSHA256: String
 
     var isValid: Bool {
+        guard conditions.count == 2, [[1], [2], [1,2]].contains(conditions[1].passes) else { return false }
+        let placements = 273 * (2 + conditions[1].passes.count)
         guard version == 1, method == "shared_mlp_xy_contact_v1", widthMM == 50, heightMM == 30,
               inputMean.count == 3, inputMean.allSatisfy(\.isFinite),
               inputScale.count == 3, inputScale.allSatisfy({ $0.isFinite && $0 > 0 }),
               layers.count == 3, contactLow == 0.35, contactHigh == 0.65,
               minimumSignalUT.isFinite, minimumSignalUT >= 3, supportLimitUT.isFinite, supportLimitUT >= 3,
-              supportFieldsUT.count == 3276, supportFieldsUT.allSatisfy({ $0.count == 3 && $0.allSatisfy(\.isFinite) }),
-              trainingTrialIDs.count == 819, Set(trainingTrialIDs).count == 819,
-              sourceSessions.count == 39, Set(sourceSessions).count == 39,
+              supportFieldsUT.count == 4*placements, supportFieldsUT.allSatisfy({ $0.count == 3 && $0.allSatisfy(\.isFinite) }),
+              trainingTrialIDs.count == placements, Set(trainingTrialIDs).count == placements,
+              sourceSessions.count == placements/21, Set(sourceSessions).count == placements/21,
               conditions.count == 2, conditions.map(\.state) == ["contact", "air"],
-              conditions[0].passes == [1,3], conditions[1].passes == [1],
+              conditions[0].passes == [1,3],
               conditions[0].tipHeightMM == 0, conditions[1].tipHeightMM == 3,
               conditions.allSatisfy({ $0.phiDegrees == 0 && $0.thetaDegrees == 90 && $0.alphaDegrees == 0 }) else { return false }
         let sizes = [3,64,64,3]
@@ -118,10 +120,13 @@ struct JointNeuralBundle {
     let sha256: String
     let projector: JointNeuralProjector
 
-    static func load(library: GridModelLibrary, read: (String) throws -> Data) throws -> JointNeuralBundle {
+    static func load(library: GridModelLibrary, airCombination: String = "hover3_1", read: (String) throws -> Data) throws -> JointNeuralBundle {
         struct Catalog: Decodable { var version: Int; var resource: String; var sha256: String; var planSHA256: String }
-        let catalog = try JSONDecoder().decode(Catalog.self, from: read("joint_mlp_catalog"))
-        guard catalog.version == 1, catalog.resource == "joint_mlp_contact13_air1" else {
+        guard ["hover3_1", "hover3_2", "hover3_12"].contains(airCombination) else { throw GridModelLibrary.LoadError.invalid("지원하지 않는 C 학습 조합") }
+        let combination = airCombination.replacingOccurrences(of: "hover3_", with: "")
+        let catalogName = combination == "1" ? "joint_mlp_catalog" : "joint_mlp_air\(combination)_catalog"
+        let catalog = try JSONDecoder().decode(Catalog.self, from: read(catalogName))
+        guard catalog.version == 1, catalog.resource == "joint_mlp_contact13_air\(combination)" else {
             throw GridModelLibrary.LoadError.invalid("C 모델 목록 불일치")
         }
         let data = try read(catalog.resource)
@@ -129,7 +134,8 @@ struct JointNeuralBundle {
         let model = try JSONDecoder().decode(JointNeuralModel.self, from: data)
         guard hash == catalog.sha256, model.planSHA256 == catalog.planSHA256,
               let projector = JointNeuralProjector(model: model),
-              let contact = library.pair("13"), let air = library.pair("hover3_1"),
+              let contact = library.pair("13"), let air = library.pair(airCombination),
+              model.conditions[1].passes == air.entry.passes,
               Set(model.trainingTrialIDs) == Set(contact.modelA.trainingTrialIDs + air.modelA.trainingTrialIDs),
               Set(model.sourceSessions) == Set((contact.modelA.sourceSessions ?? []) + (air.modelA.sourceSessions ?? [])),
               model.conditions[0].campaignID == contact.modelA.printedGridContext?.campaignID,

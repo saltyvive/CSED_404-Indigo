@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "decidedOn": "2026-11-25",
+  "method": "shared_mlp_xy_contact_v1",
+  "decisionTiming": "User requested all joint air subsets 1/2/12. Keep identical architecture, optimizer, losses, seed, preprocessing and gates; no hyperparameter tuning. Retrospective training on air2 after old-model air2 evaluation.",
+  "contactPasses": [
+    1,
+    3
+  ],
+  "airPasses": [
+    2
+  ],
+  "input": "Background-subtracted Bx, By, Bz only. Training: row before/after linear correction. Live/test: preceding baseline only, live causal 0.12s component median. No target, pose, height, row, time or Pencil IMU input.",
+  "representatives": "Four correlated representatives per placement, identical extraction to B: whole trimmed hold and three causal windows. They stay together in every split.",
+  "layers": [
+    3,
+    64,
+    64,
+    3
+  ],
+  "hiddenActivation": "tanh",
+  "output": "Linear centered XY in 25mm units; contact logit, sigmoid score. Contact=1, air=0.",
+  "loss": "Class-balanced mean of 0.5*(XY error in 25mm units)^2 sum + 0.2*binary cross entropy with logits, plus 0.5*l2*sum(weight^2). Both tasks update both shared hidden layers.",
+  "contactLossWeight": 0.2,
+  "l2": 1e-05,
+  "optimizer": "full-batch Adam, beta1=0.9 beta2=0.999 epsilon=1e-8, total gradient norm clipped to 5",
+  "epochs": 2000,
+  "learningRate": 0.003,
+  "finalLearningRate": 0.0003,
+  "schedule": "cosine",
+  "seed": 20261125,
+  "uncertaintyBand": [
+    0.35,
+    0.65
+  ],
+  "supportGate": "Distance to nearest training magnetic representative <= max(3uT, 5*maximum training hold RMS). Used only to abstain, not to choose height or XY. Signal >= max(3uT, 0.2*minimum training vector magnitude). XY outside [-0.05,1.05] is rejected without clipping.",
+  "evaluation": "Five whole-row folds; final fit contact13 + air2 only. Evaluate final C2 on held-out air1 retrospectively, with no air1 trials in training. Compare 1/2/12 on both passes, clearly separating replay and held-out pass.",
+  "limitations": "Only two air passes; reverse pass evaluation is retrospective after inspecting both datasets. No arbitrary pose/height validation. C12 has no independent pass; C2 excludes all air1 trials.",
+  "frozenPreTrainingSummarySHA256": "6cb913f8607e059da8b9c343d0d657b83daca9ec1a7d33da9555f9871b61e178"
+}

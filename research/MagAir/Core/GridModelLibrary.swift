@@ -58,7 +58,7 @@ struct GridModelLibrary {
     let catalog: Catalog
     let conditions: [GridModelCondition]
     var allEntries: [GridModelEntry] { conditions.flatMap(\.entries) }
-    var defaultLiveCombination: String { "hover3_1" }
+    var defaultLiveCombination: String { "hover3_12" }
     private let pairs: [String: GridModelPair]
     func pair(_ id: String) -> GridModelPair? { pairs[id] }
     func evaluationPair(campaign: PrintedGridCampaign, batch: PrintedGridBatch) -> GridModelPair? {
@@ -118,21 +118,29 @@ struct GridModelLibrary {
             pairs[entry.id] = pair
         }
         let hover = try JSONDecoder().decode(Catalog.self, from: read("hover3_model_catalog"))
-        guard hover.version == 1, hover.defaultCombination == "hover3_1", hover.entries.map(\.id) == ["hover3_1"] else {
+        guard hover.version == 1, hover.defaultCombination == "hover3_12", hover.entries.map(\.id) == ["hover3_1", "hover3_2", "hover3_12"] else {
             throw LoadError.invalid("3 mm 모델 목록이 올바르지 않습니다")
         }
-        let pair = try loadPair(hover.entries[0], passes: [1], evaluationPasses: [1], read: read)
-        let context = pair.modelA.printedGridContext!
-        guard context.pose.tipHeightMM == 3, !context.pose.tipContact,
-              context.pose.phiDegrees == 0, context.pose.thetaDegrees == 90, context.pose.alphaDegrees == 0,
-              context.campaignID != pairs["123"]!.modelA.printedGridContext!.campaignID,
-              Set(pair.modelA.sourceSessions ?? []).isDisjoint(with: pairs["123"]!.modelA.sourceSessions ?? []) else {
-            throw LoadError.invalid("3 mm 비접촉 모델과 기존 접촉 배치 구분 불일치")
+        for entry in hover.entries {
+            let passes = entry.id.replacingOccurrences(of: "hover3_", with: "").compactMap { Int(String($0)) }
+            let pair = try loadPair(entry, passes: passes, evaluationPasses: [1,2], read: read)
+            let context = pair.modelA.printedGridContext!
+            guard context.pose.tipHeightMM == 3, !context.pose.tipContact,
+                  context.pose.phiDegrees == 0, context.pose.thetaDegrees == 90, context.pose.alphaDegrees == 0,
+                  context.campaignID != pairs["123"]!.modelA.printedGridContext!.campaignID,
+                  Set(pair.modelA.sourceSessions ?? []).isDisjoint(with: pairs["123"]!.modelA.sourceSessions ?? []) else {
+                throw LoadError.invalid("3 mm 비접촉 모델과 기존 접촉 배치 구분 불일치")
+            }
+            if let first = pairs["hover3_1"]?.modelA.printedGridContext {
+                guard first.campaignID == context.campaignID && first.pose == context.pose else {
+                    throw LoadError.invalid("공중 회차 사이의 배치·자세 불일치")
+                }
+            }
+            pairs[pair.entry.id] = pair
         }
-        pairs[pair.entry.id] = pair
         return GridModelLibrary(catalog: catalog, conditions: [
             .init(id: "contact0", title: "0 mm · 접촉", defaultCombination: "123", entries: catalog.entries),
-            .init(id: "air3", title: "3 mm · 공중", defaultCombination: "hover3_1", entries: hover.entries)
+            .init(id: "air3", title: "3 mm · 공중", defaultCombination: "hover3_12", entries: hover.entries)
         ], pairs: pairs)
     }
 }

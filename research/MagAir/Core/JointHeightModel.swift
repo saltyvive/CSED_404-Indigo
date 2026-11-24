@@ -37,6 +37,12 @@ struct JointHeightEstimate {
 
 struct JointHeightProjector {
     static let id = "joint_contact13_air1"
+    static let expandedID = "joint_contact13_air12"
+    static let air2ID = "joint_contact13_air2"
+    static let allIDs = [id, air2ID, expandedID]
+    static func airCombination(for id: String) -> String? {
+        id == Self.id ? "hover3_1" : id == air2ID ? "hover3_2" : id == expandedID ? "hover3_12" : nil
+    }
     let contactPair: GridModelPair
     let airPair: GridModelPair
     private let contactA: GridProjector
@@ -44,10 +50,11 @@ struct JointHeightProjector {
     private let airA: GridProjector
     private let airB: KNNProjector
 
-    init?(library: GridModelLibrary) {
-        guard let c = library.pair("13"), let a = library.pair("hover3_1"),
+    init?(library: GridModelLibrary, airCombination: String = "hover3_1") {
+        guard ["hover3_1", "hover3_2", "hover3_12"].contains(airCombination),
+              let c = library.pair("13"), let a = library.pair(airCombination),
               let cc = c.modelA.printedGridContext, let ac = a.modelA.printedGridContext,
-              cc.passes == [1, 3], ac.passes == [1],
+              cc.passes == [1, 3], ac.passes == airCombination.replacingOccurrences(of: "hover3_", with: "").compactMap({ Int(String($0)) }),
               cc.pose.tipHeightMM == 0, cc.pose.tipContact,
               ac.pose.tipHeightMM == 3, !ac.pose.tipContact,
               cc.pose.phiDegrees == ac.pose.phiDegrees, cc.pose.thetaDegrees == ac.pose.thetaDegrees,

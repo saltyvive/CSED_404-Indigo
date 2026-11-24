@@ -22,9 +22,13 @@ struct JointNeuralModelTests {
         let root = URL(fileURLWithPath: CommandLine.arguments[1])
         func read(_ name: String) throws -> Data { try Data(contentsOf: root.appendingPathComponent(name + ".json")) }
         let library = try GridModelLibrary.load(read: read)
-        let bundle = try JointNeuralBundle.load(library: library, read: read)
+        let air = CommandLine.arguments.count > 3 ? CommandLine.arguments[3] : "hover3_1"
+        let combination = air.replacingOccurrences(of: "hover3_", with: "")
+        let catalogName = combination == "1" ? "joint_mlp_catalog" : "joint_mlp_air\(combination)_catalog"
+        let resourceName = "joint_mlp_contact13_air\(combination)"
+        let bundle = try JointNeuralBundle.load(library: library, airCombination: air, read: read)
         let cases = try JSONDecoder().decode([NeuralParityCase].self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[2])))
-        precondition(cases.count == 3278)
+        precondition(cases.count == (air == "hover3_12" ? 4370 : 3278))
         for c in cases {
             let p = bundle.projector.project(c.field)!
             precondition(abs(p.point.x-c.xy[0]) < 1e-8 && abs(p.point.y-c.xy[1]) < 1e-8)
@@ -38,8 +42,8 @@ struct JointNeuralModelTests {
         precondition(!bundle.projector.project([0,0,0])!.showCandidate)
         precondition(!bundle.projector.project([1000,-1000,1000])!.accepted)
         do {
-            _ = try JointNeuralBundle.load(library: library) { name in
-                var data = try read(name); if name == "joint_mlp_contact13_air1" { data.append(32) }; return data
+            _ = try JointNeuralBundle.load(library: library, airCombination: air) { name in
+                var data = try read(name); if name == resourceName { data.append(32) }; return data
             }
             preconditionFailure("Corrupt weights hash accepted")
         } catch { }
@@ -58,17 +62,17 @@ struct JointNeuralModelTests {
                 ids[0] = "unrelated-pass2-trial"; model["trainingTrialIDs"] = ids
             }
             let raw = try JSONSerialization.data(withJSONObject: model)
-            var catalog = try JSONSerialization.jsonObject(with: read("joint_mlp_catalog")) as! [String: Any]
+            var catalog = try JSONSerialization.jsonObject(with: read(catalogName)) as! [String: Any]
             catalog["sha256"] = SHA256.hash(data: raw).map { String(format: "%02x",$0) }.joined()
             let catalogData = try JSONSerialization.data(withJSONObject: catalog)
             do {
-                _ = try JointNeuralBundle.load(library: library) { name in
-                    if name == "joint_mlp_catalog" { return catalogData }
-                    return name == "joint_mlp_contact13_air1" ? raw : try read(name)
+                _ = try JointNeuralBundle.load(library: library, airCombination: air) { name in
+                    if name == catalogName { return catalogData }
+                    return name == resourceName ? raw : try read(name)
                 }
                 preconditionFailure("Invalid \(mutation) accepted")
             } catch { }
         }
-        print("C shared MLP: \(cases.count) Python/Swift predictions matched (XY, score, gates, state); corrupt weights, pass2, source mismatch and malformed layers rejected.")
+        print("C shared MLP \(air): \(cases.count) Python/Swift predictions matched (XY, score, gates, state); corrupt weights, wrong contact passes, source mismatch and malformed layers rejected.")
     }
 }

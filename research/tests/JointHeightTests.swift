@@ -37,6 +37,11 @@ struct JointHeightTests {
         let projector = JointHeightProjector(library: library)!
         precondition(projector.contactPair.entry.id == "13" && projector.contactPair.entry.passes == [1, 3])
         precondition(projector.airPair.entry.id == "hover3_1" && projector.airPair.entry.passes == [1])
+        let expanded = JointHeightProjector(library: library, airCombination: "hover3_12")!
+        precondition(expanded.contactPair.dataA == projector.contactPair.dataA && expanded.contactPair.dataB == projector.contactPair.dataB)
+        precondition(expanded.airPair.entry.passes == [1,2])
+        precondition(JointHeightProjector(library: library, airCombination: "hover3_2")!.airPair.entry.passes == [2])
+        precondition(JointHeightProjector(library: library, airCombination: "unknown") == nil)
         precondition(projector.project([1, 2]) == nil && projector.project([1, .nan, 3]) == nil)
         let absent = projector.project([0, 0, 0])!
         precondition(!absent.a.estimate.showCandidate && !absent.b.estimate.showCandidate)
