@@ -5,7 +5,15 @@ import CryptoKit
 enum GridMappingMethod: String, CaseIterable, Identifiable {
     case bilinear = "A · 기존 보간"
     case neighbors = "B · k-NN 회귀"
+    case neural = "C · 공동 학습"
     var id: String { rawValue }
+    var explanation: String {
+        switch self {
+        case .bilinear: return "A: 높이별 보간 지도에서 더 잘 맞는 위치·높이를 선택"
+        case .neighbors: return "B: 높이별 k-NN 모델에서 더 가까운 패턴의 위치·높이를 선택"
+        case .neural: return "C: 두 높이를 함께 학습한 하나의 신경망이 위치와 접촉 점수를 동시에 예측"
+        }
+    }
 }
 
 final class GridLiveTester: ObservableObject {
@@ -28,19 +36,42 @@ final class GridLiveTester: ObservableObject {
     @Published private var knnEstimate: GridEstimate?
     @Published private var jointA: JointHeightEstimate?
     @Published private var jointB: JointHeightEstimate?
-    var jointEstimate: JointHeightEstimate? { selectedMethod == .bilinear ? jointA : jointB }
-    var displayColor: Color { isJoint && jointEstimate?.state == .air ? .purple : .teal }
-    var displayStatus: String { isJoint ? jointEstimate?.reason ?? status : estimate?.reason ?? status }
-    var estimate: GridEstimate? { selectedMethod == .bilinear ? gridEstimate : knnEstimate }
+    @Published private(set) var neuralEstimate: JointNeuralEstimate?
+    private(set) var neuralBundle: JointNeuralBundle?
+    private(set) var neuralLoadError: String?
+    var jointEstimate: JointHeightEstimate? {
+        selectedMethod == .neural ? nil : selectedMethod == .bilinear ? jointA : jointB
+    }
+    var displayColor: Color {
+        let state = selectedMethod == .neural ? neuralEstimate?.state : jointEstimate?.state
+        return isJoint && state == .air ? .purple : .teal
+    }
+    var displayStatus: String {
+        if selectedMethod == .neural { return neuralEstimate?.reason ?? status }
+        return isJoint ? jointEstimate?.reason ?? status : estimate?.reason ?? status
+    }
+    var estimate: GridEstimate? {
+        switch selectedMethod {
+        case .bilinear: return gridEstimate
+        case .neighbors: return knnEstimate
+        case .neural: return neuralEstimate?.gridEstimate
+        }
+    }
+    var comparison: [(String, GridEstimate?, JointTipState?)] {
+        [("A", gridEstimate, jointA?.state), ("B", knnEstimate, jointB?.state),
+         ("C", neuralEstimate?.gridEstimate, neuralEstimate?.state)]
+    }
     @Published var exportURL: URL?
     @Published var logStatus = "배경을 맞추면 테스트 기록이 자동 저장됩니다"
     @Published var baselineAge = 0.0
     @Published var guide: GridGuide = .free
     @Published private var gridTrail: [GridTrailPoint] = []
     @Published private var knnTrail: [GridTrailPoint] = []
-    var trail: [GridTrailPoint] { selectedMethod == .bilinear ? gridTrail : knnTrail }
+    @Published private var neuralTrail: [GridTrailPoint] = []
+    var trail: [GridTrailPoint] { selectedMethod == .neural ? neuralTrail : selectedMethod == .bilinear ? gridTrail : knnTrail }
     private var lastAcceptedTime: Double?
     private var lastKNNAcceptedTime: Double?
+    private var lastNeuralAcceptedTime: Double?
     private(set) var knnModelSHA256: String?
     private var gridModelData: Data?
     private var knnModelData: Data?
@@ -48,7 +79,10 @@ final class GridLiveTester: ObservableObject {
     var calibrationCapture: Double { model?.printedGridContext == nil ? 3 : 10 }
     var calibrationTotal: Double { calibrationSettle + calibrationCapture }
 
-    func clearTrail() { gridTrail = []; knnTrail = []; lastAcceptedTime = nil; lastKNNAcceptedTime = nil }
+    func clearTrail() {
+        gridTrail = []; knnTrail = []; neuralTrail = []
+        lastAcceptedTime = nil; lastKNNAcceptedTime = nil; lastNeuralAcceptedTime = nil
+    }
 
     var active = false
     private var projector: GridProjector?
@@ -75,10 +109,19 @@ final class GridLiveTester: ObservableObject {
                 }
                 return try Data(contentsOf: url)
             }
+            do {
+                neuralBundle = try JointNeuralBundle.load(library: library!) { resource in
+                    guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
+                        throw GridModelLibrary.LoadError.invalid("C 모델 파일 누락")
+                    }
+                    return try Data(contentsOf: url)
+                }
+            } catch { neuralLoadError = error.localizedDescription }
             let saved = UserDefaults.standard.string(forKey: Self.selectionKey)
             let args = ProcessInfo.processInfo.arguments
-            let initial: String? = args.contains("--live-joint-height") ? JointHeightProjector.id : args.contains("--live-hover3") ? "hover3_1" : saved
+            let initial: String? = args.contains("--live-joint-height") || args.contains("--live-joint-mlp") ? JointHeightProjector.id : args.contains("--live-hover3") ? "hover3_1" : saved
             selectCombination(initial.flatMap { $0 == JointHeightProjector.id || library!.pair($0) != nil ? $0 : nil } ?? JointHeightProjector.id)
+            if args.contains("--live-joint-mlp"), neuralBundle != nil { selectedMethod = .neural }
         } catch { status = "모델 읽기 실패: \(error.localizedDescription)" }
     }
 
@@ -91,8 +134,9 @@ final class GridLiveTester: ObservableObject {
         let sameCondition = library.canReuseBaseline(from: selectedCombination, to: id)
         if !sameCondition { invalidate("학습 높이 조건 변경 · 펜과 홀더를 멀리 두고 배경을 다시 맞추세요") }
         else { closeLog(reason: "training_combination_changed_to_" + id) }
-        clearTrail(); gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; exportURL = nil
+        clearTrail(); gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; neuralEstimate = nil; exportURL = nil
         selectedCombination = id
+        if !isJoint && selectedMethod == .neural { selectedMethod = .bilinear }
         UserDefaults.standard.set(id, forKey: Self.selectionKey)
         model = pair.modelA; knnModel = pair.modelB; projector = a; knnProjector = b
         jointProjector = joint
@@ -115,7 +159,7 @@ final class GridLiveTester: ObservableObject {
         guard active, model != nil else { return }
         closeLog(reason: "background_recalibration")
         clearTrail()
-        baseline = nil; gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; recent = []; calibrationSamples = []; exportURL = nil
+        baseline = nil; gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; neuralEstimate = nil; recent = []; calibrationSamples = []; exportURL = nil
         calibrationStart = ProcessInfo.processInfo.systemUptime
         calibrating = true; remaining = calibrationTotal; baselineAge = 0
         status = "준비 \(Int(calibrationSettle))초 · 펜슬과 이동 홀더를 충분히 멀리 치우세요"
@@ -123,7 +167,7 @@ final class GridLiveTester: ObservableObject {
 
     func invalidate(_ message: String) {
         clearTrail()
-        baseline = nil; gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; calibrating = false; recent = []
+        baseline = nil; gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; neuralEstimate = nil; calibrating = false; recent = []
         closeLog(reason: message); status = message
     }
 
@@ -175,9 +219,10 @@ final class GridLiveTester: ObservableObject {
         let neighborResult: GridEstimate?
         if let jointProjector {
             guard let joint = jointProjector.project(filtered) else {
-                gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; return
+                gridEstimate = nil; knnEstimate = nil; jointA = nil; jointB = nil; neuralEstimate = nil; return
             }
             jointA = joint.a; jointB = joint.b
+            neuralEstimate = neuralBundle?.projector.project(filtered)
             result = joint.a.estimate; neighborResult = joint.b.estimate
         } else {
             guard let single = projector.project(filtered) else { gridEstimate = nil; knnEstimate = nil; return }
@@ -199,7 +244,7 @@ final class GridLiveTester: ObservableObject {
                     isJoint ? "" : model?.printedGridContext.map { number($0.pose.tipHeightMM) } ?? "",
                     isJoint ? "" : model?.printedGridContext.map { $0.pose.tipContact ? "contact" : "air" } ?? "",
                     isJoint ? "" : model?.printedGridContext?.campaignID ?? ""]
-        columns += jointLogColumns(jointA) + jointLogColumns(jointB)
+        columns += jointLogColumns(jointA) + jointLogColumns(jointB) + neuralLogColumns()
         if result.accepted {
             let state = jointA?.state
             let begins = (lastAcceptedTime.map { timestamp-$0 > 0.3 } ?? true) || gridTrail.last?.state != state
@@ -214,6 +259,12 @@ final class GridLiveTester: ObservableObject {
             lastKNNAcceptedTime = timestamp
         } else { lastKNNAcceptedTime = nil }
         knnTrail.removeAll { timestamp-$0.time > 8 }
+        if let c = neuralEstimate, c.accepted {
+            let begins = (lastNeuralAcceptedTime.map { timestamp-$0 > 0.3 } ?? true) || neuralTrail.last?.state != c.state
+            neuralTrail.append(.init(time: timestamp, point: c.point, beginsSegment: begins, state: c.state))
+            lastNeuralAcceptedTime = timestamp
+        } else { lastNeuralAcceptedTime = nil }
+        neuralTrail.removeAll { timestamp-$0.time > 8 }
         if let handle {
             let data = Data(csvRow(columns).utf8)
             let sync = timestamp - lastSync >= 2
@@ -228,6 +279,14 @@ final class GridLiveTester: ObservableObject {
     private static let jointColumnNames = ["estimated_state", "closest_height_candidate", "height_gap_uT", "height_ambiguous",
         "contact_x", "contact_y", "contact_residual_uT", "contact_position_accepted", "contact_position_ambiguous",
         "air_x", "air_y", "air_residual_uT", "air_position_accepted", "air_position_ambiguous"]
+    private static let neuralColumnNames = ["c_estimated_x", "c_estimated_y", "c_contact_score", "c_estimated_state", "c_closest_state",
+        "c_support_distance_uT", "c_support_limit_uT", "c_signal_uT", "c_accepted", "c_candidate_shown", "c_in_bounds", "c_in_support", "c_contact_ambiguous"]
+    private func neuralLogColumns() -> [String] {
+        guard let c = neuralEstimate else { return Array(repeating: "", count: Self.neuralColumnNames.count) }
+        return [number(c.point.x), number(c.point.y), number(c.contactScore), c.state.rawValue, c.closestState.rawValue,
+                number(c.supportDistanceUT), number(c.supportLimitUT), number(c.signal), c.accepted ? "1" : "0",
+                c.showCandidate ? "1" : "0", c.inBounds ? "1" : "0", c.inSupport ? "1" : "0", c.ambiguous ? "1" : "0"]
+    }
     private func jointLogColumns(_ joint: JointHeightEstimate?) -> [String] {
         guard let j = joint else { return Array(repeating: "", count: Self.jointColumnNames.count) }
         return [j.state.rawValue, j.closestState.rawValue, number(j.gapUT), j.heightAmbiguous ? "1" : "0",
@@ -249,6 +308,7 @@ final class GridLiveTester: ObservableObject {
                           "knn_accepted", "knn_candidate_shown", "knn_ambiguous", "knn_distant_location_residual_uT", "viewed_model", "training_combination",
                           "model_training_condition", "model_tip_height_mm", "model_tip_state", "model_campaign_id"]
             header += Self.jointColumnNames.map { "joint_a_" + $0 } + Self.jointColumnNames.map { "joint_b_" + $0 }
+            header += Self.neuralColumnNames
             try Data(csvRow(header).utf8).write(to: url, options: .atomic)
             if let gridModelData {
                 try gridModelData.write(to: url.deletingPathExtension().appendingPathExtension("model.json"), options: .atomic)
@@ -278,6 +338,12 @@ final class GridLiveTester: ObservableObject {
                      "context": try JSONSerialization.jsonObject(with: JSONEncoder().encode(pair.modelA.printedGridContext!))]
                 }
                 metadata["scope"] = "Experimental joint XY and 0/3mm inference. Contact uses passes 1+3 only; air uses pass 1. Both height models search all XY on the same magnetic input. Smaller raw residual wins; gap <= 0.75uT or winner position rejection abstains. Not calibrated probabilities or measured contact; other heights unvalidated. A/B run together; unprefixed XY is A and knn_ XY is B. Joint columns preserve both height candidates. Model height/state/campaign single-label columns are empty. No Pencil IMU, fixture labels or guide used as live inputs. B has 8 contact vs 4 air patterns per XY, which may bias nearest residuals. No independent air repeat validation."
+                if let neuralBundle {
+                    try neuralBundle.data.write(to: url.deletingPathExtension().appendingPathExtension("c-model.json"), options: .atomic)
+                    metadata["modelCSHA256"] = neuralBundle.sha256
+                    metadata["modelCPlanSHA256"] = neuralBundle.projector.model.planSHA256
+                    metadata["modelCScope"] = "Single shared MLP jointly trained on contact passes 1+3 and air pass 1; equal total loss weight per height. Predicts XY and uncalibrated sigmoid contact score from the same filtered field as A/B. c_ columns are C; support distance only gates display, never selects XY or height. Scores 0.35 < p < 0.65 abstain. Other display gates: minimum signal, training support distance, XY bounds. C has no independent air repeat validation; five-fold spatial row holdout is separate from final model training replay."
+                }
             } else if let context = model?.printedGridContext {
                 metadata["modelTrainingContext"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(context))
             }
@@ -376,6 +442,29 @@ struct GridLiveView: View {
         }
     }
 
+    @ViewBuilder private var comparisonCard: some View {
+        if tester.isJoint {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("같은 순간의 A / B / C 비교").font(.headline)
+                Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 8) {
+                    GridRow { Text("모델"); Text("접촉 판정"); Text("x · y (mm)") }.font(.caption)
+                    ForEach(0..<tester.comparison.count, id: \.self) { index in
+                        let item = tester.comparison[index]
+                        GridRow {
+                            Text(item.0).bold()
+                            Text(item.2?.title ?? "배경·센서 대기")
+                                .foregroundStyle(item.2 == .air ? Color.purple : item.2 == .contact ? Color.teal : Color.orange)
+                            if let e = item.1, e.showCandidate {
+                                Text("\(e.point.x*50, specifier: "%.1f") · \(e.point.y*30, specifier: "%.1f")").monospacedDigit()
+                            } else { Text("—") }
+                        }
+                    }
+                }
+                Text("위 선택은 지도·궤적 표시만 바꿉니다. 세 결과는 같은 입력으로 함께 계산·저장됩니다.").font(.footnote).foregroundStyle(.secondary)
+            }.padding(16).background(.background, in: RoundedRectangle(cornerRadius: 14))
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -405,10 +494,16 @@ struct GridLiveView: View {
                     Picker("위치 추정 모델", selection: $tester.selectedMethod) {
                         Text(GridMappingMethod.bilinear.rawValue).tag(GridMappingMethod.bilinear)
                         Text(GridMappingMethod.neighbors.rawValue).tag(GridMappingMethod.neighbors).disabled(tester.knnModel == nil)
+                        if tester.isJoint {
+                            Text(GridMappingMethod.neural.rawValue).tag(GridMappingMethod.neural).disabled(tester.neuralBundle == nil)
+                        }
                     }.pickerStyle(.segmented)
-                    Text(tester.selectedMethod == .bilinear ? "A: 각 위치의 반복값을 대표값으로 합친 보간 지도" : "B: 같은 위치의 여러 자력계 패턴을 유지하는 k-NN 회귀")
+                    Text(tester.isJoint ? tester.selectedMethod.explanation : tester.selectedMethod == .bilinear ? "A: 각 위치의 반복값을 대표값으로 합친 보간 지도" : "B: 같은 위치의 여러 자력계 패턴을 유지하는 k-NN 회귀")
                         .font(.headline)
-                    Text(tester.isJoint ? "배경을 한 번 맞춘 뒤 높이만 바꾸세요. A/B와 두 높이는 같은 입력으로 함께 계산됩니다. 테스트 모드를 바꾸면 배경을 다시 맞춥니다." : "같은 높이 조건에서는 배경을 한 번 맞춰 A/B와 회차 조합을 비교합니다. 높이 조건을 바꾸면 배경을 다시 맞춥니다. A/B는 같은 입력으로 함께 계산됩니다.")
+                    if tester.isJoint, let error = tester.neuralLoadError {
+                        Text("C 모델을 읽지 못했습니다: \(error). 기존 A/B는 사용할 수 있습니다.").foregroundStyle(.orange)
+                    }
+                    Text(tester.isJoint ? "배경을 한 번 맞춘 뒤 높이만 바꾸세요. A/B/C는 같은 입력으로 함께 계산됩니다. 테스트 모드를 바꾸면 배경을 다시 맞춥니다." : "같은 높이 조건에서는 배경을 한 번 맞춰 A/B와 회차 조합을 비교합니다. 높이 조건을 바꾸면 배경을 다시 맞춥니다. A/B는 같은 입력으로 함께 계산됩니다.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     if tester.isJoint {
                         Text("21열 × 13행 · 50 × 30 mm · 접촉 546회 + 공중 273회 배치").font(.subheadline)
@@ -461,6 +556,13 @@ struct GridLiveView: View {
                                    aspect: tester.model?.aspect ?? 1.5, gridColumns: gridColumns, gridRows: gridRows,
                                    pointColor: tester.displayColor).frame(height: 380)
                     Text(tester.displayStatus).font(.headline)
+                    if tester.selectedMethod == .neural, let c = tester.neuralEstimate {
+                        Text(c.state.title).font(.title2.bold()).foregroundStyle(c.accepted ? tester.displayColor : .orange)
+                        Text("C 접촉 점수 \(c.contactScore, specifier: "%.3f") · 0은 공중 쪽, 1은 접촉 쪽 · 정확도 확률이 아닙니다.")
+                            .font(.subheadline.monospacedDigit())
+                        Text("학습 신호까지 거리 \(c.supportDistanceUT, specifier: "%.2f") / 기준 \(c.supportLimitUT, specifier: "%.2f") µT · 점수 0.35~0.65 사이면 판정 보류")
+                            .font(.footnote.monospacedDigit())
+                    }
                     if tester.isJoint, let joint = tester.jointEstimate {
                         Text(joint.state.title).font(.title2.bold()).foregroundStyle(joint.estimate.accepted ? tester.displayColor : .orange)
                         Text("모델과의 차이 · 접촉 \(joint.contact.residual, specifier: "%.2f") µT / 공중 \(joint.air.residual, specifier: "%.2f") µT · 두 후보 차이 \(joint.gapUT, specifier: "%.2f") µT")
@@ -473,16 +575,19 @@ struct GridLiveView: View {
                             Text("도면 기준 추정 x \(e.point.x*printed.widthMM, specifier: "%.1f") mm · y \(e.point.y*printed.heightMM, specifier: "%.1f") mm")
                                 .font(.subheadline.monospacedDigit())
                         }
-                        Text("자기장 차이 \(e.residual, specifier: "%.1f") / 기준 \(e.limit, specifier: "%.1f") µT · 떨어진 다른 후보의 차이 \(e.otherLocationResidual, specifier: "%.1f") µT")
-                            .font(.footnote.monospacedDigit())
+                        if tester.selectedMethod != .neural {
+                            Text("자기장 차이 \(e.residual, specifier: "%.1f") / 기준 \(e.limit, specifier: "%.1f") µT · 떨어진 다른 후보의 차이 \(e.otherLocationResidual, specifier: "%.1f") µT")
+                                .font(.footnote.monospacedDigit())
+                        }
                     }
+                    comparisonCard
                     Text(tester.isJoint ? "● 청록: 접촉 추정 · ● 보라: 3 mm 공중 추정 · ◯ 주황: 판정 보류\n궤적은 최근 8초이며 접촉 상태가 바뀌거나 판정을 보류하면 선을 끊습니다. 회색 안내선은 추정에 사용하지 않습니다." : "● 청록색: 표시 기준을 통과한 추정점 · ◯ 주황색: 불확실한 후보\n궤적은 최근 8초의 청록색 점만 연결합니다. 회색 안내선은 추정에 사용하지 않습니다. 선 위에 붙어 보이는지 직접 확인해 주세요.")
                         .font(.footnote).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 10) {
                         if printed != nil {
-                            Text("같은 점과 경로에서 A/B 비교").font(.headline)
+                            Text(tester.isJoint ? "같은 점과 경로에서 A/B/C 비교" : "같은 점과 경로에서 A/B 비교").font(.headline)
                             if tester.isJoint {
-                                Text("중앙과 네 모서리에서 펜촉의 수평 위치를 유지하며 0 → 3 → 0 mm로 바꿔 보세요. 색이 맞는지와 높이를 바꿀 때 위치가 튀는지를 A/B 각각 비교하세요. 움직이는 중간 높이는 아직 학습하지 않았습니다.")
+                                Text("중앙과 네 모서리에서 펜촉의 수평 위치를 유지하며 0 → 3 → 0 mm로 바꿔 보세요. 색이 맞는지와 높이를 바꿀 때 위치가 튀는지를 A/B/C 각각 비교하세요. 움직이는 중간 높이는 아직 학습하지 않았습니다.")
                             } else if printed?.pose.tipContact == false {
                                 Text("φ=0°·θ=90°·α=0°를 유지하고 펜촉을 표식의 수직 위 3 mm에 놓으세요. 같은 점과 선에서 A/B를 전환하며 흔들림·점프·주황색 후보를 비교하세요. 3 mm의 첫 모델이며 반복 수집 검증은 아직 없습니다.")
                             } else {
@@ -502,10 +607,10 @@ struct GridLiveView: View {
                         Button("기록 공유본 만들기 (선택)") { tester.shareSnapshot() }.buttonStyle(.bordered)
                         if let url = tester.exportURL { ShareLink("CSV 공유", item: url) }
                     }
-                    Text(tester.isJoint ? "접촉 센서가 아니라 두 높이의 자기장 모델을 비교하는 실험 기능입니다. 색이 틀릴 수 있고, 0/3 mm 외 높이와 다른 자세는 검증하지 않았습니다. 실제 펜의 기울기·회전은 측정하지 않습니다. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다." : "선택한 자세·높이를 유지하는 위치 추정 모델입니다. 실제 펜의 기울기·회전·접촉 여부는 측정하지 않습니다. 높이가 달라도 점이 표시될 수 있습니다. 펜을 이동 배치한 뒤 궤적을 지우고 테스트하세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
+                    Text(tester.isJoint ? "A/B는 높이별 모델을 비교하고 C는 두 높이를 공동 학습합니다. 모두 자력계로 접촉을 추정하는 실험 기능입니다. 색이 틀릴 수 있고, 0/3 mm 외 높이와 다른 자세는 검증하지 않았습니다. 실제 펜의 기울기·회전은 측정하지 않습니다. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다." : "선택한 자세·높이를 유지하는 위치 추정 모델입니다. 실제 펜의 기울기·회전·접촉 여부는 측정하지 않습니다. 높이가 달라도 점이 표시될 수 있습니다. 펜을 이동 배치한 뒤 궤적을 지우고 테스트하세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 접촉·공중 A/B 테스트 1.21")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · A/B/C 테스트 1.22")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }
