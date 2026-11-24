@@ -6,6 +6,7 @@ struct PrintedGridStudyView: View {
     @State private var showLibrary = false
     @State private var confirmEnd = false
     @State private var confirmNew = false
+    var campaign: PrintedGridCampaign { collector.printedCampaign }
     var batch: PrintedGridBatch { collector.printedBatch ?? collector.nextPrintedBatch }
     var spec: TrialSpec? { collector.activeTrial?.spec ?? collector.currentSpec }
     var finished: Bool { collector.printedBatch != nil && !collector.plan.isEmpty && collector.currentSpec == nil }
@@ -21,19 +22,19 @@ struct PrintedGridStudyView: View {
                             Text(collector.printedCampaign.pose.summary).font(.subheadline.bold()).foregroundStyle(.teal)
                         }
                         Spacer()
-                        Text("\(collector.printedCompleted.count) / 39행 저장")
+                        Text("\(collector.printedCompleted.count) / \(campaign.batches.count)행 저장")
                             .font(.headline.monospacedDigit()).foregroundStyle(.teal)
                     }
-                    ProgressView(value: Double(collector.printedCompleted.count), total: 39)
+                    ProgressView(value: Double(collector.printedCompleted.count), total: Double(campaign.batches.count))
                     HStack {
                         Picker("측정 묶음", selection: Binding(get: { batch }, set: { collector.selectPrinted($0) })) {
-                            ForEach(PrintedGridBatch.all) { item in
-                                Text(item.title + (collector.printedCompleted[item.id] == nil ? "" : " ✓")).tag(item)
+                            ForEach(campaign.batches) { item in
+                                Text(campaign.title(for: item) + (collector.printedCompleted[item.id] == nil ? "" : " ✓")).tag(item)
                             }
                         }.pickerStyle(.menu)
                         Spacer()
                         Button("미완료 행으로") { collector.selectPrinted(collector.nextPrintedBatch) }
-                            .disabled(collector.printedCompleted.count == 39)
+                            .disabled(collector.printedCompleted.count == campaign.batches.count)
                     }.disabled(collector.sessionOpen || collector.isClosing)
                     if collector.sessionOpen && collector.printedBatch == nil {
                         Text("다른 수집 세션이 열려 있습니다. 해당 화면에서 저장·종료한 뒤 시작하세요.").foregroundStyle(.orange)
@@ -51,8 +52,13 @@ struct PrintedGridStudyView: View {
                     }
                     DisclosureGroup("전체 측정 순서 · 쉬는 방법") {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("같은 φ=0°·θ=90°·α=0°·높이 0 mm로 3회차까지 수집합니다. 2회차는 먼저 1회차 모델로 평가하고, 3회차는 1+2회차 모델로 먼저 평가한 뒤 학습에 합칩니다.")
-                            Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 1 → 13행, 1회차와 같은 지그재그")
+                            if campaign.preparationID == PrintedGridCampaign.hover3PreparationID {
+                                Text("이번에는 높이 3 mm·비접촉으로 1회차 273점만 수집합니다. 기존 0 mm 접촉 자료와 구분되는지 분석한 뒤 반복 수집을 정합니다.")
+                                Text("1 → 13행 순서. 홀수 행은 왼쪽 → 오른쪽, 짝수 행은 오른쪽 → 왼쪽입니다. 각 점의 수직 위 3 mm에 펜촉을 놓으세요. 종이에 닿게 내리지 않습니다.")
+                            } else {
+                                Text("이번 조건으로 \(campaign.passCount)회차까지 수집합니다. 2회차는 먼저 1회차 모델로 평가하고, 3회차는 1+2회차 모델로 평가한 뒤 학습에 합칩니다.")
+                                Text("1회차: 1 → 13행\n2회차: 13 → 1행, 각 행의 이동 방향 반대\n3회차: 1 → 13행, 1회차와 같은 지그재그")
+                            }
                             Text("한 행: 시작 배경(수동) → 첫 점에 놓고 연속 시작 → 이동·준비 3초 + 정지 2초로 21점 자동 진행 → 종료 배경(수동) → 저장. 배경은 준비 3초 + 측정 10초입니다.")
                             Text("자동 진행 기준 행당 약 2분 20초이며, 처음 위치 맞춤·배경 이동·휴식 시간은 별도입니다. 자동 저장된 행 사이에 쉬세요. 잠금·앱 종료·중간 종료로 끊긴 행은 시작 배경부터 다시 재며, 완료된 다른 행은 유지합니다.")
                             Text("인쇄 도면을 100% 크기로 사용하세요. 종이·iPad·스탠드·케이블을 옮기거나 펜 자세를 바꿨다면 ‘새 배치로 시작’을 사용합니다. 이전 파일은 보존됩니다.")
@@ -81,7 +87,7 @@ struct PrintedGridStudyView: View {
                             .frame(maxWidth: .infinity).background(.regularMaterial)
                     }
                 }
-                .navigationTitle("MagAir Research · 도면 수집 1.18")
+                .navigationTitle("MagAir Research · 도면 수집 1.19")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
@@ -126,7 +132,7 @@ struct PrintedGridStudyView: View {
     private var measurement: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("\(batch.pass)/3회차 · \(batch.row)행 · \(batch.direction)").font(.title3.bold())
+                Text("\(batch.pass)/\(campaign.passCount)회차 · \(batch.row)행 · \(batch.direction)").font(.title3.bold())
                 Spacer()
                 Text("항목 \(collector.planIndex + 1)/23").monospacedDigit()
             }
@@ -190,11 +196,11 @@ struct PrintedGridStudyView: View {
                 ProgressView("이 행을 저장하는 중입니다")
             } else if collector.printedCompleted[batch.id] != nil {
                 Label("\(batch.row)행 저장 완료 · 쉬어도 됩니다", systemImage: "checkmark.circle.fill").font(.title2.bold()).foregroundStyle(.teal)
-                if collector.printedCompleted.count == 39 {
-                    Text("273점 × 3회 수집을 모두 마쳤습니다. 수집 완료라고 알려주세요. 자료를 가져와 분석하고 새 모델을 적용하겠습니다.")
+                if collector.printedCompleted.count == campaign.batches.count {
+                    Text("273점 × \(campaign.passCount)회 수집을 마쳤습니다. 수집 완료라고 알려주세요. 자료를 가져와 분석한 뒤 다음 단계를 정하겠습니다.")
                 } else {
                     Text("배치를 그대로 유지하세요. 다음 행은 새 시작 배경부터 측정합니다.")
-                    Button("다음 미완료: \(collector.nextPrintedBatch.title)") { collector.selectPrinted(collector.nextPrintedBatch) }
+                    Button("다음 미완료: \(campaign.title(for: collector.nextPrintedBatch))") { collector.selectPrinted(collector.nextPrintedBatch) }
                         .buttonStyle(.borderedProminent).controlSize(.large)
                 }
                 Button("이 행 처음부터 다시 측정") { collector.selectPrinted(batch) }.buttonStyle(.bordered)
@@ -219,7 +225,10 @@ struct PrintedGridSetupView: View {
                 Section("이번 도면") {
                     Text("A4 가로 · 실제 크기 100% · 스윗 스팟 50 × 30 mm")
                     Text("왼쪽 아래 오프셋: 용지 왼쪽에서 115 mm, 아래에서 55 mm. 앱의 1행은 사각형의 위쪽(iPad 쪽), 1열은 왼쪽입니다.")
-                    Text("한 배치에서는 φ·θ·α·높이를 고정합니다. 기본값은 φ=0°, θ=90°, α=0°, 높이=0 mm·접촉입니다. 이번에는 같은 조건으로 3회차까지 이어갑니다.")
+                    Text("한 배치에서는 φ·θ·α·높이를 고정합니다. 이번에는 \(collector.printedCampaign.passCount)회차를 수집합니다.")
+                    if collector.printedCampaign.preparationID == PrintedGridCampaign.hover3PreparationID {
+                        Text("3 mm 비접촉 전용 배치입니다. 각도는 그대로 두고 펜촉의 수직 아래 표식을 맞춥니다. 아래 자세 라벨은 이번 배치에서 고정됩니다.")
+                    }
                 }
                 Section("펜 장치 설정 · 수집 라벨") {
                     HStack {
@@ -255,7 +264,7 @@ struct PrintedGridSetupView: View {
                         TextField("φ=0의 경첩 기준선 / θ를 낮출 때 기울어지는 쪽 (필수)", text: $pose.tiltDirectionAtPhiZero, axis: .vertical)
                     }
                     Text("장치에서 맞춘 값을 사람이 입력합니다. 실제 펜의 각도·높이·접촉을 센서로 읽은 값은 아닙니다. 공중에서는 펜촉의 수직 아래에 해당하는 표식을 맞춥니다.").font(.footnote)
-                }.disabled(collector.printedCampaign.hasStarted)
+                }.disabled(collector.printedCampaign.hasStarted || collector.printedCampaign.preparationID == PrintedGridCampaign.hover3PreparationID)
                 Section("iPad 경사각 · 센서 자동 기록") {
                     Text(collector.ipadInclinationDegrees.map { String(format: "현재 화면 경사 %.1f°", $0) } ?? "동작 센서 수신 대기")
                         .font(.title3.monospacedDigit())

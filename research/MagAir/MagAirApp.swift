@@ -4,6 +4,10 @@ import SwiftUI
 struct MagAirApp: App {
     @StateObject private var collector = Collector()
     @State private var selectedTab: String = {
+        if ProcessInfo.processInfo.arguments.contains("--prepare-hover3") { return "printed" }
+        if let data = UserDefaults.standard.data(forKey: "printedGrid.campaign.v1"),
+           let campaign = try? JSONDecoder().decode(PrintedGridCampaign.self, from: data),
+           campaign.preparationID == PrintedGridCampaign.hover3PreparationID { return "printed" }
         #if DEBUG && targetEnvironment(simulator)
         if ProcessInfo.processInfo.arguments.contains("--preview-printed-setup") ||
             ProcessInfo.processInfo.arguments.contains("--preview-printed-target") { return "printed" }

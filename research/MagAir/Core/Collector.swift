@@ -44,7 +44,7 @@ final class Collector: ObservableObject {
         return nil
     }
     var nextPrintedBatch: PrintedGridBatch {
-        PrintedGridBatch.all.first { printedCompleted[$0.id] == nil } ?? PrintedGridBatch.all[0]
+        printedCampaign.batches.first { printedCompleted[$0.id] == nil } ?? printedCampaign.batches[0]
     }
     @Published var denseCompleted = Set(UserDefaults.standard.stringArray(forKey: "denseGrid.completed.v1") ?? [])
     var nextDenseCollection: EdgeScenario {
@@ -156,6 +156,7 @@ final class Collector: ObservableObject {
             }
             UserDefaults.standard.set(true, forKey: "wideRectangleConfirmed.v1")
         }
+        if ProcessInfo.processInfo.arguments.contains("--prepare-hover3") { prepareHover3Campaign() }
         refreshLibrary()
         startSensors()
         timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.tick() }
@@ -358,7 +359,7 @@ final class Collector: ObservableObject {
             var session = SessionManifest(id: id, startedAt: stamp, anchorUptime: uptime, anchorUnix: date.timeIntervalSince1970,
                                           device: model, osVersion: UIDevice.current.systemVersion, setup: setup, availableSensors: capabilities)
             if let printedBatch {
-                session.printedGrid = .current(campaignID: printedCampaign.id, batch: printedBatch, pose: printedCampaign.pose)
+                session.printedGrid = printedCampaign.metadata(for: printedBatch)
                 session.printedGrid?.autoAdvanceEnabledAtStart = printedSequence.enabled
                 if printedBatch.pass > 1 {
                     session.printedGrid?.evaluationModelSHA256 = collectionEvaluationPair?.entry.sha256A
@@ -405,17 +406,18 @@ final class Collector: ObservableObject {
     }
 
     func selectPrinted(_ batch: PrintedGridBatch) {
-        guard !recording, !isClosing, !sessionOpen, PrintedGridBatch.all.contains(batch) else { return }
+        guard !recording, !isClosing, !sessionOpen, printedCampaign.batches.contains(batch) else { return }
         printedBatch = batch; edgeScenario = nil; blockNumber += 1
         printedSequence.pause()
         setup = printedCampaign.setup; setup.confirmed = printedReady
-        plan = PrintedGridMetadata.current(campaignID: printedCampaign.id, batch: batch, pose: printedCampaign.pose).makePlan(block: blockNumber)
+        plan = printedCampaign.metadata(for: batch).makePlan(block: blockNumber)
         planIndex = 0; elapsed = 0
         selected = .mapBaseline
     }
 
     func confirmPrintedSetup(_ proposed: Setup, pose: PrintedGridPose) {
         guard !sessionOpen, !isClosing, pose.readyForCollection else { return }
+        if printedCampaign.preparationID == PrintedGridCampaign.hover3PreparationID && pose != printedCampaign.pose { return }
         if !printedCampaign.hasStarted {
             printedCampaign.setup = proposed
             printedCampaign.pose = pose.canonical
@@ -432,6 +434,8 @@ final class Collector: ObservableObject {
 
     func newPrintedCampaign() {
         guard !sessionOpen, !isClosing else { return }
+        do { try archivePrintedCampaign(printedCampaign) }
+        catch { errorMessage = "이전 배치 조건 보존 실패: \(error.localizedDescription)"; return }
         printedCampaign = PrintedGridCampaign(); printedReady = false
         printedCompleted = [:]; persistPrintedCampaign()
         selectPrinted(PrintedGridBatch.all[0])
@@ -441,6 +445,36 @@ final class Collector: ObservableObject {
         if let data = try? JSONEncoder().encode(printedCampaign) {
             UserDefaults.standard.set(data, forKey: "printedGrid.campaign.v1")
         }
+    }
+
+    /// Explicit deployment request only. Repeating it must never reset collection progress.
+    private func prepareHover3Campaign() {
+        let marker = "printedGrid.prepared." + PrintedGridCampaign.hover3PreparationID
+        guard UserDefaults.standard.string(forKey: marker) == nil,
+              printedCampaign.preparationID != PrintedGridCampaign.hover3PreparationID else { return }
+        guard !sessionOpen, !isClosing, let next = PrintedGridCampaign.hover3(from: printedCampaign) else {
+            errorMessage = "3 mm 배치는 φ=0°·θ=90°·α=0°·접촉 0 mm 배치에서 준비해야 합니다."
+            return
+        }
+        do {
+            // Archive both conditions before switching preferences. Never touch raw sessions.
+            try archivePrintedCampaign(printedCampaign)
+            try archivePrintedCampaign(next)
+            let data = try JSONEncoder().encode(next)
+            UserDefaults.standard.set(data, forKey: "printedGrid.campaign.v1")
+            UserDefaults.standard.set(next.id, forKey: marker)
+            printedCampaign = next; printedReady = false; printedCompleted = [:]
+        } catch { errorMessage = "새 배치 준비 실패: \(error.localizedDescription)" }
+    }
+
+    private func archivePrintedCampaign(_ campaign: PrintedGridCampaign) throws {
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        let data = try encoder.encode(campaign)
+        let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        let directory = SessionStore.root.deletingLastPathComponent().appendingPathComponent("MagAirCampaigns", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let target = directory.appendingPathComponent("\(campaign.id)-\(hash).json")
+        if !FileManager.default.fileExists(atPath: target.path) { try data.write(to: target, options: .atomic) }
     }
 
     func finishSweep() {
@@ -565,7 +599,7 @@ final class Collector: ObservableObject {
                   let session = try? JSONDecoder().decode(SessionManifest.self, from: data),
                   let meta = session.printedGrid,
                   FixturePoseAnnotations.bundled.resolve(meta.pose, campaignID: meta.campaignID, sessionID: session.id) == printedCampaign.pose,
-                  PrintedGridBatch.all.contains(meta.batch),
+                  printedCampaign.batches.contains(meta.batch),
                   meta.batch.accepts(session, campaignID: printedCampaign.id, manifestData: data) else { continue }
             // Preserve every raw session; prefer the newest complete remeasurement in the UI.
             if completed[meta.batch.id] == nil { completed[meta.batch.id] = session.id }

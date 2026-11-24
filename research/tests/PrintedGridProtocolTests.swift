@@ -3,6 +3,55 @@ import CryptoKit
 
 enum PrintedGridProtocolTests {
     static func run() throws {
+        // New height condition has its own campaign, labels and first-pass stopping point.
+        let contact = PrintedGridCampaign()
+        let legacyCampaign = try JSONDecoder().decode(PrintedGridCampaign.self, from: JSONEncoder().encode(contact))
+        precondition(legacyCampaign.passCount == 3 && legacyCampaign.batches.count == 39)
+        let hover = PrintedGridCampaign.hover3(from: contact)!
+        precondition(hover.id != contact.id && hover.referenceCampaignID == contact.id)
+        precondition(hover.passCount == 1 && hover.batches.map(\.row) == Array(1...13))
+        precondition(!hover.hasStarted && !hover.setup.confirmed && hover.pose.readyForCollection)
+        precondition(hover.pose.phiDegrees == 0 && hover.pose.thetaDegrees == 90 && hover.pose.alphaDegrees == 0)
+        precondition(!hover.pose.tipContact && hover.pose.tipHeightMM == 3)
+        precondition(contact.pose.tipContact && contact.pose.tipHeightMM == 0)
+        precondition(PrintedGridCampaign.hover3(from: hover) == nil)
+        var changed = contact; changed.pose.phiDegrees = 45
+        precondition(PrintedGridCampaign.hover3(from: changed) == nil)
+        var hoverPlans: [String: [TrialSpec]] = [:]
+        for batch in hover.batches {
+            let metadata = hover.metadata(for: batch)
+            precondition(metadata.referenceCampaignID == contact.id && metadata.plannedPasses == 1)
+            precondition(metadata.collectionIntent == hover.collectionIntent)
+            let plan = metadata.makePlan(block: 1)
+            hoverPlans[batch.id] = plan
+            var session = SessionManifest(id: "hover3", startedAt: "test", anchorUptime: 0, anchorUnix: 0,
+                device: "test", osVersion: "test", setup: hover.setup, availableSensors: [:])
+            session.status = "completed"; session.printedGrid = metadata
+            var time = 100.0
+            session.trials = plan.map { spec in
+                var trial = TrialRecord(spec: spec, startUptime: time, settleSeconds: spec.preparationSeconds ?? 3)
+                trial.status = "completed"; trial.endUptime = trial.plannedEnd; time = trial.plannedEnd+1
+                precondition(trial.settleSeconds == 3)
+                if spec.kind == .mapHold {
+                    precondition(spec.duration == 2 && spec.fixturePose == hover.pose)
+                    precondition(trial.instructedHeightMM(at: trial.activeStart) == 3)
+                    precondition(spec.fixturePose!.csvLabels(phase: "hold")[3] == "air")
+                    precondition(trial.instructedHeightMM(at: trial.startUptime+1) == nil)
+                } else {
+                    precondition(spec.duration == 10 && spec.fixturePose == nil)
+                    precondition(trial.instructedHeightMM(at: trial.activeStart) == nil)
+                }
+                return trial
+            }
+            let decoded = try JSONDecoder().decode(SessionManifest.self, from: SessionStore.encode(session))
+            precondition(batch.accepts(decoded, campaignID: hover.id))
+            precondition(!batch.accepts(decoded, campaignID: contact.id))
+            session.trials[1].spec.fixturePose?.tipHeightMM = 0
+            precondition(!batch.accepts(session, campaignID: hover.id))
+        }
+        let hoverPoints = hoverPlans.values.flatMap { $0 }.filter { $0.kind == .mapHold }
+        precondition(hoverPoints.count == 273 && Set(hoverPoints.map(\.pointID)).count == 273)
+        try JSONEncoder().encode(hoverPlans).write(to: URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("printed-grid-hover3-plans.json"))
         precondition(PrintedGridPose().isValid)
         var air = PrintedGridPose(phiDegrees: 360, thetaDegrees: 60, tipHeightMM: 5, tipContact: false)
         precondition(!air.isValid) // A tilted run needs its zero-yaw tilt direction.

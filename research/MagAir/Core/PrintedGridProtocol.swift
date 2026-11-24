@@ -159,6 +159,9 @@ struct PrintedGridMetadata: Codable {
     var evaluationTrainingPasses: [Int]? = nil
     var rowOrderRevision: String? = nil
     var scheduledRowOrder: [Int]? = nil
+    var referenceCampaignID: String? = nil
+    var collectionIntent: String? = nil
+    var plannedPasses: Int? = nil
     var labelSource = "operator_confirmed_printed_target_unmeasured_pose"
     var coordinateDefinition = "Normalized top-left=(0,0); right=+x, toward user=+y. nominalPointMM=(50*x,30*y) from sweet spot top-left. Paper lower-left mm=(115+50*x,85-30*y). These are printed targets, not sensed tip coordinates."
     /// Session startup must use the timing that its manifest declares.
@@ -194,10 +197,47 @@ struct PrintedAutoSequence {
 }
 
 struct PrintedGridCampaign: Codable {
+    static let hover3PreparationID = "hover3_phi0_theta90_alpha0_20261124_v1"
     var id = "SweetSpot-" + UUID().uuidString
     var createdAt = ISO8601DateFormatter().string(from: Date())
     var hasStarted = false
     var pose = PrintedGridPose()
+    var preparationID: String? = nil
+    var referenceCampaignID: String? = nil
+    var collectionIntent: String? = nil
+    var plannedPasses: Int? = nil // nil preserves the historical three-pass schedule.
+    var passCount: Int { plannedPasses ?? 3 }
+    var batches: [PrintedGridBatch] { PrintedGridBatch.all.filter { $0.pass <= passCount } }
+    func title(for batch: PrintedGridBatch) -> String {
+        String(format: "%02d/%d · %d회차 · %d행", (batches.firstIndex(of: batch) ?? 0)+1, batches.count, batch.pass, batch.row)
+    }
+    func metadata(for batch: PrintedGridBatch) -> PrintedGridMetadata {
+        var meta = PrintedGridMetadata.current(campaignID: id, batch: batch, pose: pose)
+        meta.referenceCampaignID = referenceCampaignID
+        meta.collectionIntent = collectionIntent
+        meta.plannedPasses = plannedPasses
+        return meta
+    }
+    /// A new label condition, not a change to old contact sessions or inference inputs.
+    static func hover3(from reference: Self) -> Self? {
+        guard reference.pose.phiDegrees == 0, reference.pose.thetaDegrees == 90,
+              reference.pose.alphaDegrees == 0, reference.pose.tipContact,
+              reference.pose.tipHeightMM == 0 else { return nil }
+        var campaign = Self()
+        campaign.pose = reference.pose
+        campaign.pose.tipHeightMM = 3; campaign.pose.tipContact = false
+        campaign.pose.alphaLabelSource = "operator_set_fixture_unmeasured"
+        campaign.pose.alphaDefinition = PrintedGridPose.alphaConvention
+        campaign.setup = reference.setup
+        campaign.setup.confirmed = false
+        campaign.setup.plane = "책상 위 공중 · 펜촉의 수직 투영 위치"
+        campaign.setup.heightNote = campaign.pose.summary + " · 장치 설정값, 센서 실측 아님"
+        campaign.referenceCampaignID = reference.id
+        campaign.preparationID = hover3PreparationID
+        campaign.collectionIntent = "contact_0mm_vs_air_3mm_feasibility; operator-set height, no sensed contact; first pass only"
+        campaign.plannedPasses = 1
+        return campaign
+    }
     var setup: Setup = {
         var setup = Setup()
         setup.aspect = 5.0/3.0

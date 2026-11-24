@@ -300,6 +300,11 @@ struct GridLiveView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(printed == nil ? "격자 내부 실시간 테스트" : "스윗 스팟 · 273점 실시간 테스트").font(.largeTitle.bold())
+                    if let printed, printed.pose.tipHeightMM != collector.printedCampaign.pose.tipHeightMM ||
+                        printed.pose.tipContact != collector.printedCampaign.pose.tipContact {
+                        Text("현재 A/B 모델은 \(printed.pose.summary) 조건입니다. 이번 수집은 \(collector.printedCampaign.pose.summary)입니다. 접촉·비접촉 구분 모델은 수집 후 분석할 예정입니다.")
+                            .font(.subheadline).padding(14).background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    }
                     Text("학습에 사용한 회차").font(.headline)
                     Picker("학습 회차 조합", selection: Binding(get: { tester.selectedCombination }, set: { tester.selectCombination($0) })) {
                         ForEach(tester.library?.catalog.entries ?? []) { entry in
@@ -395,7 +400,7 @@ struct GridLiveView: View {
                     Text("같은 자세·책상 접촉 조건의 초기 모델입니다. 펜의 기울기·축 회전·접촉 여부는 측정하지 않습니다. 펜을 들어 옮길 때 궤적이 생길 수 있으니 내려놓고 궤적을 지우세요. iPad가 움직이거나 센서가 끊기면 배경을 다시 맞춥니다.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }.padding(26).frame(maxWidth: 1000).frame(maxWidth: .infinity)
-            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 7조합 A/B 테스트 1.18")
+            }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("MagAir Research · 7조합 A/B 테스트 1.19")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { tester.active = !collector.sessionOpen; UIApplication.shared.isIdleTimerDisabled = true }

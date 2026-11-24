@@ -31,10 +31,12 @@ class PrintedModelTests(unittest.TestCase):
         cls.temp.cleanup()
 
     @classmethod
-    def fixture(cls, row, prepare3=False):
+    def fixture(cls, row, prepare3=False, hover3=False):
         plans = json.loads((Path(__file__).resolve().parents[1]/'build/tests/printed-grid-current-plans.json').read_text()) if prepare3 else cls.plans
+        if hover3:
+            plans = json.loads((Path(__file__).resolve().parents[1]/'build/tests/printed-grid-hover3-plans.json').read_text())
         specs = plans[f'sweetspot_21x13_v1_p1_r{row}']
-        folder = cls.root/(f'row{row}-prepare3' if prepare3 else f'row{row}'); folder.mkdir()
+        folder = cls.root/(f'row{row}-hover3' if hover3 else (f'row{row}-prepare3' if prepare3 else f'row{row}')); folder.mkdir()
         time = 100.0; trials = []; samples = []; motions = []
         for spec in specs:
             hold = spec['kind'] == 'mapHold'; duration = 2 if hold else 10; prepare = spec.get('preparationSeconds', 3)
@@ -50,7 +52,7 @@ class PrintedModelTests(unittest.TestCase):
                               target_x=x if hold else '', target_y=y if hold else '',
                               fixture_phi_deg=0 if hold else '', fixture_theta_deg=90 if hold else '',
                               fixture_alpha_deg=0 if hold else '', fixture_alpha_source='operator_set_fixture_unmeasured' if hold else '',
-                              fixture_tip_state='contact' if hold else '', instructed_tip_height_mm=0 if hold else '',
+                              fixture_tip_state=('air' if hover3 else 'contact') if hold else '', instructed_tip_height_mm=(3 if hover3 else 0) if hold else '',
                               fixture_pose_source='operator_set_fixture_unmeasured' if hold else '')
                 sample.update(zip(('bx_uT', 'by_uT', 'bz_uT'), [v+row*10+.001*t for v in b]))
                 samples.append(sample)
@@ -61,14 +63,31 @@ class PrintedModelTests(unittest.TestCase):
         manifest = dict(schemaVersion=2, id=f'row{row}', status='completed', device='synthetic', warnings=[], trials=trials,
                         setup=dict(widthMM='50', heightMM='30', aspect=5/3),
                         sensorCounts=dict(magnetometer=len(samples), device_motion=len(motions)),
-                        printedGrid=dict(protocolID=printed.PROTOCOL, campaignID='SYNTHETIC', batch=dict(row=row, **{'pass': 1}),
-                                         timingRevision=printed.PREPARE3 if prepare3 else printed.FAST,
+                        printedGrid=dict(protocolID=printed.PROTOCOL, campaignID='HOVER3' if hover3 else 'SYNTHETIC', batch=dict(row=row, **{'pass': 1}),
+                                         timingRevision=printed.PREPARE3 if prepare3 or hover3 else printed.FAST,
                                          pose=specs[1]['fixturePose'], **printed.GEOMETRY))
         (folder/'manifest.json').write_text(json.dumps(manifest))
         for name, rows in [('magnetometer', samples), ('device_motion', motions)]:
             with (folder/(name+'.csv')).open('w') as f:
                 writer = csv.DictWriter(f, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
         return folder
+
+    def test_hover3_labels_extract_and_cannot_mix_with_contact(self):
+        batches = [printed.extract(self.fixture(row, hover3=True)) for row in range(1, 14)]
+        self.assertEqual(sum(len(b['points']) for b in batches), 273)
+        for batch in batches:
+            self.assertEqual(batch['pose']['tipHeightMM'], 3)
+            self.assertFalse(batch['pose']['tipContact'])
+            self.assertEqual(batch['effectiveTimingRevision'], printed.PREPARE3)
+        for builder in (printed.build, knn.build):
+            model = builder(batches, [1])
+            self.assertEqual(model['printedGridContext']['pose']['tipHeightMM'], 3)
+            with self.assertRaisesRegex(ValueError, 'Campaign/setup/fixture pose mismatch'):
+                builder([self.batches[0]] + batches[1:], [1])
+        path = self.root/'row1-hover3'/'magnetometer.csv'
+        path.write_text(path.read_text().replace(',air,', ',contact,'))
+        with self.assertRaisesRegex(ValueError, 'CSV target/pose labels mismatch'):
+            printed.extract(path.parent)
 
     def test_three_second_preparation_keeps_two_second_capture(self):
         folder = self.fixture(1, prepare3=True)
