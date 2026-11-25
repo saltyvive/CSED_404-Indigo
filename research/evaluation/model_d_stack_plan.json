@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "date": "2026-11-25",
+  "status": "retrospective_development_on_existing_campaigns_not_prospective_validation",
+  "proposal": "Out-of-fold expert stack: SVM height specialist + C + multi-prototype distances; local affine XY",
+  "source": "reports/hover3-20261125-pass2",
+  "allowedContactPasses": [
+    1,
+    3
+  ],
+  "allowedAirPasses": [
+    1,
+    2
+  ],
+  "inferenceInputs": [
+    "background_subtracted_Bx_uT",
+    "background_subtracted_By_uT",
+    "background_subtracted_Bz_uT"
+  ],
+  "prohibitedInferenceInputs": [
+    "true_xy",
+    "true_height",
+    "row",
+    "column",
+    "session",
+    "pass",
+    "future_background",
+    "fixture_pose",
+    "Pencil_IMU"
+  ],
+  "candidateFamily": "stack",
+  "representations": [
+    "primary",
+    "corrected",
+    "mixed"
+  ],
+  "metrics": [
+    "isotropic",
+    "axis_standardized"
+  ],
+  "bandwidthsUT": [
+    2,
+    4,
+    8,
+    16
+  ],
+  "ridge": [
+    1,
+    10,
+    100
+  ],
+  "scoreRejectMargins": [
+    0.2
+  ],
+  "localXYNeighbors": 24,
+  "localXYRidge": 0.1,
+  "minimumSignalUT": 3,
+  "supportLimitUT": 6,
+  "selection": "Meta balanced cost wrong + 0.35*abstain; select on outer training records only.",
+  "outerTests": [
+    "air1_to_air2_contact13_fixed_and_reverse",
+    "paired_whole_pass_holdout_with_both_contact_and_air_unseen",
+    "5_whole_row_folds_all_passes_for_final_air12"
+  ],
+  "diagnostics": [
+    "3x3 spatial regions",
+    "per-row",
+    "height confusion including abstention",
+    "coverage and selective error",
+    "XY median/P95 and joint height+XY <=2.5mm",
+    "model complementarity",
+    "causal 0.12s windows",
+    "row-cluster bootstrap"
+  ],
+  "limitations": [
+    "All existing datasets have already been inspected; nested splits prevent direct fit/tuning leakage but cannot turn this into a fresh prospective test.",
+    "0mm and 3mm are separate acquisition campaigns; height and campaign are confounded.",
+    "No intermediate heights, new poses, new devices, or continuous contact transitions are measured.",
+    "Generated predictions and models belong in ignored reports; reproducible code, plan, result documentation and selected experimental model are preserved separately."
+  ],
+  "previousCandidate": "D1 kernel ridge did not simultaneously improve correct/wrong/abstain; preserved separately.",
+  "exploratoryRevision": "After inspecting D1 and conservative D2 cross-pass outputs, fixed SVM decision margin at 0.2 to avoid excessive abstention. This is retrospective development; new row/paired splits do not constitute an untouched prospective test.",
+  "expertSVM": {
+    "representation": "corrected",
+    "metric": "axis_standardized",
+    "bandwidth": 16,
+    "C": 100
+  },
+  "metaCandidates": {
+    "logistic_C": [
+      0.1,
+      1,
+      10
+    ],
+    "histGradientBoosting_max_leaf_nodes": [
+      3,
+      7,
+      15
+    ]
+  },
+  "metaRejectBand": [
+    0.4,
+    0.6
+  ],
+  "metaInputs": "SVM score, clipped C log-odds, per-height prototype residuals, predicted XY and interactions; no true XY, height or row inputs.",
+  "metaTraining": "Three whole-row folds produce out-of-fold expert features. Meta family/regularization selected by grouped CV on those features. Outer rows/passes excluded from all stages. Inner meta CV is a selection heuristic, not an unbiased test because base experts were cross-fitted once. All outer evaluation is retrospective."
+}

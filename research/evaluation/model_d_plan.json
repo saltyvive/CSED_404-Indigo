@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "date": "2026-11-25",
+  "status": "retrospective_development_on_existing_campaigns_not_prospective_validation",
+  "proposal": "D: background-consistent nonlinear height classifier plus local magnetic-to-XY regression",
+  "source": "reports/hover3-20261125-pass2",
+  "allowedContactPasses": [1, 3],
+  "allowedAirPasses": [1, 2],
+  "inferenceInputs": ["background_subtracted_Bx_uT", "background_subtracted_By_uT", "background_subtracted_Bz_uT"],
+  "prohibitedInferenceInputs": ["true_xy", "true_height", "row", "column", "session", "pass", "future_background", "fixture_pose", "Pencil_IMU"],
+  "candidateFamily": "Gaussian radial basis kernel ridge classification with class-balanced fitting; local affine XY regression",
+  "representations": ["primary", "corrected", "mixed"],
+  "metrics": ["isotropic", "axis_standardized"],
+  "bandwidthsUT": [2, 4, 8],
+  "ridge": [0.01, 0.1],
+  "scoreRejectMargins": [0, 0.15, 0.3, 0.45],
+  "localXYNeighbors": 24,
+  "localXYRidge": 0.1,
+  "minimumSignalUT": 3,
+  "supportLimitUT": 6,
+  "selection": "Inner whole-row 3-fold CV on outer training records only; balanced loss = wrong + 0.35 * abstain. No outer truth used for configuration or margin selection.",
+  "outerTests": [
+    "air1_to_air2_contact13_fixed_and_reverse",
+    "paired_whole_pass_holdout_with_both_contact_and_air_unseen",
+    "5_whole_row_folds_all_passes_for_final_air12"
+  ],
+  "diagnostics": ["3x3 spatial regions", "per-row", "height confusion including abstention", "coverage and selective error", "XY median/P95 and joint height+XY <=2.5mm", "model complementarity", "causal 0.12s windows", "row-cluster bootstrap"],
+  "limitations": [
+    "All existing datasets have already been inspected; nested splits prevent direct fit/tuning leakage but cannot turn this into a fresh prospective test.",
+    "0mm and 3mm are separate acquisition campaigns; height and campaign are confounded.",
+    "No intermediate heights, new poses, new devices, or continuous contact transitions are measured.",
+    "Generated predictions and models belong in ignored reports; reproducible code, plan, result documentation and selected experimental model are preserved separately."
+  ]
+}
