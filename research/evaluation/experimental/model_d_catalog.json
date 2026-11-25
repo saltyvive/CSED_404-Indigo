@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "experimental": true,
+  "installedOnIPad": false,
+  "recommendedDefaultReplacement": false,
+  "entries": [
+    {
+      "airPasses": [
+        1
+      ],
+      "contactPasses": [
+        1,
+        3
+      ],
+      "file": "model_D_contact13_air1.json",
+      "sha256": "230505da201abba644a52655a1e062be2f55209f4ae37d73b8759775f5e349cf"
+    },
+    {
+      "airPasses": [
+        2
+      ],
+      "contactPasses": [
+        1,
+        3
+      ],
+      "file": "model_D_contact13_air2.json",
+      "sha256": "e476500fcb2f35aabec569816e11e7084646ce31b732bbcf1a713d24b37c5988"
+    },
+    {
+      "airPasses": [
+        1,
+        2
+      ],
+      "contactPasses": [
+        1,
+        3
+      ],
+      "file": "model_D_contact13_air12.json",
+      "sha256": "b2078b7cf7020ec1c5a4a1ce7e281b4c9cd1a11fd89b495ff1b3e3bb360bb2e0"
+    }
+  ],
+  "hybridPlanSHA256": "db84917e5d23a50094eef8281b896ba58460171a591dad3fea0521e83be4779b",
+  "summarySHA256": "c6b94e4aa8324d0e6c883bdb232e2365e697923a8f4ea0a82303a5e326380b54"
+}

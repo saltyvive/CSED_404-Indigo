@@ -15,7 +15,8 @@ from experiment_model_d import fit, raw_predict, evaluate, metrics, trial_id, di
 
 
 def fit_experts(records,plan):
-    d=fit(records,dict(representation='corrected',metric='axis_standardized',bandwidth=16,ridge=100),plan)
+    cfg=plan['expertSVM']
+    d=fit(records,dict(representation=cfg['representation'],metric=cfg['metric'],bandwidth=cfg['bandwidth'],ridge=cfg['C']),dict(plan,candidateFamily='svm'))
     cp=json.loads((ROOT/'evaluation/joint_mlp_air12_plan.json').read_bytes())
     cp['airPasses']=sorted({r['passID'] for r in records if not r['contact']})
     with contextlib.redirect_stdout(io.StringIO()):
@@ -91,7 +92,9 @@ def predict(model,records,mode='primary'):
 
 def run(out,stage):
     out.mkdir(parents=True,exist_ok=True)
-    plan=json.loads((ROOT/'evaluation/model_d_balanced_plan.json').read_bytes())
+    plan=json.loads((ROOT/'evaluation/model_d_stack_plan.json').read_bytes())
+    if (out/'plan.json').exists():assert json.loads((out/'plan.json').read_bytes())==plan
+    else:save(out/'plan.json',plan)
     records,inv=load_records(ROOT/plan['source'],(1,2));save(out/'inventory.json',inv)
     splits=[]
     if stage in ('crosspass','all'):

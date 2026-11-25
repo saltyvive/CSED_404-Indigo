@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "date": "2026-11-25",
+  "name": "Experimental D: height SVM + B disagreement guard + local affine XY",
+  "basePlan": "model_d_balanced_plan.json",
+  "selectionTiming": "Chosen retrospectively after comparing existing air cross-pass results and inspecting contact/row risks. Not a preregistered independent validation.",
+  "inferenceInputs": ["background-subtracted Bx uT", "background-subtracted By uT", "background-subtracted Bz uT"],
+  "decisionRule": [
+    "SVM height score >=0.2 contact, <=-0.2 air, otherwise abstain, subject to signal/support/XY gates.",
+    "Run the original B multiprototype classifier using only this model's training records and the original 0.75uT height margin.",
+    "If both accept but disagree, abstain.",
+    "If SVM abstains and B accepts, use B's height and XY.",
+    "Otherwise use SVM height and local affine XY."
+  ],
+  "position": "Weighted local affine regression from the 24 nearest mixed primary/corrected training vectors; ridge 0.1, no rounding to known targets.",
+  "defaultReplacementApprovedByEvidence": false,
+  "reason": "Improved other-air-pass correct and abstain counts, but spatial held-out contact false-air increases materially. Preserve A/B/C and do not silently replace the iPad default.",
+  "scope": "0mm passes1+3 and 3mm passes1+2, phi0 theta90 alpha0, 50x30mm sweet spot; final model has no independent repeat left."
+}

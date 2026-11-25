@@ -9,9 +9,11 @@ from experiment_model_d import evaluate, metrics, trial_id
 from compare_model_d import build_b, load_old, spatial
 
 
-def run(out):
+def run(out,export=False):
     out.mkdir(parents=True,exist_ok=True)
     source=ROOT/'reports/model-d-20261125-balanced'
+    plan_path=ROOT/'evaluation/model_d_hybrid_plan.json'
+    guard_plan=json.loads(plan_path.read_bytes());save(out/'plan.json',guard_plan)
     records,inventory=load_records(ROOT/'reports/hover3-20261125-pass2',(1,2))
     results={}
     for path in sorted(source.glob('*-model.json')):
@@ -26,6 +28,11 @@ def run(out):
         model['prototypeGuard']={s:build_b([r for r in train if r['state']==s]) for s in ('air','contact')}
         model['guardPolicy']='If SVM abstains and B accepts, use B height AND B XY. If accepted SVM and accepted B disagree, abstain. Otherwise use SVM height and local affine XY.'
         model['name']='Experimental D: SVM height + multiprototype guard + local affine XY'
+        model['hybridPlanSHA256']=hashlib.sha256(plan_path.read_bytes()).hexdigest()
+        model['sourceTrainingModelSHA256']=hashlib.sha256(path.read_bytes()).hexdigest()
+        model['sourceInventory']=inventory
+        model['conditions']=[dict(state=s,passes=sorted({r['passID'] for r in train if r['state']==s}),
+            tipHeightMM=0 if s=='contact' else 3,phiDegrees=0,thetaDegrees=90,alphaDegrees=0) for s in ('contact','air')]
         model['inferenceInputs']=['background-subtracted Bx uT','background-subtracted By uT','background-subtracted Bz uT']
         model['scope']='Retrospectively selected on existing fixed-pose campaigns. Not prospectively validated. Row-held-out contact false-air risk remains. No iPad deployment.'
         pred=evaluate(model,test);causal=evaluate(model,test,'causal')
@@ -55,8 +62,21 @@ def run(out):
         summary[group]=dict(C=metrics(cs),D=metrics(ds))
     final_c=[r for r in old['12']['C'] if r['mode']=='primary'];summary['finalReplay']=dict(C=metrics(final_c),D=results['final']['primary'])
     save(out/'summary.json',summary)
+    if export:
+        dest=ROOT/'evaluation/experimental';dest.mkdir(parents=True,exist_ok=True)
+        entries=[]
+        for combo,name in [('1','air1-to-air2'),('2','air2-to-air1'),('12','final')]:
+            data=(out/(name+'-model.json')).read_bytes();target=dest/f'model_D_contact13_air{combo}.json'
+            if target.exists():assert target.read_bytes()==data, 'Experimental asset differs: use a new version'
+            else:target.write_bytes(data)
+            entries.append(dict(airPasses=list(map(int,combo)),contactPasses=[1,3],file=target.name,sha256=hashlib.sha256(data).hexdigest()))
+        catalog=dict(version=1,experimental=True,installedOnIPad=False,recommendedDefaultReplacement=False,entries=entries,
+            hybridPlanSHA256=hashlib.sha256(plan_path.read_bytes()).hexdigest(),summarySHA256=hashlib.sha256((out/'summary.json').read_bytes()).hexdigest())
+        target=dest/'model_d_catalog.json'
+        if target.exists():assert json.loads(target.read_bytes())==catalog
+        else:save(target,catalog)
     print(json.dumps({k:summary[k] for k in ('crossPass','spatial','paired','finalReplay','rowClusterBootstrap')},indent=2))
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',type=Path,required=True);args=p.parse_args();run(args.out)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',type=Path,required=True);p.add_argument('--export',action='store_true');args=p.parse_args();run(args.out,args.export)
