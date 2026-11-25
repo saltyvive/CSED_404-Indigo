@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "date": "2026-11-25",
+  "purpose": "Retrospective contact pass-1 bilinear interpolation point-density ablation for presentation",
+  "trainingPass": 1,
+  "evaluationPasses": [1, 2, 3],
+  "gridNotation": "rows x columns (vertical x horizontal), including all four boundaries",
+  "rowCounts": [3, 4, 5, 7, 13],
+  "columnCounts": [3, 5, 6, 11, 21],
+  "presentationGrids": [[3,3], [3,5], [4,6], [7,11], [13,21]],
+  "nestedIsotropicSequence": [[4,6], [7,11], [13,21]],
+  "selection": "Exact uniform subsampling: row index 1+i*12/(R-1), column index 1+j*20/(C-1); original measurements only, no synthetic anchors, no score-based selection.",
+  "source": "reports/pass-combinations-20261124/evaluation/observations.json",
+  "referenceModel": "MagAir/Resources/model_A_1.json",
+  "method": "Existing A: bilinear forward interpolation of three magnetic components, inverted over fixed 181x181 XY candidates. No neural network or kNN.",
+  "fixedParameters": "All non-knot parameters of the already frozen A1 are reused, including searchSteps=180 and residualLimitUT=3.662219138778697. That legacy display limit came from full pass-1 noise; only selected vectors fit each interpolation surface. Primary position metrics do not use display acceptance.",
+  "trainBackground": "Selected pass-1 anchors use the existing row before/after linear correction.",
+  "testBackground": "All 273 points of each pass use trimmed steady median minus preceding row baseline only. No future end baseline or target coordinate is an inference input.",
+  "primaryMetrics": ["mean radial error mm", "median radial error mm", "P95 radial error mm", "RMSE mm", "fraction of all 273 candidates within 2.5mm", "fraction within 5mm"],
+  "secondaryMetrics": ["accepted display rate", "accepted and within 2.5mm", "per-row and per-location error change", "boundary/interior error"],
+  "interpretation": [
+    "Pass1 contains N fitted placements and 273-N non-anchor placements from the same sessions; never report it as independent validation.",
+    "Pass2 and pass3 never enter any model. They are existing, previously inspected repeat datasets, not newly collected prospective tests.",
+    "Main 9/15/24/77/273 grids are fixed before results. Only 24->77->273 is a nested, isotropic 10->5->2.5mm sequence.",
+    "Run every 25 exact uniform shape combination and retain non-monotonic and worsening results.",
+    "More anchors need not improve every location or repeat; report actual outcomes without enforcing monotonicity.",
+    "Contact pass2 remains included as user requested, with historical acquisition/timing caveats preserved."
+  ]
+}
