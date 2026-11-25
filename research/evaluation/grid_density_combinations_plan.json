@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "date": "2026-11-25",
+  "purpose": "Exhaustive retrospective contact-pass subsets crossed with uniform calibration-grid densities and pooled evaluation subsets",
+  "trainingSets": [[1], [2], [3], [1,2], [2,3], [1,3], [1,2,3]],
+  "evaluationSets": [[1], [2], [3], [1,2], [2,3], [1,3], [1,2,3]],
+  "rowCounts": [3,4,5,7,13],
+  "columnCounts": [3,5,6,11,21],
+  "presentationGrids": [[3,3], [3,5], [4,6], [7,11], [13,21]],
+  "gridNotation": "rows x columns; vertical x horizontal; exact uniform original coordinates including boundaries",
+  "source": "reports/pass-combinations-20261124/evaluation/observations.json",
+  "referenceModels": "reports/pass-combinations-20261124/evaluation/models/model_A_{combination}.json",
+  "aggregation": "Componentwise median of selected passes at each retained coordinate, identical to existing A. Two passes give their arithmetic mean; three give the coordinatewise median.",
+  "method": "Existing A bilinear magnetic forward surface and fixed 181x181 inverse-position search. No kNN or neural network.",
+  "background": "Training uses existing per-row before/after linear correction. Every test query is its steady raw median minus preceding row background only.",
+  "fixedDisplayParameters": "Reuse each training subset's already frozen A model constants across all densities. Legacy residual thresholds were derived from all 273 positions in those training passes; main ungated spatial metrics do not depend on them.",
+  "evaluationPooling": "Concatenate all 273 placements in every selected evaluation pass. No vector averaging across test passes; compute quantiles and rates from pooled predictions, not averaged summary quantiles.",
+  "roles": {
+    "held_out_only": "Training and evaluation pass sets are disjoint.",
+    "same_pass_only": "Every evaluation pass was used in training; includes retained anchors and other coordinates from the same sessions.",
+    "mixed": "Evaluation includes both training and unseen passes. Never call this held-out accuracy."
+  },
+  "primaryMetrics": ["mean radial error mm", "median mm", "P95 mm", "RMSE mm", "all-candidate fraction within 2.5mm", "all-candidate fraction within 5mm"],
+  "secondaryMetrics": ["accepted display rate", "accepted and within 2.5mm", "per-location and boundary/interior errors"],
+  "selectionPolicy": "Retain all 7 x 25 x 7 = 1225 results. Report best mean-error and best 2.5mm-rate models separately within the same held-out evaluation set. Also compare each single-pass fit on both other passes and report fixed-density matched-test folds.",
+  "limitations": [
+    "Three previously inspected contact passes, fixed phi=0/theta=90/alpha=0/height=0mm; no posture or air generalization claims.",
+    "Choosing a best condition after examining these results is exploratory selection, not a fresh validation claim.",
+    "The 1+2+3 training subset has no held-out pass available. Evaluation on 1+2+3 always contains training data.",
+    "9/15/24/77/273 main grids were selected in the previous experiment. Only 24->77->273 form a nested isotropic sequence.",
+    "Pass2 acquisition caveats remain; do not omit it based on evaluation scores."
+  ]
+}
